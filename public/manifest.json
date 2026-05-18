@@ -1,0 +1,18 @@
+{
+  "name": "Camp-Navs 2026",
+  "short_name": "Camp-Navs",
+  "description": "Portail officiel du Camp-Navs 2026 - Mission Évangélique des Navigateurs",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#085041",
+  "theme_color": "#085041",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
