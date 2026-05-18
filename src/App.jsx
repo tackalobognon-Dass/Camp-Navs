@@ -9,12 +9,17 @@ import ProgrammePage from './pages/public/ProgrammePage'
 
 import LoginPage from './pages/admin/LoginPage'
 import DashboardPage from './pages/admin/DashboardPage'
+import MembresPage from './pages/admin/MembresPage'
 import CampeursPage from './pages/admin/CampeursPage'
+import EnfantsPage from './pages/admin/EnfantsPage'
 import TresoreriePage from './pages/admin/TresoreriePage'
 import AnnoncesAdminPage from './pages/admin/AnnoncesAdminPage'
 import ChantsAdminPage from './pages/admin/ChantsAdminPage'
 import DocumentsAdminPage from './pages/admin/DocumentsAdminPage'
 import ProgrammeAdminPage from './pages/admin/ProgrammeAdminPage'
+import SoireePage from './pages/admin/SoireePage'
+import SantePage from './pages/admin/SantePage'
+import LogistiquePage from './pages/admin/LogistiquePage'
 
 function App() {
   return (
@@ -27,12 +32,17 @@ function App() {
 
       <Route path="/admin/login" element={<LoginPage />} />
       <Route path="/admin" element={<PrivateRoute><DashboardPage /></PrivateRoute>} />
+      <Route path="/admin/membres" element={<PrivateRoute><MembresPage /></PrivateRoute>} />
       <Route path="/admin/campeurs" element={<PrivateRoute><CampeursPage /></PrivateRoute>} />
+      <Route path="/admin/enfants" element={<PrivateRoute><EnfantsPage /></PrivateRoute>} />
       <Route path="/admin/tresorerie" element={<PrivateRoute><TresoreriePage /></PrivateRoute>} />
       <Route path="/admin/annonces" element={<PrivateRoute><AnnoncesAdminPage /></PrivateRoute>} />
       <Route path="/admin/chants" element={<PrivateRoute><ChantsAdminPage /></PrivateRoute>} />
       <Route path="/admin/documents" element={<PrivateRoute><DocumentsAdminPage /></PrivateRoute>} />
       <Route path="/admin/programme" element={<PrivateRoute><ProgrammeAdminPage /></PrivateRoute>} />
+      <Route path="/admin/soiree" element={<PrivateRoute><SoireePage /></PrivateRoute>} />
+      <Route path="/admin/sante" element={<PrivateRoute><SantePage /></PrivateRoute>} />
+      <Route path="/admin/logistique" element={<PrivateRoute><LogistiquePage /></PrivateRoute>} />
     </Routes>
   )
 }
