@@ -7,6 +7,8 @@ import ChantsPage from './pages/public/ChantsPage'
 import DocumentsPage from './pages/public/DocumentsPage'
 import ProgrammePage from './pages/public/ProgrammePage'
 import CommentairesPage from './pages/public/CommentairesPage'
+import ContactPage from './pages/public/ContactPage'
+import SuiviPage from './pages/public/SuiviPage'
 
 import LoginPage from './pages/admin/LoginPage'
 import DashboardPage from './pages/admin/DashboardPage'
@@ -25,13 +27,17 @@ import LogistiquePage from './pages/admin/LogistiquePage'
 function App() {
   return (
     <Routes>
+      {/* Public */}
       <Route path="/" element={<HomePage />} />
       <Route path="/inscription" element={<InscriptionPage />} />
       <Route path="/chants" element={<ChantsPage />} />
       <Route path="/documents" element={<DocumentsPage />} />
       <Route path="/programme" element={<ProgrammePage />} />
       <Route path="/discussion" element={<CommentairesPage />} />
+      <Route path="/contact" element={<ContactPage />} />
+      <Route path="/suivi" element={<SuiviPage />} />
 
+      {/* Admin */}
       <Route path="/admin/login" element={<LoginPage />} />
       <Route path="/admin" element={<PrivateRoute><DashboardPage /></PrivateRoute>} />
       <Route path="/admin/membres" element={<PrivateRoute><MembresPage /></PrivateRoute>} />
