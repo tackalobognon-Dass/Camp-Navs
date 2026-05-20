@@ -22,26 +22,90 @@ function Countdown() {
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '6px', marginTop: '12px' }}>
-      {[{ v: time.j, l: 'JOURS' }, { v: time.h, l: 'HEURES' }, { v: time.m, l: 'MIN' }, { v: time.s, l: 'SEC', pulse: true }].map(({ v, l, pulse }) => (
+      {[
+        { v: time.j, l: 'JOURS' },
+        { v: time.h, l: 'HEURES' },
+        { v: time.m, l: 'MIN' },
+        { v: time.s, l: 'SEC', pulse: true }
+      ].map(({ v, l, pulse }) => (
         <div key={l} style={{
-          background: 'rgba(255,255,255,0.12)',
-          border: '0.5px solid rgba(255,255,255,0.2)',
+          background: 'rgba(255,255,255,0.13)',
+          backdropFilter: 'blur(4px)',
+          border: '0.5px solid rgba(255,255,255,0.22)',
           borderRadius: '10px',
-          padding: '7px 4px',
+          padding: '8px 4px',
           textAlign: 'center',
+          position: 'relative',
+          overflow: 'hidden',
         }}>
           <div style={{
-            fontSize: '22px',
-            fontWeight: '700',
-            color: '#fff',
-            lineHeight: '1',
-            animation: pulse ? 'pulse 1s infinite' : 'none',
+            position: 'absolute', top: 0, left: 0, right: 0, height: '1px',
+            background: 'linear-gradient(90deg,transparent,rgba(255,255,255,0.3),transparent)'
+          }} />
+          <div style={{
+            fontSize: '22px', fontWeight: '700', color: '#fff', lineHeight: '1',
+            animation: pulse ? 'cdpulse 1s infinite' : 'none',
           }}>{v}</div>
-          <div style={{ width: '1px', height: '8px', background: 'rgba(255,255,255,0.2)', margin: '4px auto' }} />
+          <div style={{ width: '1px', height: '8px', background: 'rgba(255,255,255,0.25)', margin: '4px auto' }} />
           <div style={{ fontSize: '6px', color: '#9FE1CB', letterSpacing: '0.05em' }}>{l}</div>
         </div>
       ))}
-      <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}`}</style>
+      <style>{`@keyframes cdpulse{0%,100%{opacity:1}50%{opacity:0.45}}`}</style>
+    </div>
+  )
+}
+
+function NewsCard({ annonce, gradient }) {
+  const [expanded, setExpanded] = useState(false)
+  const maxLen = 80
+  const isLong = annonce.contenu && annonce.contenu.length > maxLen
+
+  return (
+    <div style={{
+      flexShrink: 0,
+      width: '82vw',
+      maxWidth: 320,
+      borderRadius: '16px',
+      padding: '14px',
+      position: 'relative',
+      overflow: 'hidden',
+      background: gradient,
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'space-between',
+    }}>
+      <div style={{ position: 'absolute', width: 80, height: 80, borderRadius: '50%', background: 'rgba(255,255,255,0.07)', top: -20, right: -20 }} />
+      <div>
+        <span style={{
+          fontSize: '8px', fontWeight: 600, background: 'rgba(255,255,255,0.2)',
+          color: '#fff', borderRadius: 20, padding: '2px 8px', display: 'inline-block', marginBottom: 8
+        }}>{annonce.tag}</span>
+        <div style={{ fontSize: '13px', fontWeight: 500, color: '#fff', lineHeight: 1.35, marginBottom: 6 }}>
+          {annonce.titre}
+        </div>
+        {annonce.contenu && (
+          <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.8)', lineHeight: 1.5 }}>
+            {expanded || !isLong ? annonce.contenu : `${annonce.contenu.slice(0, maxLen)}...`}
+            {isLong && (
+              <span
+                onClick={() => setExpanded(!expanded)}
+                style={{ color: '#fff', fontWeight: 600, marginLeft: 4, cursor: 'pointer', textDecoration: 'underline' }}>
+                {expanded ? 'Voir moins' : 'Voir plus'}
+              </span>
+            )}
+          </div>
+        )}
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 10 }}>
+        <span style={{ fontSize: '9px', color: 'rgba(255,255,255,0.5)' }}>
+          {new Date(annonce.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+        </span>
+        <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <svg style={{ width: 12, height: 12, color: '#fff' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </div>
+      </div>
     </div>
   )
 }
@@ -74,56 +138,47 @@ export default function HomePage() {
   }
 
   const plusItems = [
-    {
-      label: 'Documents', path: '/documents',
-      icon: <svg style={{ width: 22, height: 22 }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>,
-      bg: '#FAECE7', color: '#993C1D'
-    },
-    {
-      label: 'Discussion', path: '/discussion',
-      icon: <svg style={{ width: 22, height: 22 }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>,
-      bg: '#E1F5EE', color: '#085041'
-    },
-    {
-      label: 'Contact', path: '/contact',
-      icon: <svg style={{ width: 22, height: 22 }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>,
-      bg: '#EEEDFE', color: '#534AB7'
-    },
-    {
-      label: 'Lieu', path: '/lieu',
-      icon: <svg style={{ width: 22, height: 22 }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>,
-      bg: '#E6F1FB', color: '#185FA5'
-    },
+    { label: 'Documents', path: '/documents', bg: '#FAECE7', color: '#993C1D',
+      icon: <svg style={{ width: 22, height: 22 }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg> },
+    { label: 'Discussion', path: '/discussion', bg: '#E1F5EE', color: '#085041',
+      icon: <svg style={{ width: 22, height: 22 }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg> },
+    { label: 'Contact', path: '/contact', bg: '#EEEDFE', color: '#534AB7',
+      icon: <svg style={{ width: 22, height: 22 }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg> },
+    { label: 'Lieu', path: '/lieu', bg: '#E6F1FB', color: '#185FA5',
+      icon: <svg style={{ width: 22, height: 22 }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg> },
   ]
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f8f8f6', maxWidth: '480px', margin: '0 auto', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ minHeight: '100vh', background: '#f8f8f6', maxWidth: 480, margin: '0 auto', display: 'flex', flexDirection: 'column' }}>
 
       {/* HERO */}
-      <div style={{ background: 'linear-gradient(160deg,#054035 0%,#085041 50%,#0F6E56 100%)', padding: '40px 16px 16px', position: 'relative', overflow: 'hidden' }}>
+      <div style={{ background: 'linear-gradient(160deg,#054035 0%,#085041 50%,#0F6E56 100%)', padding: '44px 16px 16px', position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', width: 140, height: 140, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.07)', top: -45, right: -35 }} />
+        <div style={{ position: 'absolute', width: 80, height: 80, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.05)', bottom: -20, left: -20 }} />
 
-        {/* Logo */}
+        {/* Logo sans cadre */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-          <div style={{ width: 40, height: 40, background: '#fff', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden' }}>
-            <img src="/logo-navs.jpg" alt="Navigateurs" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-          </div>
+          <img
+            src="/logo-navs.jpg"
+            alt="Navigateurs CI"
+            style={{ height: 38, width: 'auto', borderRadius: 6, objectFit: 'contain' }}
+          />
           <div>
-            <div style={{ fontSize: 10, fontWeight: 700, color: '#C9A84C', letterSpacing: '0.04em' }}>LES</div>
-            <div style={{ fontSize: 12, fontWeight: 700, color: '#fff', letterSpacing: '0.03em', lineHeight: 1 }}>NAVIGATEURS</div>
+            <div style={{ fontSize: 10, fontWeight: 700, color: '#C9A84C', letterSpacing: '0.05em' }}>LES</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#fff', lineHeight: 1 }}>NAVIGATEURS</div>
             <div style={{ fontSize: 9, color: '#9FE1CB', fontStyle: 'italic' }}>Côte d'Ivoire</div>
           </div>
         </div>
 
-        <div style={{ fontSize: 22, fontWeight: 700, color: '#fff', marginBottom: 4 }}>Camp-Navs 2026</div>
-        <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.72)', fontStyle: 'italic', borderLeft: '2px solid #C9A84C', paddingLeft: 8, marginBottom: 4, lineHeight: 1.5 }}>
-          Les familles et réseaux relationnels pour une expansion naturelle de l'Évangile
+        <div style={{ fontSize: 23, fontWeight: 700, color: '#fff', marginBottom: 5 }}>Camp-Navs 2026</div>
+        <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.72)', fontStyle: 'italic', borderLeft: '2px solid #C9A84C', paddingLeft: 8, lineHeight: 1.55 }}>
+          Les familles et réseaux relationnels pour une expansion naturelle de l'Évangile et du Royaume de Dieu
         </div>
 
         <Countdown />
       </div>
 
-      {/* PLACES - réduit */}
+      {/* PLACES */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, padding: '8px 14px' }}>
         {[
           { label: 'Jeunes & Adultes', val: places.jeunes, max: 100, prix: '30 000 FCFA' },
@@ -131,7 +186,9 @@ export default function HomePage() {
         ].map(({ label, val, max, prix }) => (
           <div key={label} style={{ background: '#fff', borderRadius: 10, border: '0.5px solid #e5e5e0', padding: '8px 10px' }}>
             <div style={{ fontSize: 9, color: '#888780', marginBottom: 2 }}>{label}</div>
-            <div style={{ fontSize: 15, fontWeight: 500, color: '#085041' }}>{val}<span style={{ fontSize: 9, color: '#888780', fontWeight: 400 }}> / {max}</span></div>
+            <div style={{ fontSize: 15, fontWeight: 500, color: '#085041' }}>
+              {val}<span style={{ fontSize: 9, color: '#888780', fontWeight: 400 }}> / {max}</span>
+            </div>
             <div style={{ background: '#E1F5EE', borderRadius: 3, height: 3, marginTop: 4 }}>
               <div style={{ background: '#085041', borderRadius: 3, height: 3, width: `${Math.min((val / max) * 100, 100)}%` }} />
             </div>
@@ -140,7 +197,7 @@ export default function HomePage() {
         ))}
       </div>
 
-      {/* ACTIONS - réduites */}
+      {/* ACTIONS */}
       <div style={{ padding: '0 14px 10px' }}>
         <div style={{ fontSize: 9, fontWeight: 500, color: '#888780', letterSpacing: '0.06em', marginBottom: 7 }}>ACTIONS RAPIDES</div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
@@ -159,43 +216,22 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* ACTUALITES - une carte visible + flèche */}
+      {/* ACTUALITES */}
       <div style={{ padding: '0 14px 90px' }}>
         <div style={{ fontSize: 9, fontWeight: 500, color: '#888780', letterSpacing: '0.06em', marginBottom: 7 }}>ACTUALITES</div>
         {annonces.length === 0 ? (
-          <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #e5e5e0', padding: '20px', textAlign: 'center' }}>
+          <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #e5e5e0', padding: 20, textAlign: 'center' }}>
             <p style={{ fontSize: 13, color: '#888780' }}>Aucune actualité pour le moment.</p>
           </div>
         ) : (
           <div style={{ position: 'relative' }}>
-            <div style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 4, scrollbarWidth: 'none', paddingRight: 40 }}>
+            <div style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 4, scrollbarWidth: 'none' }}>
               {annonces.map((a) => (
-                <div key={a.id} style={{
-                  flexShrink: 0,
-                  width: '85vw',
-                  maxWidth: 340,
-                  borderRadius: 16,
-                  padding: '14px',
-                  position: 'relative',
-                  overflow: 'hidden',
-                  background: tagGradients[a.tag] || tagGradients['Info'],
-                }}>
-                  <div style={{ position: 'absolute', width: 80, height: 80, borderRadius: '50%', background: 'rgba(255,255,255,0.07)', top: -20, right: -20 }} />
-                  <span style={{ fontSize: 8, fontWeight: 600, background: 'rgba(255,255,255,0.2)', color: '#fff', borderRadius: 20, padding: '2px 8px', display: 'inline-block', marginBottom: 8 }}>{a.tag}</span>
-                  <div style={{ fontSize: 13, fontWeight: 500, color: '#fff', lineHeight: 1.3, marginBottom: 5 }}>{a.titre}</div>
-                  {a.contenu && <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.78)', lineHeight: 1.5 }}>{a.contenu}</div>}
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 10 }}>
-                    <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.5)' }}>{new Date(a.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}</span>
-                    <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <svg style={{ width: 12, height: 12, color: '#fff' }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-                    </div>
-                  </div>
-                </div>
+                <NewsCard key={a.id} annonce={a} gradient={tagGradients[a.tag] || tagGradients['Info']} />
               ))}
             </div>
-            {/* Flèche indicateur de scroll */}
             {annonces.length > 1 && (
-              <div style={{ position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)', background: 'rgba(8,80,65,0.15)', borderRadius: '50%', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ position: 'absolute', right: 0, top: '40%', transform: 'translateY(-50%)', background: 'rgba(8,80,65,0.12)', borderRadius: '50%', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
                 <svg style={{ width: 14, height: 14, color: '#085041' }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
               </div>
             )}
@@ -203,23 +239,14 @@ export default function HomePage() {
         )}
       </div>
 
-      {/* MENU PLUS - corrigé sans overlay noir */}
+      {/* MENU PLUS */}
       {plusOpen && (
         <>
           <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={() => setPlusOpen(false)} />
           <div style={{
-            position: 'fixed',
-            bottom: 56,
-            left: 0,
-            right: 0,
-            maxWidth: 480,
-            margin: '0 auto',
-            background: '#fff',
-            borderRadius: '20px 20px 0 0',
-            borderTop: '0.5px solid #e5e5e0',
-            padding: '12px 16px 16px',
-            boxShadow: '0 -4px 24px rgba(0,0,0,0.1)',
-            zIndex: 50,
+            position: 'fixed', bottom: 56, left: 0, right: 0, maxWidth: 480, margin: '0 auto',
+            background: '#fff', borderRadius: '20px 20px 0 0', borderTop: '0.5px solid #e5e5e0',
+            padding: '12px 16px 16px', boxShadow: '0 -4px 24px rgba(0,0,0,0.1)', zIndex: 50,
           }}>
             <div style={{ width: 32, height: 3, background: '#e0e0e0', borderRadius: 2, margin: '0 auto 12px' }} />
             <div style={{ fontSize: 9, fontWeight: 500, color: '#888780', letterSpacing: '0.06em', marginBottom: 12 }}>PLUS DE SECTIONS</div>
@@ -241,7 +268,7 @@ export default function HomePage() {
       {/* BOTTOM NAV */}
       <nav style={{ position: 'fixed', bottom: 0, left: 0, right: 0, maxWidth: 480, margin: '0 auto', background: '#fff', borderTop: '0.5px solid #e5e5e0', display: 'flex', zIndex: 30 }}>
         {[
-          { label: 'Accueil', path: '/', icon: <svg style={{ width: 20, height: 20 }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0h6" /></svg>, active: true },
+          { label: 'Accueil', path: '/', active: true, icon: <svg style={{ width: 20, height: 20 }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0h6" /></svg> },
           { label: 'Planning', path: '/programme', icon: <svg style={{ width: 20, height: 20 }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg> },
           { label: 'Chants', path: '/chants', icon: <svg style={{ width: 20, height: 20 }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" /></svg> },
           { label: "S'inscrire", path: '/inscription', icon: <svg style={{ width: 20, height: 20 }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg> },
