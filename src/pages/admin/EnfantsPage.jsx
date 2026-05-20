@@ -20,7 +20,10 @@ export default function EnfantsPage() {
   }
 
   async function updateStatut(id, statut) {
-    await supabase.from('inscriptions').update({ statut_paiement: statut }).eq('id', id)
+    const updates = { statut_paiement: statut }
+    if (statut === 'payé') updates.montant_paye = 25000
+    if (statut === 'en attente') updates.montant_paye = 0
+    await supabase.from('inscriptions').update(updates).eq('id', id)
     fetchEnfants()
   }
 

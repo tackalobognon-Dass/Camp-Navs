@@ -14,11 +14,11 @@ export default function SuiviPage() {
     setLoading(true)
     setResultats([])
     setRechercheFaite(false)
-    const tel = telephone.replace(/\s/g, '').replace(/\+225/g, '')
+    const tel = telephone.replace(/\s/g, '')
     const { data } = await supabase
       .from('inscriptions')
       .select('*')
-      .or(`telephone.ilike.%${tel}%,telephone.ilike.%${tel.replace(/^0/, '225')}%`)
+      .ilike('telephone', `%${tel}%`)
       .order('created_at', { ascending: false })
     setLoading(false)
     setRechercheFaite(true)
@@ -83,7 +83,7 @@ export default function SuiviPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           {resultats.map(r => {
             const total = fraisTotal(r)
-            const paye = r.montant_paye || 0
+            const paye = statut === 'payé' ? total : (r.montant_paye || 0)
             const reste = Math.max(total - paye, 0)
             const statut = r.statut_paiement
 

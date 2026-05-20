@@ -16,8 +16,11 @@ export default function CampeursPage() {
     setLoading(false)
   }
 
-  async function updateStatut(id, statut) {
-    await supabase.from('inscriptions').update({ statut_paiement: statut }).eq('id', id)
+  async function updateStatut(id, statut, total) {
+    const updates = { statut_paiement: statut }
+    if (statut === 'payé') updates.montant_paye = total
+    if (statut === 'en attente') updates.montant_paye = 0
+    await supabase.from('inscriptions').update(updates).eq('id', id)
     fetchInscriptions()
   }
 
@@ -101,7 +104,7 @@ export default function CampeursPage() {
               <div className="flex flex-col gap-1.5">
                 <select
                   value={ins.statut_paiement}
-                  onChange={e => updateStatut(ins.id, e.target.value)}
+                  onChange={e => updateStatut(ins.id, e.target.value, ins.tranche_age === 'Enfants & Adolescents' ? 25000 : 30000)}
                   className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white text-gray-600 outline-none"
                 >
                   <option value="en attente">En attente</option>
