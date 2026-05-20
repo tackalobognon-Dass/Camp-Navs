@@ -14,11 +14,11 @@ export default function SuiviPage() {
     setLoading(true)
     setResultats([])
     setRechercheFaite(false)
-    const tel = telephone.replace(/\s/g, '')
+    const tel = telephone.replace(/\s/g, '').replace(/\+225/g, '')
     const { data } = await supabase
       .from('inscriptions')
       .select('*')
-      .ilike('telephone', `%${tel}%`)
+      .or(`telephone.ilike.%${tel}%,telephone.ilike.%${tel.replace(/^0/, '225')}%`)
       .order('created_at', { ascending: false })
     setLoading(false)
     setRechercheFaite(true)
