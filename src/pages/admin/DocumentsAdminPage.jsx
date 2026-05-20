@@ -11,6 +11,7 @@ export default function DocumentsAdminPage() {
   const [fichier, setFichier] = useState(null)
   const [saving, setSaving] = useState(false)
   const [progress, setProgress] = useState(0)
+  const [erreur, setErreur] = useState('')
 
   useEffect(() => { fetchDocuments() }, [])
 
@@ -23,27 +24,40 @@ export default function DocumentsAdminPage() {
   async function handleAjouter() {
     if (!nom || !fichier) return
     setSaving(true)
+    setErreur('')
     setProgress(10)
     const ext = fichier.name.split('.').pop()
     const nomFichier = `${Date.now()}_${nom.replace(/\s+/g, '_')}.${ext}`
     const { error: uploadError } = await supabase.storage
       .from('documents-camp')
-      .upload(nomFichier, fichier, { cacheControl: '3600', upsert: false })
+      .upload(nomFichier, fichier, { cacheControl: '3600', upsert: true })
+    if (uploadError) {
+      setErreur(`Erreur upload : ${uploadError.message}`)
+      setSaving(false)
+      setProgress(0)
+      return
+    }
     setProgress(70)
-    if (uploadError) { setSaving(false); return }
     const { data: urlData } = supabase.storage.from('documents-camp').getPublicUrl(nomFichier)
     const tailleMo = (fichier.size / 1024 / 1024).toFixed(1)
-    await supabase.from('documents').insert([{
+    const { error: insertError } = await supabase.from('documents').insert([{
       nom,
       description,
       lien_fichier: urlData.publicUrl,
       taille: `${tailleMo} MB`,
     }])
+    if (insertError) {
+      setErreur(`Erreur base de données : ${insertError.message}`)
+      setSaving(false)
+      setProgress(0)
+      return
+    }
     setProgress(100)
     setNom('')
     setDescription('')
     setFichier(null)
     setProgress(0)
+    setErreur('')
     setSaving(false)
     setShowForm(false)
     fetchDocuments()
@@ -141,6 +155,13 @@ export default function DocumentsAdminPage() {
               <div className="bg-gray-100 rounded-full h-1.5">
                 <div className="bg-emerald-700 h-1.5 rounded-full transition-all" style={{ width: `${progress}%` }} />
               </div>
+            </div>
+          )}
+
+          {/* Affichage erreur */}
+          {erreur && (
+            <div className="mb-3 bg-red-50 border border-red-100 rounded-xl p-3">
+              <p className="text-xs text-red-600">{erreur}</p>
             </div>
           )}
 
