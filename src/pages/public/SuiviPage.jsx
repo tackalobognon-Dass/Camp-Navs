@@ -82,10 +82,10 @@ export default function SuiviPage() {
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           {resultats.map(r => {
+            const statut = r.statut_paiement
             const total = fraisTotal(r)
             const paye = statut === 'payé' ? total : (r.montant_paye || 0)
             const reste = Math.max(total - paye, 0)
-            const statut = r.statut_paiement
 
             return (
               <div key={r.id} style={{ background: '#fff', borderRadius: 18, border: '0.5px solid #e5e5e0', overflow: 'hidden' }}>
