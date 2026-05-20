@@ -55,7 +55,7 @@ export default function AdminLayout({ children }) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-gray-50 flex overflow-x-hidden">
 
       {/* Overlay mobile */}
       {sidebarOpen && (
@@ -112,7 +112,7 @@ export default function AdminLayout({ children }) {
       </aside>
 
       {/* Contenu principal */}
-      <div className="flex-1 lg:ml-60 flex flex-col min-h-screen">
+      <div className="flex-1 lg:ml-60 flex flex-col min-h-screen overflow-x-hidden w-full">
 
         {/* Topbar mobile */}
         <header className="bg-white border-b border-gray-100 px-4 py-3 flex items-center gap-3 lg:hidden">
@@ -124,7 +124,7 @@ export default function AdminLayout({ children }) {
           <p className="text-sm font-medium text-gray-800">Camp-Navs Admin</p>
         </header>
 
-        <main className="flex-1 p-5">
+        <main className="flex-1 p-4 overflow-x-hidden max-w-full">
           {children}
         </main>
       </div>
