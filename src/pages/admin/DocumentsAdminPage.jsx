@@ -26,13 +26,8 @@ export default function DocumentsAdminPage() {
     setSaving(true)
     setErreur('')
     setProgress(10)
-    const ext = fichier.name.split('.').pop()
-    const nomNettoye = nom
-      .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // retirer accents
-      .replace(/[^a-zA-Z0-9_\-]/g, '_') // remplacer caractères spéciaux
-      .replace(/_+/g, '_') // éviter les doubles underscores
-      .slice(0, 50) // limiter la longueur
-    const nomFichier = `${Date.now()}_${nomNettoye}.${ext}`
+    const ext = fichier.name.split('.').pop().toLowerCase()
+    const nomFichier = `${Date.now()}.${ext}`
     const { error: uploadError } = await supabase.storage
       .from('documents-camp')
       .upload(nomFichier, fichier, { cacheControl: '3600', upsert: true })
