@@ -265,8 +265,8 @@ export default function InscriptionPage() {
 
         {step === 2 && (
           <>
-            <Field label="🏥 Antécédents médicaux *" hint='Allergies, asthme, etc. Écrire "Aucun" si pas d\'antécédents.'>
-              <Textarea placeholder='Écrire "Aucun" si pas d\'antécédents médicaux.' value={form.antecedents_medicaux} onChange={v => set('antecedents_medicaux', v)} />
+            <Field label="🏥 Antécédents médicaux *" hint={`Allergies, asthme, etc. Écrire "Aucun" si pas d'antécédents.`}>
+              <Textarea placeholder={`Écrire "Aucun" si pas d'antécédents médicaux.`} value={form.antecedents_medicaux} onChange={v => set('antecedents_medicaux', v)} />
             </Field>
 
             <Field label="⛺ Avez-vous déjà participé à un camp des Navigateurs ? *">
