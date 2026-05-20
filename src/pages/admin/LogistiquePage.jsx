@@ -2,6 +2,169 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import AdminLayout from '../../components/admin/AdminLayout'
 
+function exportExcel(materiel) {
+  const lignes = [
+    ['BILAN LOGISTIQUE — CAMP-NAVS 2026'],
+    [],
+    ['=== INVENTAIRE COMPLET ==='],
+    ['Équipement', 'Propriétaire', 'Responsable', 'Qté départ', 'État départ', 'Qté retour', 'État retour', 'Cassé', 'Volé', 'Perdu', 'Manquant', 'Observation'],
+    ...materiel.map(m => {
+      const qteDepart = m.quantite_depart || m.quantite || 0
+      const qteRetour = m.quantite_retour || 0
+      const manquant = qteDepart - qteRetour
+      return [
+        m.nom, m.proprietaire || '', m.responsable || '',
+        qteDepart, m.etat_depart || 'Bon',
+        qteRetour, m.etat_retour || '-',
+        m.quantite_casse || 0, m.quantite_vole || 0, m.quantite_perdu || 0,
+        manquant > 0 ? manquant : 0,
+        m.incident || ''
+      ]
+    }),
+    [],
+    ['=== INCIDENTS ==='],
+    ['Équipement', 'Cassé', 'Volé', 'Perdu', 'Description'],
+    ...materiel.filter(m => (m.quantite_casse || 0) + (m.quantite_vole || 0) + (m.quantite_perdu || 0) > 0)
+      .map(m => [m.nom, m.quantite_casse || 0, m.quantite_vole || 0, m.quantite_perdu || 0, m.incident || '']),
+    [],
+    ['=== BILAN RETOUR ==='],
+    ['Équipement', 'Parti', 'Retourné', 'Manquant', 'Statut'],
+    ...materiel.map(m => {
+      const qteDepart = m.quantite_depart || m.quantite || 0
+      const qteRetour = m.quantite_retour || 0
+      const diff = qteDepart - qteRetour
+      return [m.nom, qteDepart, qteRetour, diff > 0 ? diff : 0, m.checkout ? 'Retourné' : 'En attente']
+    }),
+    [],
+    ['=== RÉSUMÉ ==='],
+    ['Total équipements', materiel.length],
+    ['Total unités au départ', materiel.reduce((s, m) => s + (m.quantite_depart || m.quantite || 0), 0)],
+    ['Total unités au retour', materiel.reduce((s, m) => s + (m.quantite_retour || 0), 0)],
+    ['Total incidents', materiel.reduce((s, m) => s + (m.quantite_casse || 0) + (m.quantite_vole || 0) + (m.quantite_perdu || 0), 0)],
+    ['Généré le', new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })],
+  ]
+
+  const csvContent = '\uFEFF' + lignes.map(row =>
+    row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(';')
+  ).join('\n')
+
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `Bilan_Logistique_CampNavs2026_${new Date().toLocaleDateString('fr-FR').replace(/\//g, '-')}.csv`
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+function exportPDF(materiel) {
+  const dateStr = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
+  const totalDepart = materiel.reduce((s, m) => s + (m.quantite_depart || m.quantite || 0), 0)
+  const totalRetour = materiel.reduce((s, m) => s + (m.quantite_retour || 0), 0)
+  const totalIncidents = materiel.reduce((s, m) => s + (m.quantite_casse || 0) + (m.quantite_vole || 0) + (m.quantite_perdu || 0), 0)
+  const avecIncidents = materiel.filter(m => (m.quantite_casse || 0) + (m.quantite_vole || 0) + (m.quantite_perdu || 0) > 0)
+
+  const html = `<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Bilan Logistique — Camp-Navs 2026</title>
+<style>
+  body { font-family: Arial, sans-serif; font-size: 12px; color: #1a1a1a; margin: 30px; }
+  h1 { font-size: 20px; color: #085041; margin-bottom: 4px; }
+  h2 { font-size: 14px; color: #085041; margin: 24px 0 10px; border-bottom: 2px solid #085041; padding-bottom: 4px; }
+  .subtitle { font-size: 12px; color: #666; margin-bottom: 20px; }
+  .resume { display: flex; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
+  .stat { background: #E1F5EE; border-radius: 8px; padding: 10px 14px; min-width: 120px; }
+  .stat .num { font-size: 22px; font-weight: bold; color: #085041; }
+  .stat .lbl { font-size: 10px; color: #0F6E56; }
+  .stat.alert { background: #FCEBEB; }
+  .stat.alert .num { color: #A32D2D; }
+  .stat.alert .lbl { color: #993C1D; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+  th { background: #085041; color: #fff; padding: 7px 10px; text-align: left; font-size: 11px; }
+  td { padding: 6px 10px; border-bottom: 0.5px solid #e5e5e0; font-size: 11px; }
+  tr:nth-child(even) td { background: #f8f8f6; }
+  .badge { padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: bold; }
+  .badge-ok { background: #E1F5EE; color: #085041; }
+  .badge-warn { background: #FAEEDA; color: #854F0B; }
+  .badge-danger { background: #FCEBEB; color: #A32D2D; }
+  .footer { margin-top: 30px; font-size: 10px; color: #888; text-align: center; border-top: 0.5px solid #e5e5e0; padding-top: 10px; }
+</style>
+</head>
+<body>
+<h1>Bilan Logistique — Camp-Navs 2026</h1>
+<p class="subtitle">La Sablière · Bingerville · 23–29 août 2026 · Généré le ${dateStr}</p>
+
+<div class="resume">
+  <div class="stat"><div class="num">${materiel.length}</div><div class="lbl">Équipements</div></div>
+  <div class="stat"><div class="num">${totalDepart}</div><div class="lbl">Unités au départ</div></div>
+  <div class="stat"><div class="num">${totalRetour}</div><div class="lbl">Unités au retour</div></div>
+  <div class="stat ${totalIncidents > 0 ? 'alert' : ''}"><div class="num">${totalIncidents}</div><div class="lbl">${totalIncidents > 0 ? 'Incidents' : 'Aucun incident'}</div></div>
+</div>
+
+<h2>Inventaire complet</h2>
+<table>
+  <tr><th>Équipement</th><th>Propriétaire</th><th>Responsable</th><th>Qté départ</th><th>État départ</th><th>Qté retour</th><th>État retour</th><th>Manquant</th></tr>
+  ${materiel.map(m => {
+    const qd = m.quantite_depart || m.quantite || 0
+    const qr = m.quantite_retour || 0
+    const diff = qd - qr
+    return `<tr>
+      <td><strong>${m.nom}</strong></td>
+      <td>${m.proprietaire || '-'}</td>
+      <td>${m.responsable || '-'}</td>
+      <td>${qd}</td>
+      <td><span class="badge badge-ok">${m.etat_depart || 'Bon'}</span></td>
+      <td>${m.checkout ? qr : '-'}</td>
+      <td>${m.checkout ? `<span class="badge badge-ok">${m.etat_retour || 'Bon'}</span>` : '-'}</td>
+      <td>${diff > 0 ? `<span class="badge badge-danger">${diff}</span>` : '<span class="badge badge-ok">0</span>'}</td>
+    </tr>`
+  }).join('')}
+</table>
+
+<h2>Incidents signalés</h2>
+${avecIncidents.length === 0
+  ? '<p style="color:#888;font-style:italic">Aucun incident signalé.</p>'
+  : `<table>
+  <tr><th>Équipement</th><th>Cassé</th><th>Volé</th><th>Perdu</th><th>Description</th></tr>
+  ${avecIncidents.map(m => `<tr>
+    <td><strong>${m.nom}</strong></td>
+    <td>${(m.quantite_casse || 0) > 0 ? `<span class="badge badge-danger">${m.quantite_casse}</span>` : '0'}</td>
+    <td>${(m.quantite_vole || 0) > 0 ? `<span class="badge badge-warn">${m.quantite_vole}</span>` : '0'}</td>
+    <td>${(m.quantite_perdu || 0) > 0 ? `<span class="badge badge-warn">${m.quantite_perdu}</span>` : '0'}</td>
+    <td>${m.incident || '-'}</td>
+  </tr>`).join('')}
+</table>`}
+
+<h2>Bilan retour</h2>
+<table>
+  <tr><th>Équipement</th><th>Parti</th><th>Retourné</th><th>Manquant</th><th>Statut</th></tr>
+  ${materiel.map(m => {
+    const qd = m.quantite_depart || m.quantite || 0
+    const qr = m.quantite_retour || 0
+    const diff = qd - qr
+    return `<tr>
+      <td><strong>${m.nom}</strong></td>
+      <td>${qd}</td>
+      <td>${m.checkout ? qr : '-'}</td>
+      <td>${diff > 0 ? `<span class="badge badge-danger">${diff}</span>` : '<span class="badge badge-ok">0</span>'}</td>
+      <td>${m.checkout ? '<span class="badge badge-ok">Retourné</span>' : '<span class="badge badge-warn">En attente</span>'}</td>
+    </tr>`
+  }).join('')}
+</table>
+
+<div class="footer">Camp-Navs 2026 · Mission Évangélique des Navigateurs — Côte d'Ivoire · ${dateStr}</div>
+</body>
+</html>`
+
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const win = window.open(url, '_blank')
+  if (win) setTimeout(() => win.print(), 800)
+  URL.revokeObjectURL(url)
+}
+
 const ETATS = ['Bon', 'Moyen', 'Mauvais']
 const ETAT_CONFIG = {
   'Bon':    { bg: '#E1F5EE', color: '#085041' },
@@ -162,13 +325,25 @@ export default function LogistiquePage() {
           <h1 className="text-xl font-medium text-gray-800">Logistique</h1>
           <p className="text-sm text-gray-400 mt-0.5">{totalEquip} équipement(s) · {totalDepart} unité(s)</p>
         </div>
-        <button onClick={() => { showForm && !editId ? setShowForm(false) : (setShowForm(true), setEditId(null), setForm(EMPTY_FORM)) }}
-          className="bg-emerald-700 text-white text-sm font-medium px-4 py-2 rounded-xl flex items-center gap-2">
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={showForm && !editId ? "M6 18L18 6M6 6l12 12" : "M12 4v16m8-8H4"} />
-          </svg>
-          {showForm && !editId ? 'Fermer' : 'Ajouter'}
-        </button>
+        <div className="flex gap-2 flex-wrap">
+          <button onClick={() => exportPDF(materiel)}
+            style={{ background: '#A32D2D', color: '#fff', border: 'none', borderRadius: 10, padding: '7px 12px', fontSize: 12, fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5 }}>
+            <svg style={{ width: 14, height: 14 }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+            PDF
+          </button>
+          <button onClick={() => exportExcel(materiel)}
+            style={{ background: '#3B6D11', color: '#fff', border: 'none', borderRadius: 10, padding: '7px 12px', fontSize: 12, fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5 }}>
+            <svg style={{ width: 14, height: 14 }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+            Excel
+          </button>
+          <button onClick={() => { showForm && !editId ? setShowForm(false) : (setShowForm(true), setEditId(null), setForm(EMPTY_FORM)) }}
+            className="bg-emerald-700 text-white text-sm font-medium px-4 py-2 rounded-xl flex items-center gap-2">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={showForm && !editId ? "M6 18L18 6M6 6l12 12" : "M12 4v16m8-8H4"} />
+            </svg>
+            {showForm && !editId ? 'Fermer' : 'Ajouter'}
+          </button>
+        </div>
       </div>
 
       {/* Stats */}
