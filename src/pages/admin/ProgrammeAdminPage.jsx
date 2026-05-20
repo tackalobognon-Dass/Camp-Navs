@@ -55,9 +55,7 @@ export default function ProgrammeAdminPage() {
     setLoading(false)
   }
 
-  function setF(key, val) {
-    setForm(f => ({ ...f, [key]: val }))
-  }
+  function setF(key, val) { setForm(f => ({ ...f, [key]: val })) }
 
   function openNew() {
     setForm({ ...EMPTY_FORM, jour: jourActif })
@@ -117,22 +115,26 @@ export default function ProgrammeAdminPage() {
 
   return (
     <AdminLayout>
-      <div className="mb-5 flex items-center justify-between">
+      <div className="mb-5 flex items-center justify-between flex-wrap gap-2">
         <div>
           <h1 className="text-xl font-medium text-gray-800">Programme du camp</h1>
           <p className="text-sm text-gray-400 mt-0.5">23 – 29 août 2026</p>
         </div>
         <button onClick={openNew}
           className="bg-emerald-700 text-white text-sm font-medium px-4 py-2 rounded-xl flex items-center gap-2">
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
           Ajouter
         </button>
       </div>
 
       {/* Formulaire */}
       {showForm && (
-        <div className="bg-white border border-gray-100 rounded-2xl p-5 mb-5">
-          <h2 className="text-sm font-medium text-gray-700 mb-4">{editId ? 'Modifier l\'activité' : 'Nouvelle activité'}</h2>
+        <div className="bg-white border border-gray-100 rounded-2xl p-4 mb-5">
+          <h2 className="text-sm font-medium text-gray-700 mb-4">
+            {editId ? "Modifier l'activité" : 'Nouvelle activité'}
+          </h2>
 
           {/* Jour */}
           <div className="mb-3">
@@ -143,20 +145,21 @@ export default function ProgrammeAdminPage() {
             </select>
           </div>
 
-          {/* Type d'activité */}
+          {/* Type d'activité — grille adaptée mobile */}
           <div className="mb-3">
             <label className="block text-xs text-gray-500 mb-2">Type d'activité</label>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            <div className="grid grid-cols-2 gap-2">
               {TYPES_ACTIVITE.map(t => (
-                <button key={t.label} onClick={() => { setF('type_activite', t.label); setF('activite', t.label) }}
+                <button key={t.label}
+                  onClick={() => { setF('type_activite', t.label); setF('activite', t.label) }}
+                  className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium border transition-all text-left"
                   style={{
                     border: `0.5px solid ${form.type_activite === t.label ? t.color : '#e5e5e0'}`,
-                    borderRadius: 20, padding: '4px 10px', fontSize: 11, cursor: 'pointer',
                     background: form.type_activite === t.label ? t.color : '#fff',
                     color: form.type_activite === t.label ? '#fff' : '#555',
-                    display: 'flex', alignItems: 'center', gap: 4,
                   }}>
-                  <span>{t.emoji}</span> {t.label}
+                  <span style={{ fontSize: 16, flexShrink: 0 }}>{t.emoji}</span>
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.label}</span>
                 </button>
               ))}
             </div>
@@ -185,19 +188,15 @@ export default function ProgrammeAdminPage() {
           </div>
 
           {/* Responsable & Lieu */}
-          <div className="grid grid-cols-2 gap-3 mb-4">
-            <div>
-              <label className="block text-xs text-gray-500 mb-1">Responsable</label>
-              <input type="text" value={form.responsable} onChange={e => setF('responsable', e.target.value)}
-                placeholder="Ex : AKRE ALPHONSE"
-                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-white outline-none focus:border-emerald-400" />
-            </div>
-            <div>
-              <label className="block text-xs text-gray-500 mb-1">Lieu</label>
-              <input type="text" value={form.lieu} onChange={e => setF('lieu', e.target.value)}
-                placeholder="Ex : Grande salle"
-                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-white outline-none focus:border-emerald-400" />
-            </div>
+          <div className="mb-4">
+            <label className="block text-xs text-gray-500 mb-1">Responsable</label>
+            <input type="text" value={form.responsable} onChange={e => setF('responsable', e.target.value)}
+              placeholder="Ex : AKRE ALPHONSE"
+              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-white outline-none focus:border-emerald-400 mb-3" />
+            <label className="block text-xs text-gray-500 mb-1">Lieu</label>
+            <input type="text" value={form.lieu} onChange={e => setF('lieu', e.target.value)}
+              placeholder="Ex : Grande salle"
+              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-white outline-none focus:border-emerald-400" />
           </div>
 
           <div className="flex gap-3">
@@ -213,13 +212,13 @@ export default function ProgrammeAdminPage() {
         </div>
       )}
 
-      {/* Sélecteur de jours */}
-      <div style={{ display: 'flex', gap: 6, overflowX: 'auto', marginBottom: 16, paddingBottom: 4, scrollbarWidth: 'none' }}>
+      {/* Sélecteur de jours — scroll horizontal */}
+      <div className="flex gap-2 overflow-x-auto mb-4 pb-1" style={{ scrollbarWidth: 'none' }}>
         {JOURS.map(j => (
           <button key={j} onClick={() => setJourActif(j)}
+            className="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all"
             style={{
-              flexShrink: 0, padding: '6px 14px', borderRadius: 20, fontSize: 11, fontWeight: 500,
-              cursor: 'pointer', border: `0.5px solid ${jourActif === j ? '#085041' : '#e5e5e0'}`,
+              border: `0.5px solid ${jourActif === j ? '#085041' : '#e5e5e0'}`,
               background: jourActif === j ? '#085041' : '#fff',
               color: jourActif === j ? '#fff' : '#666',
             }}>
@@ -230,6 +229,7 @@ export default function ProgrammeAdminPage() {
 
       {/* Liste activités */}
       {loading && <p className="text-sm text-gray-400 text-center py-8">Chargement...</p>}
+
       {!loading && activitesDuJour.length === 0 && (
         <div className="bg-white border border-gray-100 rounded-xl p-6 text-center">
           <p className="text-sm text-gray-400">Aucune activité pour {jourActif}.</p>
@@ -243,19 +243,19 @@ export default function ProgrammeAdminPage() {
         {activitesDuJour.map(item => {
           const t = typeInfo(item.type_activite)
           return (
-            <div key={item.id} style={{ background: '#fff', borderRadius: 14, border: '0.5px solid #e5e5e0', padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div key={item.id} className="bg-white border border-gray-100 rounded-xl p-3 flex items-center gap-3">
               <div style={{ width: 36, height: 36, borderRadius: 10, background: t.color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 18 }}>
                 {t.emoji}
               </div>
-              <div style={{ flex: 1 }}>
-                <p style={{ fontSize: 13, fontWeight: 500, color: '#1a1a1a' }}>{item.activite}</p>
-                <p style={{ fontSize: 10, color: '#888', marginTop: 2 }}>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-800 truncate">{item.activite}</p>
+                <p className="text-xs text-gray-400 mt-0.5">
                   {item.heure_debut}{item.heure_fin ? ` – ${item.heure_fin}` : ''}
                   {item.lieu ? ` · ${item.lieu}` : ''}
-                  {item.responsable ? ` · ${item.responsable}` : ''}
                 </p>
+                {item.responsable && <p className="text-xs text-gray-400">{item.responsable}</p>}
               </div>
-              <div style={{ display: 'flex', gap: 6 }}>
+              <div className="flex gap-2 flex-shrink-0">
                 <button onClick={() => openEdit(item)}
                   style={{ width: 32, height: 32, borderRadius: 8, background: '#E1F5EE', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <svg style={{ width: 14, height: 14, color: '#085041' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
