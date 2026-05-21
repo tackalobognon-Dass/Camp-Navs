@@ -116,7 +116,7 @@ export default function DashboardPage() {
   return (
     <AdminLayout>
       {/* Verset du jour */}
-      <div style={{ background: '#f8f8f6', borderRadius: 12, padding: '12px 14px', marginBottom: 20, borderLeft: '3px solid #085041' }}>
+      <div style={{ background: '#fff', padding: '12px 14px', marginBottom: 20, borderLeft: '3px solid #085041' }}>
         <p style={{ fontSize: 9, color: '#085041', fontWeight: 600, letterSpacing: '0.06em', marginBottom: 4 }}>VERSET DU JOUR</p>
         <p style={{ fontSize: 13, color: '#1a1a1a', lineHeight: 1.6, fontStyle: 'italic', marginBottom: 4 }}>« {verset.texte} »</p>
         <p style={{ fontSize: 10, color: '#888' }}>{verset.ref}</p>
@@ -134,40 +134,35 @@ export default function DashboardPage() {
               <p style={{ fontSize: 20, fontWeight: 700, color: '#1a1a1a' }}>{stats.totalInscrits} <span style={{ fontSize: 12, color: '#888', fontWeight: 400 }}>/ 150</span></p>
             </div>
 
-            {/* Barres jeunes / enfants */}
-            <div style={{ padding: '10px 14px', borderBottom: '0.5px solid #f0f0ee' }}>
-              <div style={{ marginBottom: 8 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
-                  <span style={{ fontSize: 11, color: '#444' }}>Jeunes & Adultes</span>
-                  <span style={{ fontSize: 11, fontWeight: 500, color: '#085041' }}>{stats.jeunes} / 100</span>
-                </div>
-                <div style={{ background: '#f0f0ee', borderRadius: 3, height: 5 }}>
-                  <div style={{ background: '#085041', borderRadius: 3, height: 5, width: `${pctJeunes}%`, transition: 'width .4s' }} />
-                </div>
+            {/* Répartition jeunes / enfants */}
+            <div style={{ padding: '10px 14px', borderBottom: '0.5px solid #f0f0ee', display: 'flex', justifyContent: 'space-around' }}>
+              <div style={{ textAlign: 'center' }}>
+                <p style={{ fontSize: 22, fontWeight: 700, color: '#1a1a1a' }}>{stats.jeunes}</p>
+                <p style={{ fontSize: 10, color: '#888' }}>Jeunes & Adultes</p>
+                <p style={{ fontSize: 9, color: '#aaa' }}>sur 100</p>
               </div>
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
-                  <span style={{ fontSize: 11, color: '#444' }}>Enfants & Adolescents</span>
-                  <span style={{ fontSize: 11, fontWeight: 500, color: '#085041' }}>{stats.enfants} / 50</span>
-                </div>
-                <div style={{ background: '#f0f0ee', borderRadius: 3, height: 5 }}>
-                  <div style={{ background: '#085041', borderRadius: 3, height: 5, width: `${pctEnfants}%`, transition: 'width .4s' }} />
-                </div>
+              <div style={{ width: '0.5px', background: '#f0f0ee' }} />
+              <div style={{ textAlign: 'center' }}>
+                <p style={{ fontSize: 22, fontWeight: 700, color: '#1a1a1a' }}>{stats.enfants}</p>
+                <p style={{ fontSize: 10, color: '#888' }}>Enfants & Ados</p>
+                <p style={{ fontSize: 9, color: '#aaa' }}>sur 50</p>
               </div>
             </div>
 
-            {/* Statuts paiement */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5px', background: '#f0f0ee' }}>
-              {[
-                { label: 'Payés', val: stats.payes, color: '#085041', bg: '#E1F5EE' },
-                { label: 'En attente', val: stats.enAttente, color: '#854F0B', bg: '#FAEEDA' },
-                { label: 'Partiel', val: stats.partiels, color: '#185FA5', bg: '#E6F1FB' },
-              ].map(s => (
-                <div key={s.label} style={{ background: s.bg, padding: '8px 10px', textAlign: 'center' }}>
-                  <p style={{ fontSize: 16, fontWeight: 600, color: s.color }}>{s.val}</p>
-                  <p style={{ fontSize: 9, color: s.color }}>{s.label}</p>
-                </div>
-              ))}
+            {/* Statuts paiement — boutons distincts */}
+            <div style={{ padding: '10px 14px', display: 'flex', gap: 8 }}>
+              <div style={{ flex: 1, background: '#085041', borderRadius: 10, padding: '10px 8px', textAlign: 'center' }}>
+                <p style={{ fontSize: 20, fontWeight: 700, color: '#fff' }}>{stats.payes}</p>
+                <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.8)' }}>Payés</p>
+              </div>
+              <div style={{ flex: 1, background: '#C48A00', borderRadius: 10, padding: '10px 8px', textAlign: 'center' }}>
+                <p style={{ fontSize: 20, fontWeight: 700, color: '#fff' }}>{stats.enAttente}</p>
+                <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.8)' }}>En attente</p>
+              </div>
+              <div style={{ flex: 1, background: '#185FA5', borderRadius: 10, padding: '10px 8px', textAlign: 'center' }}>
+                <p style={{ fontSize: 20, fontWeight: 700, color: '#fff' }}>{stats.partiels}</p>
+                <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.8)' }}>Partiel</p>
+              </div>
             </div>
           </div>
 
