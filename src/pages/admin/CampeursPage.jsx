@@ -9,96 +9,48 @@ function getMontantDu(ins) {
 
 function exportExcel(campeurs) {
   const now = new Date().toLocaleDateString('fr-FR')
-
   function buildRows(liste) {
     return liste.map(ins => {
       const du = getMontantDu(ins)
       const paye = ins.statut_paiement === 'payé' ? du : (ins.montant_paye || 0)
       const reste = Math.max(du - paye, 0)
       return [
-        ins.nom_complet || '',
-        ins.genre || '',
-        ins.telephone || '',
-        ins.tranche_age || '',
-        ins.tranche_age_detail || '',
-        ins.statut_paiement || '',
-        du,
-        paye,
-        reste,
+        ins.nom_complet || '', ins.genre || '', ins.telephone || '',
+        ins.tranche_age || '', ins.tranche_age_detail || '',
+        ins.statut_paiement || '', du, paye, reste,
         ins.montant_personnalise != null ? 'Oui' : 'Non',
-        ins.occupation || '',
-        ins.lieu_habitation || '',
-        ins.taille_tshirt || '',
-        ins.contact_urgence || '',
+        ins.occupation || '', ins.lieu_habitation || '',
+        ins.taille_tshirt || '', ins.contact_urgence || '',
         ins.invite || '',
         new Date(ins.created_at).toLocaleDateString('fr-FR'),
       ]
     })
   }
-
   const jeunes = campeurs.filter(i => i.tranche_age === 'Jeunes & Adultes')
   const enfants = campeurs.filter(i => i.tranche_age === 'Enfants & Adolescents')
-
   const totalDu = campeurs.reduce((s, i) => s + getMontantDu(i), 0)
   const totalPaye = campeurs.reduce((s, i) => {
     const du = getMontantDu(i)
     return s + (i.statut_paiement === 'payé' ? du : (i.montant_paye || 0))
   }, 0)
-  const totalReste = totalDu - totalPaye
-  const nbPaye = campeurs.filter(i => i.statut_paiement === 'payé').length
-  const nbAttente = campeurs.filter(i => i.statut_paiement === 'en attente').length
-  const nbPartiel = campeurs.filter(i => i.statut_paiement === 'partiel').length
-
-  const entetes = ['Nom complet', 'Genre', 'Téléphone', 'Catégorie', 'Tranche d\'âge', 'Statut', 'Montant dû', 'Montant payé', 'Reste à payer', 'Réduction', 'Occupation', 'Lieu habitation', 'Taille T-shirt', 'Contact urgence', 'Invité', 'Date inscription']
-
+  const entetes = ['Nom', 'Genre', 'Téléphone', 'Catégorie', 'Tranche âge', 'Statut', 'Montant dû', 'Montant payé', 'Reste', 'Réduction', 'Occupation', 'Lieu', 'T-shirt', 'Contact urgence', 'Invité', 'Date inscription']
   const lignes = [
-    // Feuille 1 : Tous
-    ['CAMP-NAVS 2026 — LISTE COMPLÈTE DES CAMPEURS'],
-    [`Exporté le ${now}`],
-    [],
-    entetes,
-    ...buildRows(campeurs),
-    [],
-    [],
-    // Feuille 2 : Jeunes & Adultes
-    ['JEUNES & ADULTES (16 ans et +) — 30 000 FCFA'],
-    [],
-    entetes,
-    ...buildRows(jeunes),
-    [],
-    [],
-    // Feuille 3 : Enfants & Adolescents
-    ['ENFANTS & ADOLESCENTS (0-15 ans) — 25 000 FCFA'],
-    [],
-    entetes,
-    ...buildRows(enfants),
-    [],
-    [],
-    // Résumé financier
-    ['RÉSUMÉ FINANCIER'],
-    [],
+    ['CAMP-NAVS 2026 — LISTE COMPLÈTE'], [`Exporté le ${now}`], [],
+    ['TOUS LES CAMPEURS'], entetes, ...buildRows(campeurs), [], [],
+    ['JEUNES & ADULTES'], entetes, ...buildRows(jeunes), [], [],
+    ['ENFANTS & ADOLESCENTS'], entetes, ...buildRows(enfants), [], [],
+    ['RÉSUMÉ FINANCIER'], [],
     ['Total inscrits', campeurs.length],
     ['Jeunes & Adultes', jeunes.length],
     ['Enfants & Adolescents', enfants.length],
-    [],
-    ['Statut paiement', ''],
-    ['Payés', nbPaye],
-    ['En attente', nbAttente],
-    ['Partiels', nbPartiel],
-    [],
-    ['Finances', ''],
+    ['Payés', campeurs.filter(i => i.statut_paiement === 'payé').length],
+    ['En attente', campeurs.filter(i => i.statut_paiement === 'en attente').length],
+    ['Partiels', campeurs.filter(i => i.statut_paiement === 'partiel').length],
     ['Montant total dû', `${totalDu.toLocaleString()} FCFA`],
     ['Montant total collecté', `${totalPaye.toLocaleString()} FCFA`],
-    ['Montant restant', `${totalReste.toLocaleString()} FCFA`],
-    [],
-    ['Généré le', now],
-    ['Camp-Navs 2026 · Mission Évangélique des Navigateurs CI'],
+    ['Montant restant', `${(totalDu - totalPaye).toLocaleString()} FCFA`],
   ]
-
-  const csv = '\uFEFF' + lignes.map(row =>
-    row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(';')
-  ).join('\n')
-
+  const csv = '\uFEFF' + lignes.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(';')).join('\n')
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
@@ -129,10 +81,7 @@ export default function CampeursPage() {
   useEffect(() => { fetchCampeurs() }, [])
 
   async function fetchCampeurs() {
-    const { data } = await supabase
-      .from('inscriptions')
-      .select('*')
-      .order('created_at', { ascending: false })
+    const { data } = await supabase.from('inscriptions').select('*').order('created_at', { ascending: false })
     setCampeurs(data || [])
     setLoading(false)
   }
@@ -147,13 +96,45 @@ export default function CampeursPage() {
   async function saveFiche() {
     if (!ficheOuverte) return
     setSaving(true)
-    const du = editMontantPerso !== '' ? parseInt(editMontantPerso) : getMontantDu(ficheOuverte)
-    const updates = {
+
+    const montantPerso = editMontantPerso !== '' ? parseInt(editMontantPerso) : null
+    const du = montantPerso != null ? montantPerso : getMontantDu(ficheOuverte)
+    const montantPaye = editStatut === 'payé' ? du : (parseInt(editMontantPaye) || 0)
+
+    // Mettre à jour l'inscription
+    await supabase.from('inscriptions').update({
       statut_paiement: editStatut,
-      montant_paye: editStatut === 'payé' ? du : parseInt(editMontantPaye) || 0,
-      montant_personnalise: editMontantPerso !== '' ? parseInt(editMontantPerso) : null,
+      montant_paye: montantPaye,
+      montant_personnalise: montantPerso,
+    }).eq('id', ficheOuverte.id)
+
+    // Enregistrer automatiquement dans les recettes si paiement effectué
+    if (editStatut === 'payé' || (editStatut === 'partiel' && montantPaye > 0)) {
+      // Vérifier si une recette existe déjà pour ce campeur
+      const { data: existante } = await supabase
+        .from('recettes')
+        .select('id')
+        .eq('description', `Inscription — ${ficheOuverte.nom_complet}`)
+        .single()
+
+      if (existante) {
+        // Mettre à jour la recette existante
+        await supabase.from('recettes').update({
+          montant: montantPaye,
+          type: 'frais_participation',
+        }).eq('id', existante.id)
+      } else {
+        // Créer une nouvelle recette
+        await supabase.from('recettes').insert([{
+          type: 'frais_participation',
+          description: `Inscription — ${ficheOuverte.nom_complet}`,
+          montant: montantPaye,
+          donateur: ficheOuverte.nom_complet,
+          date_reception: new Date().toISOString().split('T')[0],
+        }])
+      }
     }
-    await supabase.from('inscriptions').update(updates).eq('id', ficheOuverte.id)
+
     setSaving(false)
     setFicheOuverte(null)
     fetchCampeurs()
@@ -174,7 +155,6 @@ export default function CampeursPage() {
       i.telephone?.includes(recherche)
     )
 
-  // Stats
   const total = campeurs.length
   const jeunes = campeurs.filter(i => i.tranche_age === 'Jeunes & Adultes').length
   const enfants = campeurs.filter(i => i.tranche_age === 'Enfants & Adolescents').length
@@ -187,7 +167,6 @@ export default function CampeursPage() {
 
   return (
     <AdminLayout>
-      {/* Header */}
       <div className="mb-5 flex items-center justify-between flex-wrap gap-2">
         <div>
           <h1 className="text-xl font-medium text-gray-800">Campeurs</h1>
@@ -195,9 +174,7 @@ export default function CampeursPage() {
         </div>
         <button onClick={() => exportExcel(campeurs)}
           style={{ background: '#3B6D11', color: '#fff', border: 'none', borderRadius: 10, padding: '8px 14px', fontSize: 12, fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5 }}>
-          <svg style={{ width: 14, height: 14 }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-          </svg>
+          <svg style={{ width: 14, height: 14 }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
           Exporter Excel
         </button>
       </div>
@@ -231,11 +208,7 @@ export default function CampeursPage() {
         ].map(f => (
           <button key={f.key} onClick={() => setFiltreCategorie(f.key)}
             className="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium"
-            style={{
-              border: `0.5px solid ${filtreCategorie === f.key ? '#085041' : '#e5e5e0'}`,
-              background: filtreCategorie === f.key ? '#085041' : '#fff',
-              color: filtreCategorie === f.key ? '#fff' : '#666',
-            }}>
+            style={{ border: `0.5px solid ${filtreCategorie === f.key ? '#085041' : '#e5e5e0'}`, background: filtreCategorie === f.key ? '#085041' : '#fff', color: filtreCategorie === f.key ? '#fff' : '#666' }}>
             {f.label}
           </button>
         ))}
@@ -244,18 +217,14 @@ export default function CampeursPage() {
       {/* Filtres statut */}
       <div className="flex gap-2 mb-4 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
         {[
-          { key: 'tous', label: 'Tous statuts' },
+          { key: 'tous', label: 'Tous' },
           { key: 'payé', label: 'Payés' },
           { key: 'en attente', label: 'En attente' },
           { key: 'partiel', label: 'Partiel' },
         ].map(f => (
           <button key={f.key} onClick={() => setFiltreStatut(f.key)}
             className="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium"
-            style={{
-              border: `0.5px solid ${filtreStatut === f.key ? '#085041' : '#e5e5e0'}`,
-              background: filtreStatut === f.key ? '#085041' : '#fff',
-              color: filtreStatut === f.key ? '#fff' : '#666',
-            }}>
+            style={{ border: `0.5px solid ${filtreStatut === f.key ? '#085041' : '#e5e5e0'}`, background: filtreStatut === f.key ? '#085041' : '#fff', color: filtreStatut === f.key ? '#fff' : '#666' }}>
             {f.label}
           </button>
         ))}
@@ -273,7 +242,6 @@ export default function CampeursPage() {
         </div>
       )}
 
-      {/* Liste */}
       <div className="space-y-2">
         {filtres.map(ins => {
           const sc = statutColor[ins.statut_paiement] || { bg: '#f0f0f0', color: '#666' }
@@ -320,8 +288,6 @@ export default function CampeursPage() {
           <div style={{ background: '#fff', borderRadius: '20px 20px 0 0', width: '100%', maxWidth: 480, maxHeight: '85vh', overflowY: 'auto', padding: '20px 16px 32px' }}
             onClick={e => e.stopPropagation()}>
             <div style={{ width: 36, height: 3, background: '#e0e0e0', borderRadius: 2, margin: '0 auto 16px' }} />
-
-            {/* Identité */}
             <div className="flex items-center gap-3 mb-4 pb-4 border-b border-gray-100">
               <div style={{ width: 48, height: 48, borderRadius: '50%', background: '#E1F5EE', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 <span style={{ fontSize: 18, fontWeight: 600, color: '#085041' }}>{ficheOuverte.nom_complet?.charAt(0)}</span>
@@ -333,7 +299,6 @@ export default function CampeursPage() {
               </div>
             </div>
 
-            {/* Infos personnelles */}
             <div style={{ background: '#f8f8f6', borderRadius: 12, padding: '12px 14px', marginBottom: 14 }}>
               <p style={{ fontSize: 10, fontWeight: 600, color: '#085041', marginBottom: 8, letterSpacing: '0.05em' }}>INFORMATIONS PERSONNELLES</p>
               {[
@@ -353,20 +318,27 @@ export default function CampeursPage() {
               ))}
             </div>
 
-            {/* Paiement */}
             <p style={{ fontSize: 10, fontWeight: 600, color: '#085041', marginBottom: 8, letterSpacing: '0.05em' }}>PAIEMENT</p>
-
-            <div className="mb-3">
-              <label className="block text-xs text-gray-500 mb-1">Montant personnalisé (réduction)</label>
-              <input type="number" value={editMontantPerso}
-                onChange={e => setEditMontantPerso(e.target.value)}
-                placeholder={`Tarif standard : ${ficheOuverte.tranche_age === 'Enfants & Adolescents' ? '25 000' : '30 000'} FCFA`}
-                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-white outline-none focus:border-emerald-400" />
-              <p style={{ fontSize: 10, color: '#888', marginTop: 4 }}>Laisser vide pour appliquer le tarif standard.</p>
+            <div style={{ background: '#E1F5EE', borderRadius: 10, padding: '10px 12px', marginBottom: 12 }}>
+              <p style={{ fontSize: 11, color: '#085041' }}>
+                Tarif standard : <strong>{ficheOuverte.tranche_age === 'Enfants & Adolescents' ? '25 000' : '30 000'} FCFA</strong>
+              </p>
+              {ficheOuverte.montant_personnalise != null && (
+                <p style={{ fontSize: 11, color: '#534AB7', marginTop: 2 }}>
+                  Réduction appliquée : <strong>{ficheOuverte.montant_personnalise.toLocaleString()} FCFA</strong>
+                </p>
+              )}
             </div>
 
             <div className="mb-3">
-              <label className="block text-xs text-gray-500 mb-1">Statut</label>
+              <label className="block text-xs text-gray-500 mb-1">Montant personnalisé (réduction)</label>
+              <input type="number" value={editMontantPerso} onChange={e => setEditMontantPerso(e.target.value)}
+                placeholder="Laisser vide pour tarif standard"
+                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-white outline-none focus:border-emerald-400" />
+            </div>
+
+            <div className="mb-3">
+              <label className="block text-xs text-gray-500 mb-1">Statut de paiement</label>
               <select value={editStatut} onChange={e => setEditStatut(e.target.value)}
                 className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-white outline-none">
                 <option value="en attente">En attente</option>
@@ -376,16 +348,21 @@ export default function CampeursPage() {
             </div>
 
             {editStatut === 'partiel' && (
-              <div className="mb-4">
+              <div className="mb-3">
                 <label className="block text-xs text-gray-500 mb-1">Montant déjà payé (FCFA)</label>
-                <input type="number" value={editMontantPaye}
-                  onChange={e => setEditMontantPaye(e.target.value)}
+                <input type="number" value={editMontantPaye} onChange={e => setEditMontantPaye(e.target.value)}
                   placeholder="Ex : 15000"
                   className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-white outline-none focus:border-emerald-400" />
               </div>
             )}
 
-            <div className="flex gap-3 mt-4">
+            <div style={{ background: '#FAEEDA', borderRadius: 10, padding: '10px 12px', marginBottom: 16 }}>
+              <p style={{ fontSize: 11, color: '#854F0B' }}>
+                Le paiement sera automatiquement enregistré dans la trésorerie.
+              </p>
+            </div>
+
+            <div className="flex gap-3">
               <button onClick={() => supprimerCampeur(ficheOuverte.id)}
                 style={{ padding: '12px 16px', borderRadius: 12, background: '#FCEBEB', color: '#A32D2D', border: 'none', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}>
                 Supprimer
