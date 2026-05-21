@@ -294,50 +294,35 @@ export default function TresoreriePage() {
         <div className="space-y-4">
 
           {/* Budget global */}
-          <div style={{ background: 'linear-gradient(135deg,#054035,#085041)', borderRadius: 16, padding: '18px 16px', position: 'relative', overflow: 'hidden' }}>
-            <div style={{ position: 'absolute', width: 100, height: 100, borderRadius: '50%', background: 'rgba(255,255,255,0.06)', top: -20, right: -20 }} />
-            <p style={{ fontSize: 10, color: '#9FE1CB', letterSpacing: '0.06em', marginBottom: 6 }}>BUDGET GLOBAL DU CAMP</p>
+          <div style={{ background: '#fff', borderRadius: 14, border: '0.5px solid #e5e5e0', padding: '14px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+              <p style={{ fontSize: 10, fontWeight: 600, color: '#085041', letterSpacing: '0.05em' }}>BUDGET GLOBAL DU CAMP</p>
+              <button onClick={() => { setEditBudget(!editBudget); setBudgetForm(budgetGlobal) }}
+                style={{ fontSize: 11, color: '#085041', background: '#E1F5EE', border: 'none', borderRadius: 8, padding: '4px 10px', cursor: 'pointer' }}>
+                {editBudget ? 'Annuler' : 'Modifier'}
+              </button>
+            </div>
             {editBudget ? (
               <div className="flex gap-2 mt-2">
                 <input type="number" value={budgetForm} onChange={e => setBudgetForm(e.target.value)}
                   placeholder="Montant en FCFA"
-                  style={{ flex: 1, borderRadius: 10, border: 'none', padding: '8px 12px', fontSize: 14, outline: 'none' }} />
+                  style={{ flex: 1, border: '0.5px solid #e5e5e0', borderRadius: 10, padding: '8px 12px', fontSize: 14, outline: 'none' }} />
                 <button onClick={saveBudgetGlobal} disabled={saving}
-                  style={{ background: '#9FE1CB', color: '#054035', border: 'none', borderRadius: 10, padding: '8px 14px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
-                  {saving ? '...' : 'OK'}
+                  style={{ background: '#085041', color: '#fff', border: 'none', borderRadius: 10, padding: '8px 14px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+                  {saving ? '...' : 'Enregistrer'}
                 </button>
-                <button onClick={() => setEditBudget(false)}
-                  style={{ background: 'rgba(255,255,255,0.15)', color: '#fff', border: 'none', borderRadius: 10, padding: '8px 12px', fontSize: 12, cursor: 'pointer' }}>✕</button>
               </div>
             ) : (
-              <div className="flex items-end justify-between">
-                <div>
-                  <p style={{ fontSize: 28, fontWeight: 700, color: '#fff', lineHeight: 1 }}>{budgetGlobal.toLocaleString()}</p>
-                  <p style={{ fontSize: 11, color: '#9FE1CB', marginTop: 3 }}>FCFA</p>
-                </div>
-                <button onClick={() => setEditBudget(true)}
-                  style={{ background: 'rgba(255,255,255,0.15)', color: '#fff', border: 'none', borderRadius: 10, padding: '7px 12px', fontSize: 11, cursor: 'pointer' }}>
-                  Modifier
-                </button>
-              </div>
+              <p style={{ fontSize: 22, fontWeight: 700, color: '#1a1a1a', marginTop: 4 }}>
+                {budgetGlobal > 0 ? `${budgetGlobal.toLocaleString()} FCFA` : <span style={{ fontSize: 13, color: '#888', fontWeight: 400 }}>Non défini — cliquez sur Modifier</span>}
+              </p>
             )}
-
-            {/* Barre progression budget */}
             {budgetGlobal > 0 && (
-              <div style={{ marginTop: 14 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
-                  <span style={{ fontSize: 9, color: '#9FE1CB' }}>Collecté : {totalRecettes.toLocaleString()} FCFA</span>
-                  <span style={{ fontSize: 9, color: '#9FE1CB' }}>{Math.round((totalRecettes / budgetGlobal) * 100)}%</span>
-                </div>
-                <div style={{ background: 'rgba(255,255,255,0.15)', borderRadius: 10, height: 6 }}>
-                  <div style={{ background: '#9FE1CB', borderRadius: 10, height: 6, width: `${Math.min((totalRecettes / budgetGlobal) * 100, 100)}%`, transition: 'width .4s ease' }} />
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 5 }}>
-                  <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.6)' }}>
-                    Reste à collecter : {Math.max(budgetGlobal - totalRecettes, 0).toLocaleString()} FCFA
-                  </span>
-                </div>
-              </div>
+              <p style={{ fontSize: 11, color: totalRecettes >= budgetGlobal ? '#085041' : '#854F0B', marginTop: 4 }}>
+                {totalRecettes >= budgetGlobal
+                  ? `✓ Objectif atteint — ${totalRecettes.toLocaleString()} FCFA collectés`
+                  : `${Math.round((totalRecettes / budgetGlobal) * 100)}% collecté — il reste ${(budgetGlobal - totalRecettes).toLocaleString()} FCFA`}
+              </p>
             )}
           </div>
 
