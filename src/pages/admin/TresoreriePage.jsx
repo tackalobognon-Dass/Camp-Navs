@@ -121,6 +121,10 @@ export default function TresoreriePage() {
   const [recettes, setRecettes] = useState([])
   const [commissions, setCommissions] = useState([])
   const [depenses, setDepenses] = useState([])
+  const [budgetGlobal, setBudgetGlobal] = useState(0)
+  const [budgetGlobalId, setBudgetGlobalId] = useState(null)
+  const [editBudget, setEditBudget] = useState(false)
+  const [budgetForm, setBudgetForm] = useState('')
   const [loading, setLoading] = useState(true)
 
   // Forms
@@ -138,15 +142,33 @@ export default function TresoreriePage() {
   useEffect(() => { fetchData() }, [])
 
   async function fetchData() {
-    const [{ data: r }, { data: c }, { data: d }] = await Promise.all([
+    const [{ data: r }, { data: c }, { data: d }, { data: bg }] = await Promise.all([
       supabase.from('recettes').select('*').order('date_reception', { ascending: false }),
       supabase.from('budget_commissions').select('*').order('nom_commission'),
       supabase.from('depenses').select('*').order('date_depense', { ascending: false }),
+      supabase.from('budget_global').select('*').limit(1),
     ])
     setRecettes(r || [])
     setCommissions(c || [])
     setDepenses(d || [])
+    if (bg && bg.length > 0) {
+      setBudgetGlobal(bg[0].montant || 0)
+      setBudgetGlobalId(bg[0].id)
+      setBudgetForm(bg[0].montant || 0)
+    }
     setLoading(false)
+  }
+
+  async function saveBudgetGlobal() {
+    setSaving(true)
+    if (budgetGlobalId) {
+      await supabase.from('budget_global').update({ montant: parseInt(budgetForm) || 0, updated_at: new Date().toISOString() }).eq('id', budgetGlobalId)
+    } else {
+      await supabase.from('budget_global').insert([{ montant: parseInt(budgetForm) || 0 }])
+    }
+    setSaving(false)
+    setEditBudget(false)
+    fetchData()
   }
 
   async function saveRecette() {
@@ -270,62 +292,124 @@ export default function TresoreriePage() {
       {/* TABLEAU DE BORD */}
       {onglet === 'tableau_bord' && (
         <div className="space-y-4">
+
+          {/* Budget global */}
+          <div style={{ background: 'linear-gradient(135deg,#054035,#085041)', borderRadius: 16, padding: '18px 16px', position: 'relative', overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', width: 100, height: 100, borderRadius: '50%', background: 'rgba(255,255,255,0.06)', top: -20, right: -20 }} />
+            <p style={{ fontSize: 10, color: '#9FE1CB', letterSpacing: '0.06em', marginBottom: 6 }}>BUDGET GLOBAL DU CAMP</p>
+            {editBudget ? (
+              <div className="flex gap-2 mt-2">
+                <input type="number" value={budgetForm} onChange={e => setBudgetForm(e.target.value)}
+                  placeholder="Montant en FCFA"
+                  style={{ flex: 1, borderRadius: 10, border: 'none', padding: '8px 12px', fontSize: 14, outline: 'none' }} />
+                <button onClick={saveBudgetGlobal} disabled={saving}
+                  style={{ background: '#9FE1CB', color: '#054035', border: 'none', borderRadius: 10, padding: '8px 14px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+                  {saving ? '...' : 'OK'}
+                </button>
+                <button onClick={() => setEditBudget(false)}
+                  style={{ background: 'rgba(255,255,255,0.15)', color: '#fff', border: 'none', borderRadius: 10, padding: '8px 12px', fontSize: 12, cursor: 'pointer' }}>✕</button>
+              </div>
+            ) : (
+              <div className="flex items-end justify-between">
+                <div>
+                  <p style={{ fontSize: 28, fontWeight: 700, color: '#fff', lineHeight: 1 }}>{budgetGlobal.toLocaleString()}</p>
+                  <p style={{ fontSize: 11, color: '#9FE1CB', marginTop: 3 }}>FCFA</p>
+                </div>
+                <button onClick={() => setEditBudget(true)}
+                  style={{ background: 'rgba(255,255,255,0.15)', color: '#fff', border: 'none', borderRadius: 10, padding: '7px 12px', fontSize: 11, cursor: 'pointer' }}>
+                  Modifier
+                </button>
+              </div>
+            )}
+
+            {/* Barre progression budget */}
+            {budgetGlobal > 0 && (
+              <div style={{ marginTop: 14 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
+                  <span style={{ fontSize: 9, color: '#9FE1CB' }}>Collecté : {totalRecettes.toLocaleString()} FCFA</span>
+                  <span style={{ fontSize: 9, color: '#9FE1CB' }}>{Math.round((totalRecettes / budgetGlobal) * 100)}%</span>
+                </div>
+                <div style={{ background: 'rgba(255,255,255,0.15)', borderRadius: 10, height: 6 }}>
+                  <div style={{ background: '#9FE1CB', borderRadius: 10, height: 6, width: `${Math.min((totalRecettes / budgetGlobal) * 100, 100)}%`, transition: 'width .4s ease' }} />
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 5 }}>
+                  <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.6)' }}>
+                    Reste à collecter : {Math.max(budgetGlobal - totalRecettes, 0).toLocaleString()} FCFA
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Stats financières */}
           <div className="grid grid-cols-2 gap-3">
             <div style={{ background: '#E1F5EE', borderRadius: 12, padding: '14px' }}>
-              <p style={{ fontSize: 18, fontWeight: 600, color: '#085041' }}>{totalRecettes.toLocaleString()}</p>
-              <p style={{ fontSize: 10, color: '#0F6E56' }}>Total recettes (FCFA)</p>
+              <p style={{ fontSize: 9, color: '#0F6E56', letterSpacing: '0.05em', marginBottom: 4 }}>TOTAL RECETTES</p>
+              <p style={{ fontSize: 20, fontWeight: 600, color: '#085041' }}>{totalRecettes.toLocaleString()}</p>
+              <p style={{ fontSize: 9, color: '#0F6E56' }}>FCFA</p>
             </div>
             <div style={{ background: '#FCEBEB', borderRadius: 12, padding: '14px' }}>
-              <p style={{ fontSize: 18, fontWeight: 600, color: '#A32D2D' }}>{totalDepenses.toLocaleString()}</p>
-              <p style={{ fontSize: 10, color: '#993C1D' }}>Total dépenses (FCFA)</p>
+              <p style={{ fontSize: 9, color: '#993C1D', letterSpacing: '0.05em', marginBottom: 4 }}>TOTAL DÉPENSES</p>
+              <p style={{ fontSize: 20, fontWeight: 600, color: '#A32D2D' }}>{totalDepenses.toLocaleString()}</p>
+              <p style={{ fontSize: 9, color: '#993C1D' }}>FCFA</p>
             </div>
             <div style={{ background: soldeGlobal >= 0 ? '#E6F1FB' : '#FCEBEB', borderRadius: 12, padding: '14px' }}>
-              <p style={{ fontSize: 18, fontWeight: 600, color: soldeGlobal >= 0 ? '#185FA5' : '#A32D2D' }}>{soldeGlobal.toLocaleString()}</p>
-              <p style={{ fontSize: 10, color: soldeGlobal >= 0 ? '#185FA5' : '#993C1D' }}>Solde global (FCFA)</p>
+              <p style={{ fontSize: 9, color: soldeGlobal >= 0 ? '#185FA5' : '#993C1D', letterSpacing: '0.05em', marginBottom: 4 }}>SOLDE DISPONIBLE</p>
+              <p style={{ fontSize: 20, fontWeight: 600, color: soldeGlobal >= 0 ? '#185FA5' : '#A32D2D' }}>{soldeGlobal.toLocaleString()}</p>
+              <p style={{ fontSize: 9, color: soldeGlobal >= 0 ? '#185FA5' : '#993C1D' }}>FCFA</p>
             </div>
             <div style={{ background: '#FAEEDA', borderRadius: 12, padding: '14px' }}>
-              <p style={{ fontSize: 18, fontWeight: 600, color: '#854F0B' }}>{soldeNonAlloue.toLocaleString()}</p>
-              <p style={{ fontSize: 10, color: '#854F0B' }}>Non alloué (FCFA)</p>
+              <p style={{ fontSize: 9, color: '#854F0B', letterSpacing: '0.05em', marginBottom: 4 }}>NON ALLOUÉ</p>
+              <p style={{ fontSize: 20, fontWeight: 600, color: '#854F0B' }}>{soldeNonAlloue.toLocaleString()}</p>
+              <p style={{ fontSize: 9, color: '#854F0B' }}>FCFA</p>
             </div>
           </div>
 
           {/* Recettes par type */}
           <div style={{ background: '#fff', borderRadius: 14, border: '0.5px solid #e5e5e0', padding: '14px' }}>
-            <p style={{ fontSize: 10, fontWeight: 600, color: '#085041', marginBottom: 10, letterSpacing: '0.05em' }}>RECETTES PAR TYPE</p>
+            <p style={{ fontSize: 10, fontWeight: 600, color: '#085041', marginBottom: 10, letterSpacing: '0.05em' }}>RECETTES PAR SOURCE</p>
             {TYPES_RECETTE.map(t => {
               const montant = recettes.filter(r => r.type === t.key).reduce((s, r) => s + (r.montant || r.valeur_estimee || 0), 0)
+              const pct = totalRecettes > 0 ? (montant / totalRecettes) * 100 : 0
               if (montant === 0) return null
               return (
-                <div key={t.key} style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 0', borderBottom: '0.5px solid #f0f0ee' }}>
-                  <span style={{ fontSize: 12, color: '#333' }}>{t.label}</span>
-                  <span style={{ fontSize: 12, fontWeight: 500, color: t.color }}>{montant.toLocaleString()} FCFA</span>
+                <div key={t.key} style={{ marginBottom: 10 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                    <span style={{ fontSize: 11, color: '#333' }}>{t.label}</span>
+                    <span style={{ fontSize: 11, fontWeight: 500, color: t.color }}>{montant.toLocaleString()} FCFA</span>
+                  </div>
+                  <div style={{ background: '#f0f0ee', borderRadius: 4, height: 4 }}>
+                    <div style={{ background: t.color, borderRadius: 4, height: 4, width: `${pct}%` }} />
+                  </div>
                 </div>
               )
             })}
+            {recettes.length === 0 && <p style={{ fontSize: 12, color: '#888', textAlign: 'center', padding: '8px 0' }}>Aucune recette enregistrée.</p>}
           </div>
 
           {/* État des commissions */}
           <div style={{ background: '#fff', borderRadius: 14, border: '0.5px solid #e5e5e0', padding: '14px' }}>
             <p style={{ fontSize: 10, fontWeight: 600, color: '#085041', marginBottom: 10, letterSpacing: '0.05em' }}>ÉTAT DES COMMISSIONS</p>
+            {commissions.length === 0 && <p style={{ fontSize: 12, color: '#888', textAlign: 'center', padding: '8px 0' }}>Aucune commission créée.</p>}
             {commissions.map(c => {
               const totalDep = depenses.filter(d => d.commission_id === c.id).reduce((s, d) => s + d.montant, 0)
               const alloue = c.montant_alloue || 0
               const solde = alloue - totalDep
               const pct = alloue > 0 ? (totalDep / alloue) * 100 : 0
               return (
-                <div key={c.id} style={{ marginBottom: 12 }}>
+                <div key={c.id} style={{ marginBottom: 14, paddingBottom: 14, borderBottom: '0.5px solid #f0f0ee' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
                     <span style={{ fontSize: 12, fontWeight: 500, color: '#1a1a1a' }}>{c.nom_commission}</span>
-                    <span style={{ fontSize: 11, color: solde < 0 ? '#A32D2D' : '#085041' }}>
-                      Solde : {solde.toLocaleString()} FCFA
+                    <span style={{ fontSize: 11, fontWeight: 500, color: solde < 0 ? '#A32D2D' : '#085041' }}>
+                      {solde.toLocaleString()} FCFA
                     </span>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
                     <span style={{ fontSize: 10, color: '#888' }}>Alloué : {alloue.toLocaleString()}</span>
                     <span style={{ fontSize: 10, color: '#A32D2D' }}>Dépensé : {totalDep.toLocaleString()}</span>
                   </div>
-                  <div style={{ background: '#f0f0ee', borderRadius: 4, height: 4 }}>
-                    <div style={{ background: pct > 100 ? '#A32D2D' : '#085041', borderRadius: 4, height: 4, width: `${Math.min(pct, 100)}%` }} />
+                  <div style={{ background: '#f0f0ee', borderRadius: 4, height: 5 }}>
+                    <div style={{ background: pct > 100 ? '#A32D2D' : pct > 80 ? '#854F0B' : '#085041', borderRadius: 4, height: 5, width: `${Math.min(pct, 100)}%`, transition: 'width .3s' }} />
                   </div>
                 </div>
               )
