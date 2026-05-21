@@ -200,7 +200,8 @@ export default function HomePage() {
       {plusOpen && (
         <>
           <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={() => setPlusOpen(false)} />
-          <div style={{ position: 'fixed', bottom: 56, left: 0, right: 0, maxWidth: 480, margin: '0 auto', background: '#fff', borderRadius: '20px 20px 0 0', borderTop: '0.5px solid #e5e5e0', padding: '12px 16px 16px', boxShadow: '0 -4px 24px rgba(0,0,0,0.08)', zIndex: 50 }}>
+          <div style={{ position: 'fixed', bottom: 56, left: 0, right: 0, maxWidth: 480, margin: '0 auto', background: '#fff', borderRadius: '20px 20px 0 0', borderTop: '0.5px solid #e5e5e0', padding: '12px 16px 16px', boxShadow: '0 -4px 24px rgba(0,0,0,0.08)', zIndex: 50 }}
+            onClick={e => e.stopPropagation()}>
             <div style={{ width: 32, height: 3, background: '#e0e0e0', borderRadius: 2, margin: '0 auto 12px' }} />
             <div style={{ fontSize: 9, fontWeight: 500, color: '#888', letterSpacing: '0.06em', marginBottom: 12 }}>PLUS DE SECTIONS</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 8 }}>
@@ -232,7 +233,7 @@ export default function HomePage() {
             <span style={{ fontSize: 10, marginTop: 2, fontWeight: item.active ? 500 : 400 }}>{item.label}</span>
           </button>
         ))}
-        <button onClick={() => setPlusOpen(!plusOpen)}
+        <button onClick={(e) => { e.stopPropagation(); setPlusOpen(!plusOpen) }}
           style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '8px 0 10px', color: plusOpen ? '#054035' : '#888780', background: 'none', border: 'none', cursor: 'pointer' }}>
           <svg style={{ width: 20, height: 20 }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z" /></svg>
           <span style={{ fontSize: 10, marginTop: 2 }}>Plus</span>
