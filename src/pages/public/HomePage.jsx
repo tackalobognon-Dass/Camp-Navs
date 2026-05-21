@@ -51,24 +51,24 @@ function NewsCard({ annonce }) {
   const tc = tagConfig[annonce.tag] || tagConfig['Info']
 
   return (
-    <div style={{ flexShrink: 0, width: '82vw', maxWidth: 300, background: '#fff', borderRadius: 16, padding: 14, display: 'flex', flexDirection: 'column', gap: 8 }}>
+    <div style={{ flexShrink: 0, width: '88vw', maxWidth: 320, background: '#fff', borderRadius: 16, padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <span style={{ fontSize: 9, fontWeight: 500, padding: '3px 8px', borderRadius: 20, background: tc.bg, color: tc.color }}>
+        <span style={{ fontSize: 10, fontWeight: 500, padding: '3px 8px', borderRadius: 20, background: tc.bg, color: tc.color }}>
           {annonce.tag}
         </span>
-        <span style={{ fontSize: 10, color: '#999' }}>
+        <span style={{ fontSize: 11, color: '#999' }}>
           {new Date(annonce.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
         </span>
       </div>
-      <div style={{ fontSize: 13, fontWeight: 500, color: '#1a1a1a', lineHeight: 1.4 }}>{annonce.titre}</div>
+      <div style={{ fontSize: 14, fontWeight: 500, color: '#1a1a1a', lineHeight: 1.4 }}>{annonce.titre}</div>
       {annonce.contenu && (
-        <div style={{ fontSize: 11, color: '#666', lineHeight: 1.6, overflow: expanded ? 'visible' : 'hidden', display: expanded ? 'block' : '-webkit-box', WebkitLineClamp: expanded ? 'unset' : 3, WebkitBoxOrient: 'vertical' }}>
+        <div style={{ fontSize: 12, color: '#666', lineHeight: 1.6, overflow: expanded ? 'visible' : 'hidden', display: expanded ? 'block' : '-webkit-box', WebkitLineClamp: expanded ? 'unset' : 3, WebkitBoxOrient: 'vertical' }}>
           {annonce.contenu}
         </div>
       )}
       {isLong && (
         <button onClick={() => setExpanded(!expanded)}
-          style={{ fontSize: 10, color: '#999', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'left' }}>
+          style={{ fontSize: 11, color: '#999', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'left' }}>
           {expanded ? 'Réduire' : 'Lire la suite →'}
         </button>
       )}
@@ -119,15 +119,10 @@ export default function HomePage() {
     <div style={{ minHeight: '100vh', background: '#F4F3EF', maxWidth: 480, margin: '0 auto', display: 'flex', flexDirection: 'column' }}>
 
       {/* HERO */}
-      <div style={{ background: '#054035', padding: '44px 16px 18px', position: 'relative', overflow: 'hidden' }}>
+      <div style={{ background: '#054035', padding: '36px 16px 16px', position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', width: 180, height: 180, borderRadius: '50%', background: 'rgba(255,255,255,0.04)', top: -60, right: -50 }} />
 
-        <div style={{ marginBottom: 14 }}>
-          <div style={{ fontSize: 12, fontWeight: 500, color: 'rgba(255,255,255,0.9)', letterSpacing: '0.04em' }}>LES NAVIGATEURS</div>
-          <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.45)', marginTop: 1 }}>Côte d'Ivoire</div>
-        </div>
-
-        <div style={{ fontSize: 23, fontWeight: 500, color: '#fff', marginBottom: 6, letterSpacing: '-0.3px' }}>Camp-Navs 2026</div>
+        <div style={{ fontSize: 23, fontWeight: 500, color: '#fff', marginBottom: 5, letterSpacing: '-0.3px' }}>Camp-Navs 2026</div>
         <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', lineHeight: 1.6, fontWeight: 400, marginBottom: 4, paddingLeft: 10, borderLeft: '2px solid rgba(201,168,76,0.5)' }}>
           Les familles et réseaux relationnels pour une expansion naturelle de l'Évangile et du Royaume de Dieu
         </div>
@@ -136,7 +131,7 @@ export default function HomePage() {
       </div>
 
       {/* PLACES */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, padding: '14px 14px 0' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, padding: '10px 14px 0' }}>
         {[
           { label: 'Jeunes & Adultes', val: places.jeunes, max: 100, prix: '30 000 FCFA' },
           { label: 'Enfants & Ados', val: places.enfants, max: 50, prix: '25 000 FCFA' },
@@ -155,7 +150,7 @@ export default function HomePage() {
       </div>
 
       {/* ACTIONS */}
-      <div style={{ padding: '14px 14px 0' }}>
+      <div style={{ padding: '10px 14px 0' }}>
         <div style={{ fontSize: 10, fontWeight: 500, color: '#888', letterSpacing: '0.06em', marginBottom: 10 }}>ACTIONS RAPIDES</div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
           {[
@@ -188,7 +183,7 @@ export default function HomePage() {
       </div>
 
       {/* ACTUALITES */}
-      <div style={{ padding: '14px 14px 90px' }}>
+      <div style={{ padding: '10px 14px 90px' }}>
         <div style={{ fontSize: 10, fontWeight: 500, color: '#888', letterSpacing: '0.06em', marginBottom: 10 }}>ACTUALITÉS</div>
         {annonces.length === 0 ? (
           <div style={{ background: '#fff', borderRadius: 16, padding: 20, textAlign: 'center' }}>
