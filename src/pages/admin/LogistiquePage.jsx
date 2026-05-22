@@ -65,79 +65,106 @@ function exportExcel(materiel, responsableGeneral) {
 }
 
 function exportPDF(materiel, responsableGeneral) {
-  const now = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
-  const totalDepart = materiel.reduce((s, m) => s + (m.quantite_depart || m.quantite || 0), 0)
-  const totalVole = materiel.reduce((s, m) => s + (m.quantite_vole || 0), 0)
-  const totalPerdu = materiel.reduce((s, m) => s + (m.quantite_perdu || 0), 0)
-  const totalCasse = materiel.reduce((s, m) => s + (m.quantite_casse || 0), 0)
-  const avecIncidents = materiel.filter(m => (m.quantite_casse || 0) + (m.quantite_vole || 0) + (m.quantite_perdu || 0) > 0)
+  import('jspdf').then(({ default: jsPDF }) => {
+    import('jspdf-autotable').then(() => {
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
+      const now = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
+      const totalDepart = materiel.reduce((s, m) => s + (m.quantite_depart || m.quantite || 0), 0)
+      const totalVole = materiel.reduce((s, m) => s + (m.quantite_vole || 0), 0)
+      const totalPerdu = materiel.reduce((s, m) => s + (m.quantite_perdu || 0), 0)
+      const totalCasse = materiel.reduce((s, m) => s + (m.quantite_casse || 0), 0)
 
-  const html = `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">
-<title>Bilan Logistique — Camp-Navs 2026</title>
-<style>
-  body{font-family:Arial,sans-serif;font-size:12px;color:#1a1a1a;margin:30px}
-  h1{font-size:20px;color:#085041;margin-bottom:4px}
-  h2{font-size:14px;color:#085041;margin:24px 0 10px;border-bottom:2px solid #085041;padding-bottom:4px}
-  .subtitle{font-size:12px;color:#666;margin-bottom:6px}
-  .resume{display:flex;gap:16px;margin-bottom:20px;flex-wrap:wrap}
-  .stat{background:#E1F5EE;border-radius:8px;padding:10px 14px;min-width:100px}
-  .stat .num{font-size:20px;font-weight:bold;color:#085041}
-  .stat .lbl{font-size:10px;color:#0F6E56}
-  .stat.danger{background:#FCEBEB}.stat.danger .num{color:#A32D2D}.stat.danger .lbl{color:#993C1D}
-  .stat.warn{background:#FAEEDA}.stat.warn .num{color:#854F0B}.stat.warn .lbl{color:#854F0B}
-  table{width:100%;border-collapse:collapse;margin-bottom:16px}
-  th{background:#085041;color:#fff;padding:7px 10px;text-align:left;font-size:11px}
-  td{padding:6px 10px;border-bottom:0.5px solid #e5e5e0;font-size:11px}
-  tr:nth-child(even) td{background:#f8f8f6}
-  .badge{padding:2px 8px;border-radius:20px;font-size:10px;font-weight:bold}
-  .ok{background:#E1F5EE;color:#085041}.warn{background:#FAEEDA;color:#854F0B}.danger{background:#FCEBEB;color:#A32D2D}
-  .footer{margin-top:30px;font-size:10px;color:#888;text-align:center;border-top:0.5px solid #e5e5e0;padding-top:10px}
-</style></head><body>
-<h1>Bilan Logistique — Camp-Navs 2026</h1>
-<p class="subtitle">La Sablière · Bingerville · 23–29 août 2026</p>
-<p class="subtitle">Responsable général : <strong>${responsableGeneral || '-'}</strong></p>
-<p class="subtitle">Généré le ${now}</p>
-<div class="resume">
-  <div class="stat"><div class="num">${materiel.length}</div><div class="lbl">Équipements</div></div>
-  <div class="stat"><div class="num">${totalDepart}</div><div class="lbl">Unités au départ</div></div>
-  <div class="stat ${totalCasse > 0 ? 'warn' : ''}"><div class="num">${totalCasse}</div><div class="lbl">Cassés</div></div>
-  <div class="stat ${totalVole > 0 ? 'danger' : ''}"><div class="num">${totalVole}</div><div class="lbl">Volés</div></div>
-  <div class="stat ${totalPerdu > 0 ? 'danger' : ''}"><div class="num">${totalPerdu}</div><div class="lbl">Perdus</div></div>
-</div>
-<h2>Inventaire complet</h2>
-<table><tr><th>Équipement</th><th>Catégorie</th><th>Resp.</th><th>Qté départ</th><th>État départ</th><th>Qté retour</th><th>État retour</th><th>Manquant</th></tr>
-${materiel.map(m => {
-  const qd = m.quantite_depart || m.quantite || 0
-  const qr = qd - (m.quantite_vole || 0) - (m.quantite_perdu || 0)
-  const manquant = (m.quantite_vole || 0) + (m.quantite_perdu || 0)
-  return `<tr><td><strong>${m.nom}</strong></td><td>${m.categorie || 'Autre'}</td><td>${m.responsable || '-'}</td>
-    <td>${qd}</td><td><span class="badge ok">${m.etat_depart || 'Bon'}</span></td>
-    <td>${m.checkout ? qr : '-'}</td>
-    <td>${m.checkout ? `<span class="badge ${m.etat_retour === 'Mauvais' ? 'danger' : m.etat_retour === 'Moyen' ? 'warn' : 'ok'}">${m.etat_retour || 'Bon'}</span>` : '-'}</td>
-    <td>${manquant > 0 ? `<span class="badge danger">${manquant}</span>` : '<span class="badge ok">0</span>'}</td></tr>`
-}).join('')}
-</table>
-${avecIncidents.length > 0 ? `<h2>Incidents</h2>
-<table><tr><th>Équipement</th><th>Cassé</th><th>Volé</th><th>Perdu</th><th>Description</th></tr>
-${avecIncidents.map(m => `<tr><td><strong>${m.nom}</strong></td>
-  <td>${(m.quantite_casse||0)>0?`<span class="badge warn">${m.quantite_casse}</span>`:'0'}</td>
-  <td>${(m.quantite_vole||0)>0?`<span class="badge danger">${m.quantite_vole}</span>`:'0'}</td>
-  <td>${(m.quantite_perdu||0)>0?`<span class="badge danger">${m.quantite_perdu}</span>`:'0'}</td>
-  <td>${m.incident||'-'}</td></tr>`).join('')}
-</table>` : ''}
-<div class="footer">Camp-Navs 2026 · Mission Évangélique des Navigateurs — Côte d'Ivoire · ${now}</div>
-</body></html>`
+      // En-tête
+      doc.setFillColor(5, 64, 53)
+      doc.rect(0, 0, 210, 28, 'F')
+      doc.setTextColor(255, 255, 255)
+      doc.setFontSize(16)
+      doc.setFont('helvetica', 'bold')
+      doc.text('Bilan Logistique — Camp-Navs 2026', 14, 12)
+      doc.setFontSize(9)
+      doc.setFont('helvetica', 'normal')
+      doc.text(`La Sablière · Bingerville · 23–29 août 2026`, 14, 19)
+      doc.text(`Responsable : ${responsableGeneral || '-'} · Généré le ${now}`, 14, 24)
 
-  // Téléchargement direct du PDF via blob HTML
-  const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `Bilan_Logistique_CampNavs2026_${new Date().toLocaleDateString('fr-FR').replace(/\//g, '-')}.html`
-  document.body.appendChild(a)
-  a.click()
-  document.body.removeChild(a)
-  URL.revokeObjectURL(url)
+      // Stats
+      doc.setTextColor(5, 64, 53)
+      doc.setFontSize(10)
+      doc.setFont('helvetica', 'bold')
+      doc.text('RÉSUMÉ', 14, 36)
+      const stats = [
+        ['Équipements', materiel.length],
+        ['Unités au départ', totalDepart],
+        ['Cassés', totalCasse],
+        ['Volés', totalVole],
+        ['Perdus', totalPerdu],
+        ['Manquants', totalVole + totalPerdu],
+      ]
+      let sx = 14
+      stats.forEach(([label, val]) => {
+        doc.setFillColor(225, 245, 238)
+        doc.roundedRect(sx, 39, 28, 14, 2, 2, 'F')
+        doc.setTextColor(5, 64, 53)
+        doc.setFontSize(14)
+        doc.setFont('helvetica', 'bold')
+        doc.text(String(val), sx + 14, 47, { align: 'center' })
+        doc.setFontSize(7)
+        doc.setFont('helvetica', 'normal')
+        doc.text(label, sx + 14, 51, { align: 'center' })
+        sx += 31
+      })
+
+      // Inventaire
+      doc.setTextColor(5, 64, 53)
+      doc.setFontSize(10)
+      doc.setFont('helvetica', 'bold')
+      doc.text('INVENTAIRE COMPLET', 14, 62)
+
+      doc.autoTable({
+        startY: 65,
+        head: [['Équipement', 'Catégorie', 'Responsable', 'Qté départ', 'État départ', 'Qté retour', 'Manquant']],
+        body: materiel.map(m => {
+          const qd = m.quantite_depart || m.quantite || 0
+          const qr = qd - (m.quantite_vole || 0) - (m.quantite_perdu || 0)
+          const manquant = (m.quantite_vole || 0) + (m.quantite_perdu || 0)
+          return [m.nom, m.categorie || 'Autre', m.responsable || '-', qd, m.etat_depart || 'Bon', m.checkout ? qr : '-', manquant > 0 ? manquant : '✓']
+        }),
+        headStyles: { fillColor: [5, 64, 53], fontSize: 8, fontStyle: 'bold' },
+        bodyStyles: { fontSize: 8 },
+        alternateRowStyles: { fillColor: [248, 248, 246] },
+        columnStyles: { 0: { fontStyle: 'bold' } },
+        margin: { left: 14, right: 14 },
+      })
+
+      // Incidents
+      const avecIncidents = materiel.filter(m => (m.quantite_casse || 0) + (m.quantite_vole || 0) + (m.quantite_perdu || 0) > 0)
+      if (avecIncidents.length > 0) {
+        doc.setTextColor(5, 64, 53)
+        doc.setFontSize(10)
+        doc.setFont('helvetica', 'bold')
+        doc.text('INCIDENTS', 14, doc.lastAutoTable.finalY + 10)
+        doc.autoTable({
+          startY: doc.lastAutoTable.finalY + 13,
+          head: [['Équipement', 'Cassé', 'Volé', 'Perdu', 'Description']],
+          body: avecIncidents.map(m => [m.nom, m.quantite_casse || 0, m.quantite_vole || 0, m.quantite_perdu || 0, m.incident || '-']),
+          headStyles: { fillColor: [163, 45, 45], fontSize: 8, fontStyle: 'bold' },
+          bodyStyles: { fontSize: 8 },
+          alternateRowStyles: { fillColor: [248, 248, 246] },
+          margin: { left: 14, right: 14 },
+        })
+      }
+
+      // Footer
+      const pageCount = doc.internal.getNumberOfPages()
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i)
+        doc.setFontSize(7)
+        doc.setTextColor(150)
+        doc.text(`Camp-Navs 2026 · Mission Évangélique des Navigateurs CI · Page ${i}/${pageCount}`, 105, 290, { align: 'center' })
+      }
+
+      doc.save(`Bilan_Logistique_CampNavs2026_${new Date().toLocaleDateString('fr-FR').replace(/\//g, '-')}.pdf`)
+    })
+  })
 }
 
 export default function LogistiquePage() {
