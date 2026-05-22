@@ -25,6 +25,8 @@ import ProgrammeAdminPage from './pages/admin/ProgrammeAdminPage'
 import SoireePage from './pages/admin/SoireePage'
 import SantePage from './pages/admin/SantePage'
 import LogistiquePage from './pages/admin/LogistiquePage'
+import SuiviPostCampPage from './pages/admin/SuiviPostCampPage'
+import ParametresPage from './pages/admin/ParametresPage'
 
 function App() {
   return (
@@ -54,6 +56,8 @@ function App() {
         <Route path="/admin/soiree" element={<PrivateRoute><SoireePage /></PrivateRoute>} />
         <Route path="/admin/sante" element={<PrivateRoute><SantePage /></PrivateRoute>} />
         <Route path="/admin/logistique" element={<PrivateRoute><LogistiquePage /></PrivateRoute>} />
+        <Route path="/admin/suivi-post-camp" element={<PrivateRoute><SuiviPostCampPage /></PrivateRoute>} />
+        <Route path="/admin/parametres" element={<PrivateRoute><ParametresPage /></PrivateRoute>} />
       </Routes>
     </>
   )
