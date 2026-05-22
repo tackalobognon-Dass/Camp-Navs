@@ -519,11 +519,11 @@ export default function LogistiquePage() {
                     {/* Boutons action */}
                     {!m.checkout && (
                       <div className="flex gap-2 mt-1">
-                        <button onClick={() => { setIncidentItem(m); setIncidentForm({ type: 'cassé', quantite: 1, detail: '' }); setShowIncident(true) }}
+                        <button onClick={(e) => { e.stopPropagation(); setIncidentItem(m); setIncidentForm({ type: 'cassé', quantite: 1, detail: '' }); setShowIncident(true) }}
                           style={{ fontSize: 10, padding: '4px 8px', borderRadius: 8, border: '0.5px solid #F09595', background: '#FCEBEB', color: '#A32D2D', cursor: 'pointer' }}>
                           Signaler incident
                         </button>
-                        <button onClick={() => openRetour(m)}
+                        <button onClick={(e) => { e.stopPropagation(); openRetour(m) }}
                           style={{ fontSize: 10, padding: '4px 8px', borderRadius: 8, border: '0.5px solid #085041', background: '#E1F5EE', color: '#085041', cursor: 'pointer' }}>
                           Enregistrer retour
                         </button>
