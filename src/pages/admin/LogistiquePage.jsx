@@ -1,6 +1,8 @@
 import { useEffect, useState, useRef } from 'react'
 import { supabase } from '../../lib/supabase'
 import AdminLayout from '../../components/admin/AdminLayout'
+import jsPDF from 'jspdf'
+import 'jspdf-autotable'
 
 const CATEGORIES = ['Son & Musique', 'Éclairage', 'Transport', 'Cuisine', 'Sport & Loisirs', 'Bureau & Admin', 'Médical', 'Autre']
 const ETATS = ['Bon', 'Moyen', 'Mauvais']
@@ -65,106 +67,90 @@ function exportExcel(materiel, responsableGeneral) {
 }
 
 function exportPDF(materiel, responsableGeneral) {
-  import('jspdf').then(({ default: jsPDF }) => {
-    import('jspdf-autotable').then(() => {
-      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
-      const now = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
-      const totalDepart = materiel.reduce((s, m) => s + (m.quantite_depart || m.quantite || 0), 0)
-      const totalVole = materiel.reduce((s, m) => s + (m.quantite_vole || 0), 0)
-      const totalPerdu = materiel.reduce((s, m) => s + (m.quantite_perdu || 0), 0)
-      const totalCasse = materiel.reduce((s, m) => s + (m.quantite_casse || 0), 0)
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
+  const now = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
+  const totalDepart = materiel.reduce((s, m) => s + (m.quantite_depart || m.quantite || 0), 0)
+  const totalVole = materiel.reduce((s, m) => s + (m.quantite_vole || 0), 0)
+  const totalPerdu = materiel.reduce((s, m) => s + (m.quantite_perdu || 0), 0)
+  const totalCasse = materiel.reduce((s, m) => s + (m.quantite_casse || 0), 0)
 
-      // En-tête
-      doc.setFillColor(5, 64, 53)
-      doc.rect(0, 0, 210, 28, 'F')
-      doc.setTextColor(255, 255, 255)
-      doc.setFontSize(16)
-      doc.setFont('helvetica', 'bold')
-      doc.text('Bilan Logistique — Camp-Navs 2026', 14, 12)
-      doc.setFontSize(9)
-      doc.setFont('helvetica', 'normal')
-      doc.text(`La Sablière · Bingerville · 23–29 août 2026`, 14, 19)
-      doc.text(`Responsable : ${responsableGeneral || '-'} · Généré le ${now}`, 14, 24)
+  // En-tête
+  doc.setFillColor(5, 64, 53)
+  doc.rect(0, 0, 210, 28, 'F')
+  doc.setTextColor(255, 255, 255)
+  doc.setFontSize(16)
+  doc.setFont('helvetica', 'bold')
+  doc.text('Bilan Logistique - Camp-Navs 2026', 14, 12)
+  doc.setFontSize(9)
+  doc.setFont('helvetica', 'normal')
+  doc.text(`La Sabliere - Bingerville - 23-29 aout 2026`, 14, 19)
+  doc.text(`Responsable : ${responsableGeneral || '-'} - Genere le ${now}`, 14, 24)
 
-      // Stats
-      doc.setTextColor(5, 64, 53)
-      doc.setFontSize(10)
-      doc.setFont('helvetica', 'bold')
-      doc.text('RÉSUMÉ', 14, 36)
-      const stats = [
-        ['Équipements', materiel.length],
-        ['Unités au départ', totalDepart],
-        ['Cassés', totalCasse],
-        ['Volés', totalVole],
-        ['Perdus', totalPerdu],
-        ['Manquants', totalVole + totalPerdu],
-      ]
-      let sx = 14
-      stats.forEach(([label, val]) => {
-        doc.setFillColor(225, 245, 238)
-        doc.roundedRect(sx, 39, 28, 14, 2, 2, 'F')
-        doc.setTextColor(5, 64, 53)
-        doc.setFontSize(14)
-        doc.setFont('helvetica', 'bold')
-        doc.text(String(val), sx + 14, 47, { align: 'center' })
-        doc.setFontSize(7)
-        doc.setFont('helvetica', 'normal')
-        doc.text(label, sx + 14, 51, { align: 'center' })
-        sx += 31
-      })
+  // Inventaire
+  doc.setTextColor(5, 64, 53)
+  doc.setFontSize(10)
+  doc.setFont('helvetica', 'bold')
+  doc.text('INVENTAIRE COMPLET', 14, 38)
 
-      // Inventaire
-      doc.setTextColor(5, 64, 53)
-      doc.setFontSize(10)
-      doc.setFont('helvetica', 'bold')
-      doc.text('INVENTAIRE COMPLET', 14, 62)
-
-      doc.autoTable({
-        startY: 65,
-        head: [['Équipement', 'Catégorie', 'Responsable', 'Qté départ', 'État départ', 'Qté retour', 'Manquant']],
-        body: materiel.map(m => {
-          const qd = m.quantite_depart || m.quantite || 0
-          const qr = qd - (m.quantite_vole || 0) - (m.quantite_perdu || 0)
-          const manquant = (m.quantite_vole || 0) + (m.quantite_perdu || 0)
-          return [m.nom, m.categorie || 'Autre', m.responsable || '-', qd, m.etat_depart || 'Bon', m.checkout ? qr : '-', manquant > 0 ? manquant : '✓']
-        }),
-        headStyles: { fillColor: [5, 64, 53], fontSize: 8, fontStyle: 'bold' },
-        bodyStyles: { fontSize: 8 },
-        alternateRowStyles: { fillColor: [248, 248, 246] },
-        columnStyles: { 0: { fontStyle: 'bold' } },
-        margin: { left: 14, right: 14 },
-      })
-
-      // Incidents
-      const avecIncidents = materiel.filter(m => (m.quantite_casse || 0) + (m.quantite_vole || 0) + (m.quantite_perdu || 0) > 0)
-      if (avecIncidents.length > 0) {
-        doc.setTextColor(5, 64, 53)
-        doc.setFontSize(10)
-        doc.setFont('helvetica', 'bold')
-        doc.text('INCIDENTS', 14, doc.lastAutoTable.finalY + 10)
-        doc.autoTable({
-          startY: doc.lastAutoTable.finalY + 13,
-          head: [['Équipement', 'Cassé', 'Volé', 'Perdu', 'Description']],
-          body: avecIncidents.map(m => [m.nom, m.quantite_casse || 0, m.quantite_vole || 0, m.quantite_perdu || 0, m.incident || '-']),
-          headStyles: { fillColor: [163, 45, 45], fontSize: 8, fontStyle: 'bold' },
-          bodyStyles: { fontSize: 8 },
-          alternateRowStyles: { fillColor: [248, 248, 246] },
-          margin: { left: 14, right: 14 },
-        })
-      }
-
-      // Footer
-      const pageCount = doc.internal.getNumberOfPages()
-      for (let i = 1; i <= pageCount; i++) {
-        doc.setPage(i)
-        doc.setFontSize(7)
-        doc.setTextColor(150)
-        doc.text(`Camp-Navs 2026 · Mission Évangélique des Navigateurs CI · Page ${i}/${pageCount}`, 105, 290, { align: 'center' })
-      }
-
-      doc.save(`Bilan_Logistique_CampNavs2026_${new Date().toLocaleDateString('fr-FR').replace(/\//g, '-')}.pdf`)
-    })
+  doc.autoTable({
+    startY: 41,
+    head: [['Equipement', 'Categorie', 'Responsable', 'Qte depart', 'Etat depart', 'Qte retour', 'Manquant']],
+    body: materiel.map(m => {
+      const qd = m.quantite_depart || m.quantite || 0
+      const qr = qd - (m.quantite_vole || 0) - (m.quantite_perdu || 0)
+      const manquant = (m.quantite_vole || 0) + (m.quantite_perdu || 0)
+      return [m.nom, m.categorie || 'Autre', m.responsable || '-', qd, m.etat_depart || 'Bon', m.checkout ? qr : '-', manquant > 0 ? manquant : 'OK']
+    }),
+    headStyles: { fillColor: [5, 64, 53], fontSize: 8, fontStyle: 'bold' },
+    bodyStyles: { fontSize: 8 },
+    alternateRowStyles: { fillColor: [248, 248, 246] },
+    columnStyles: { 0: { fontStyle: 'bold' } },
+    margin: { left: 14, right: 14 },
   })
+
+  // Incidents
+  const avecIncidents = materiel.filter(m => (m.quantite_casse || 0) + (m.quantite_vole || 0) + (m.quantite_perdu || 0) > 0)
+  if (avecIncidents.length > 0) {
+    doc.setTextColor(5, 64, 53)
+    doc.setFontSize(10)
+    doc.setFont('helvetica', 'bold')
+    doc.text('INCIDENTS', 14, doc.lastAutoTable.finalY + 10)
+    doc.autoTable({
+      startY: doc.lastAutoTable.finalY + 13,
+      head: [['Equipement', 'Casse', 'Vole', 'Perdu', 'Description']],
+      body: avecIncidents.map(m => [m.nom, m.quantite_casse || 0, m.quantite_vole || 0, m.quantite_perdu || 0, m.incident || '-']),
+      headStyles: { fillColor: [163, 45, 45], fontSize: 8, fontStyle: 'bold' },
+      bodyStyles: { fontSize: 8 },
+      alternateRowStyles: { fillColor: [248, 248, 246] },
+      margin: { left: 14, right: 14 },
+    })
+  }
+
+  // Résumé
+  const finalY = doc.lastAutoTable.finalY + 10
+  doc.setTextColor(5, 64, 53)
+  doc.setFontSize(10)
+  doc.setFont('helvetica', 'bold')
+  doc.text('RESUME', 14, finalY)
+  doc.autoTable({
+    startY: finalY + 3,
+    head: [['Equipements', 'Unites depart', 'Casses', 'Voles', 'Perdus', 'Manquants']],
+    body: [[materiel.length, totalDepart, totalCasse, totalVole, totalPerdu, totalVole + totalPerdu]],
+    headStyles: { fillColor: [5, 64, 53], fontSize: 8, fontStyle: 'bold' },
+    bodyStyles: { fontSize: 9, fontStyle: 'bold' },
+    margin: { left: 14, right: 14 },
+  })
+
+  // Footer
+  const pageCount = doc.internal.getNumberOfPages()
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i)
+    doc.setFontSize(7)
+    doc.setTextColor(150)
+    doc.text(`Camp-Navs 2026 - Mission Evangelique des Navigateurs CI - Page ${i}/${pageCount}`, 105, 290, { align: 'center' })
+  }
+
+  doc.save(`Bilan_Logistique_CampNavs2026_${new Date().toLocaleDateString('fr-FR').replace(/\//g, '-')}.pdf`)
 }
 
 export default function LogistiquePage() {
