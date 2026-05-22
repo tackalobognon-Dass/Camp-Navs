@@ -1,6 +1,8 @@
+import { useState } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import PrivateRoute from './routes/PrivateRoute'
 import InstallBanner from './components/InstallBanner'
+import SplashScreen from './components/SplashScreen'
 
 import HomePage from './pages/public/HomePage'
 import InscriptionPage from './pages/public/InscriptionPage'
@@ -29,8 +31,11 @@ import SuiviPostCampPage from './pages/admin/SuiviPostCampPage'
 import ParametresPage from './pages/admin/ParametresPage'
 
 function App() {
+  const [splashDone, setSplashDone] = useState(false)
+
   return (
     <>
+      {!splashDone && <SplashScreen onFinish={() => setSplashDone(true)} />}
       <InstallBanner />
       <Routes>
         <Route path="/" element={<HomePage />} />
