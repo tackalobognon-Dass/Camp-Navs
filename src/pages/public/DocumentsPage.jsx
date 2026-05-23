@@ -68,20 +68,15 @@ function FileIcon({ url, size = 20 }) {
 function DownloadIconBtn({ url, label, large = false }) {
   const [loading, setLoading] = useState(false)
 
-  async function handleDownload() {
+  function handleDownload() {
     if (!url) return
     setLoading(true)
-    try {
-      const res = await fetch(url)
-      const blob = await res.blob()
-      const a = document.createElement('a')
-      a.href = URL.createObjectURL(blob)
-      a.download = label || 'document'
-      a.click()
-    } catch {
-      window.open(url, '_blank')
-    }
-    setLoading(false)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = label || 'document'
+    a.target = '_blank'
+    a.click()
+    setTimeout(() => setLoading(false), 800)
   }
 
   if (large) {
@@ -170,13 +165,11 @@ export default function DocumentsPage() {
           <div onClick={async () => {
             if (!featured.lien_fichier) return
             try {
-              const res = await fetch(featured.lien_fichier)
-              const blob = await res.blob()
-              const a = document.createElement('a')
-              a.href = URL.createObjectURL(blob)
-              a.download = featured.nom
-              a.click()
-            } catch { window.open(featured.lien_fichier, '_blank') }
+                const a = document.createElement('a')
+                a.href = featured.lien_fichier
+                a.download = featured.nom
+                a.target = '_blank'
+                a.click()
           }}
             style={{ background: 'linear-gradient(140deg,#054035,#0D7A5A)', borderRadius: 20, padding: '18px 16px', marginBottom: 16, position: 'relative', overflow: 'hidden', cursor: 'pointer' }}>
             <div style={{ position: 'absolute', width: 100, height: 100, borderRadius: '50%', background: 'rgba(255,255,255,0.06)', top: -30, right: -20 }} />
