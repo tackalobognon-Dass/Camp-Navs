@@ -7,34 +7,34 @@ const VERSETS = [
   { texte: "Je puis tout par celui qui me fortifie.", ref: "Philippiens 4:13" },
   { texte: "L'Éternel est mon berger, je ne manquerai de rien.", ref: "Psaume 23:1" },
   { texte: "Confie-toi en l'Éternel de tout ton cœur, et ne t'appuie pas sur ta sagesse.", ref: "Proverbes 3:5" },
-  { texte: "Car je connais les projets que j'ai formés sur vous, dit l'Éternel, projets de paix et non de malheur, afin de vous donner un avenir et de l'espérance.", ref: "Jérémie 29:11" },
-  { texte: "Mais ceux qui se confient en l'Éternel renouvellent leur force. Ils prennent le vol comme les aigles.", ref: "Ésaïe 40:31" },
-  { texte: "Ne crains rien, car je suis avec toi ; ne promène pas des regards inquiets, car je suis ton Dieu.", ref: "Ésaïe 41:10" },
-  { texte: "Cherchez premièrement le royaume et la justice de Dieu ; et toutes ces choses vous seront données par-dessus.", ref: "Matthieu 6:33" },
+  { texte: "Car je connais les projets que j'ai formés sur vous, projets de paix et non de malheur.", ref: "Jérémie 29:11" },
+  { texte: "Mais ceux qui se confient en l'Éternel renouvellent leur force.", ref: "Ésaïe 40:31" },
+  { texte: "Ne crains rien, car je suis avec toi.", ref: "Ésaïe 41:10" },
+  { texte: "Cherchez premièrement le royaume et la justice de Dieu.", ref: "Matthieu 6:33" },
   { texte: "Voici, je suis avec vous tous les jours, jusqu'à la fin du monde.", ref: "Matthieu 28:20" },
-  { texte: "L'amour de Dieu a été répandu dans nos cœurs par le Saint-Esprit qui nous a été donné.", ref: "Romains 5:5" },
-  { texte: "Soyez forts et courageux. Ne craignez rien, ne soyez pas effrayés, car l'Éternel, ton Dieu, marchera avec toi.", ref: "Deutéronome 31:6" },
-  { texte: "Heureux les artisans de paix, car ils seront appelés fils de Dieu.", ref: "Matthieu 5:9" },
-  { texte: "C'est par la grâce que vous êtes sauvés, par le moyen de la foi.", ref: "Éphésiens 2:8" },
-  { texte: "Que votre lumière brille ainsi devant les hommes, afin qu'ils voient vos bonnes œuvres.", ref: "Matthieu 5:16" },
-  { texte: "Réjouissez-vous toujours dans le Seigneur. Je le répète : réjouissez-vous !", ref: "Philippiens 4:4" },
-  { texte: "Ne vous lassez pas de faire le bien.", ref: "2 Thessaloniciens 3:13" },
-  { texte: "Rendez grâces en toutes choses, car c'est à votre égard la volonté de Dieu.", ref: "1 Thessaloniciens 5:18" },
-  { texte: "L'Éternel est proche de ceux qui ont le cœur brisé, et il sauve ceux qui ont l'esprit dans l'abattement.", ref: "Psaume 34:18" },
-  { texte: "Fortifiez-vous et prenez courage ! Ne craignez pas.", ref: "Psaume 31:24" },
-  { texte: "Celui qui habite sous l'abri du Très-Haut repose à l'ombre du Tout-Puissant.", ref: "Psaume 91:1" },
-  { texte: "En toutes choses, nous sommes plus que vainqueurs par celui qui nous a aimés.", ref: "Romains 8:37" },
-  { texte: "Venez à moi, vous tous qui êtes fatigués et chargés, et je vous donnerai du repos.", ref: "Matthieu 11:28" },
-  { texte: "Car Dieu n'est pas un Dieu de désordre, mais un Dieu de paix.", ref: "1 Corinthiens 14:33" },
-  { texte: "Que la paix de Dieu, qui surpasse toute intelligence, garde vos cœurs.", ref: "Philippiens 4:7" },
   { texte: "Si Dieu est pour nous, qui sera contre nous ?", ref: "Romains 8:31" },
   { texte: "Aimez-vous les uns les autres comme je vous ai aimés.", ref: "Jean 15:12" },
   { texte: "Ta parole est une lampe à mes pieds, et une lumière sur mon sentier.", ref: "Psaume 119:105" },
-  { texte: "L'Éternel te bénisse et te garde !", ref: "Nombres 6:24" },
   { texte: "Que tout ce que vous faites soit fait avec amour.", ref: "1 Corinthiens 16:14" },
+  { texte: "Réjouissez-vous toujours dans le Seigneur. Je le répète : réjouissez-vous !", ref: "Philippiens 4:4" },
+  { texte: "Rendez grâces en toutes choses.", ref: "1 Thessaloniciens 5:18" },
+  { texte: "En toutes choses, nous sommes plus que vainqueurs.", ref: "Romains 8:37" },
+  { texte: "Venez à moi, vous tous qui êtes fatigués et chargés.", ref: "Matthieu 11:28" },
+  { texte: "Que la paix de Dieu garde vos cœurs.", ref: "Philippiens 4:7" },
+  { texte: "L'amour de Dieu a été répandu dans nos cœurs.", ref: "Romains 5:5" },
+  { texte: "Ne vous lassez pas de faire le bien.", ref: "2 Thessaloniciens 3:13" },
+  { texte: "L'Éternel est proche de ceux qui ont le cœur brisé.", ref: "Psaume 34:18" },
   { texte: "Dieu a tant aimé le monde qu'il a donné son Fils unique.", ref: "Jean 3:16" },
-  { texte: "Je suis la résurrection et la vie. Celui qui croit en moi vivra, même s'il meurt.", ref: "Jean 11:25" },
+  { texte: "Heureux les artisans de paix, car ils seront appelés fils de Dieu.", ref: "Matthieu 5:9" },
   { texte: "L'Éternel est ma lumière et mon salut : de qui aurais-je crainte ?", ref: "Psaume 27:1" },
+  { texte: "Fortifiez-vous et prenez courage !", ref: "Psaume 31:24" },
+  { texte: "Celui qui habite sous l'abri du Très-Haut repose à l'ombre du Tout-Puissant.", ref: "Psaume 91:1" },
+  { texte: "C'est par la grâce que vous êtes sauvés, par le moyen de la foi.", ref: "Éphésiens 2:8" },
+  { texte: "Que votre lumière brille ainsi devant les hommes.", ref: "Matthieu 5:16" },
+  { texte: "L'Éternel te bénisse et te garde !", ref: "Nombres 6:24" },
+  { texte: "Je suis la résurrection et la vie.", ref: "Jean 11:25" },
+  { texte: "Soyez forts et courageux. Ne craignez rien.", ref: "Deutéronome 31:6" },
+  { texte: "Car je sais que c'est pour mon salut.", ref: "Philippiens 1:19" },
 ]
 
 function getVerset() {
@@ -42,13 +42,23 @@ function getVerset() {
   return VERSETS[jour % VERSETS.length]
 }
 
+function getMontantDu(ins) {
+  if (ins.montant_personnalise != null) return ins.montant_personnalise
+  return ins.tranche_age === 'Enfants & Adolescents' ? 25000 : 30000
+}
+
+const statutBadge = {
+  'payé':       { bg: 'rgba(16,185,129,0.1)', color: '#065f46', label: 'Payé' },
+  'en attente': { bg: 'rgba(245,158,11,0.1)', color: '#92400e', label: 'En attente' },
+  'partiel':    { bg: 'rgba(59,130,246,0.1)', color: '#1e3a8a', label: 'Partiel' },
+}
+
 export default function DashboardPage() {
   const navigate = useNavigate()
   const [stats, setStats] = useState({
     totalInscrits: 0, jeunes: 0, enfants: 0,
     payes: 0, enAttente: 0, partiels: 0,
-    montantCollecte: 0, solde: 0, budgetGlobal: 0,
-    totalDepenses: 0,
+    montantCollecte: 0, solde: 0, budgetGlobal: 0, totalRecettes: 0,
   })
   const [dernieres, setDernieres] = useState([])
   const [loading, setLoading] = useState(true)
@@ -64,37 +74,24 @@ export default function DashboardPage() {
       ])
 
       const inscrits = ins || []
-      const jeunes = inscrits.filter(i => i.tranche_age === 'Jeunes & Adultes')
-      const enfants = inscrits.filter(i => i.tranche_age === 'Enfants & Adolescents')
-      const payes = inscrits.filter(i => i.statut_paiement === 'payé')
-      const enAttente = inscrits.filter(i => i.statut_paiement === 'en attente')
-      const partiels = inscrits.filter(i => i.statut_paiement === 'partiel')
-
-      function getMontantDu(ins) {
-        if (ins.montant_personnalise != null) return ins.montant_personnalise
-        return ins.tranche_age === 'Enfants & Adolescents' ? 25000 : 30000
-      }
-
       const montantCollecte = inscrits.reduce((s, i) => {
         const du = getMontantDu(i)
         return s + (i.statut_paiement === 'payé' ? du : (i.montant_paye || 0))
       }, 0)
-
       const totalRec = (rec || []).reduce((s, r) => s + (r.montant || r.valeur_estimee || 0), 0)
       const totalDep = (dep || []).reduce((s, d) => s + (d.montant || 0), 0)
       const budget = bg && bg.length > 0 ? bg[0].montant : 0
 
       setStats({
         totalInscrits: inscrits.length,
-        jeunes: jeunes.length,
-        enfants: enfants.length,
-        payes: payes.length,
-        enAttente: enAttente.length,
-        partiels: partiels.length,
+        jeunes: inscrits.filter(i => i.tranche_age === 'Jeunes & Adultes').length,
+        enfants: inscrits.filter(i => i.tranche_age === 'Enfants & Adolescents').length,
+        payes: inscrits.filter(i => i.statut_paiement === 'payé').length,
+        enAttente: inscrits.filter(i => i.statut_paiement === 'en attente').length,
+        partiels: inscrits.filter(i => i.statut_paiement === 'partiel').length,
         montantCollecte,
         solde: totalRec - totalDep,
         budgetGlobal: budget,
-        totalDepenses: totalDep,
         totalRecettes: totalRec,
       })
       setDernieres(inscrits.slice(0, 5))
@@ -103,133 +100,179 @@ export default function DashboardPage() {
     fetchData()
   }, [])
 
-  const pctJeunes = Math.min((stats.jeunes / 100) * 100, 100)
-  const pctEnfants = Math.min((stats.enfants / 50) * 100, 100)
   const pctBudget = stats.budgetGlobal > 0 ? Math.min((stats.totalRecettes / stats.budgetGlobal) * 100, 100) : 0
 
-  const statutColor = {
-    'payé': { bg: '#E1F5EE', color: '#085041' },
-    'en attente': { bg: '#FAEEDA', color: '#854F0B' },
-    'partiel': { bg: '#E6F1FB', color: '#185FA5' },
-  }
+  const kpis = [
+    {
+      label: 'Total inscrits', val: stats.totalInscrits,
+      icon: <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>,
+      iconBg: '#EFF6FF', iconColor: '#2563EB',
+    },
+    {
+      label: 'Payés', val: stats.payes,
+      icon: <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
+      iconBg: '#ECFDF5', iconColor: '#059669',
+    },
+    {
+      label: 'En attente', val: stats.enAttente,
+      icon: <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
+      iconBg: '#FFFBEB', iconColor: '#D97706',
+    },
+    {
+      label: 'Partiels', val: stats.partiels,
+      icon: <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>,
+      iconBg: '#EFF6FF', iconColor: '#3B82F6',
+    },
+  ]
 
   return (
     <AdminLayout>
-      {/* Verset du jour */}
-      <div style={{ background: '#fff', padding: '12px 14px', marginBottom: 20, borderLeft: '3px solid #085041' }}>
-        <p style={{ fontSize: 9, color: '#085041', fontWeight: 600, letterSpacing: '0.06em', marginBottom: 4 }}>VERSET DU JOUR</p>
-        <p style={{ fontSize: 13, color: '#1a1a1a', lineHeight: 1.6, fontStyle: 'italic', marginBottom: 4 }}>« {verset.texte} »</p>
-        <p style={{ fontSize: 10, color: '#888' }}>{verset.ref}</p>
+
+      {/* Verset du jour — bandeau compact */}
+      <div style={{
+        background: '#fff',
+        borderRadius: 10,
+        borderLeft: '3px solid #054035',
+        padding: '10px 14px',
+        marginBottom: 20,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 10,
+      }}>
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#054035" strokeWidth="1.5" style={{ flexShrink: 0 }}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+        </svg>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <span style={{ fontSize: 12, fontStyle: 'italic', color: '#374151' }}>« {verset.texte} »</span>
+          <span style={{ fontSize: 10, color: '#9CA3AF', marginLeft: 6 }}>{verset.ref}</span>
+        </div>
       </div>
 
-      {loading && <p className="text-sm text-gray-400 text-center py-8">Chargement...</p>}
+      {loading && <p style={{ fontSize: 13, color: '#9CA3AF', textAlign: 'center', padding: '32px 0' }}>Chargement...</p>}
 
       {!loading && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-          {/* Inscriptions */}
-          <div style={{ background: '#fff', borderRadius: 14, border: '0.5px solid #e5e5e0', overflow: 'hidden' }}>
-            <div style={{ padding: '12px 14px', borderBottom: '0.5px solid #f0f0ee', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <p style={{ fontSize: 9, fontWeight: 600, color: '#085041', letterSpacing: '0.05em' }}>INSCRIPTIONS</p>
-              <p style={{ fontSize: 20, fontWeight: 700, color: '#1a1a1a' }}>{stats.totalInscrits} <span style={{ fontSize: 12, color: '#888', fontWeight: 400 }}>/ 150</span></p>
-            </div>
-
-            {/* Répartition jeunes / enfants */}
-            <div style={{ padding: '10px 14px', borderBottom: '0.5px solid #f0f0ee', display: 'flex', justifyContent: 'space-around' }}>
-              <div style={{ textAlign: 'center' }}>
-                <p style={{ fontSize: 22, fontWeight: 700, color: '#1a1a1a' }}>{stats.jeunes}</p>
-                <p style={{ fontSize: 10, color: '#888' }}>Jeunes & Adultes</p>
-                <p style={{ fontSize: 9, color: '#aaa' }}>sur 100</p>
-              </div>
-              <div style={{ width: '0.5px', background: '#f0f0ee' }} />
-              <div style={{ textAlign: 'center' }}>
-                <p style={{ fontSize: 22, fontWeight: 700, color: '#1a1a1a' }}>{stats.enfants}</p>
-                <p style={{ fontSize: 10, color: '#888' }}>Enfants & Ados</p>
-                <p style={{ fontSize: 9, color: '#aaa' }}>sur 50</p>
-              </div>
-            </div>
-
-            {/* Statuts paiement — boutons distincts */}
-            <div style={{ padding: '10px 14px', display: 'flex', gap: 8 }}>
-              <div style={{ flex: 1, background: '#085041', borderRadius: 10, padding: '10px 8px', textAlign: 'center' }}>
-                <p style={{ fontSize: 20, fontWeight: 700, color: '#fff' }}>{stats.payes}</p>
-                <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.8)' }}>Payés</p>
-              </div>
-              <div style={{ flex: 1, background: '#C48A00', borderRadius: 10, padding: '10px 8px', textAlign: 'center' }}>
-                <p style={{ fontSize: 20, fontWeight: 700, color: '#fff' }}>{stats.enAttente}</p>
-                <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.8)' }}>En attente</p>
-              </div>
-              <div style={{ flex: 1, background: '#185FA5', borderRadius: 10, padding: '10px 8px', textAlign: 'center' }}>
-                <p style={{ fontSize: 20, fontWeight: 700, color: '#fff' }}>{stats.partiels}</p>
-                <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.8)' }}>Partiel</p>
-              </div>
+          {/* KPI Cards — Inscriptions */}
+          <div>
+            <p style={{ fontSize: 11, fontWeight: 600, color: '#9CA3AF', letterSpacing: '0.07em', marginBottom: 10 }}>INSCRIPTIONS</p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              {kpis.map(k => (
+                <div key={k.label} style={{
+                  background: '#fff',
+                  borderRadius: 12,
+                  border: '0.5px solid #F3F4F6',
+                  boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+                  padding: '14px 14px 12px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 8,
+                }}>
+                  <div style={{ width: 32, height: 32, borderRadius: 8, background: k.iconBg, color: k.iconColor, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {k.icon}
+                  </div>
+                  <div>
+                    <p style={{ fontSize: 24, fontWeight: 700, color: '#111827', margin: 0, lineHeight: 1 }}>{k.val}</p>
+                    <p style={{ fontSize: 11, color: '#6B7280', margin: '4px 0 0' }}>{k.label}</p>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
           {/* Finances */}
-          <div style={{ background: '#fff', borderRadius: 14, border: '0.5px solid #e5e5e0', overflow: 'hidden' }}>
-            <div style={{ padding: '12px 14px', borderBottom: '0.5px solid #f0f0ee' }}>
-              <p style={{ fontSize: 9, fontWeight: 600, color: '#085041', letterSpacing: '0.05em', marginBottom: 8 }}>FINANCES</p>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                <div>
-                  <p style={{ fontSize: 9, color: '#888', marginBottom: 2 }}>Montant collecté</p>
-                  <p style={{ fontSize: 15, fontWeight: 600, color: '#085041' }}>{stats.montantCollecte.toLocaleString()}</p>
-                  <p style={{ fontSize: 9, color: '#888' }}>FCFA</p>
-                </div>
-                <div>
-                  <p style={{ fontSize: 9, color: '#888', marginBottom: 2 }}>Solde disponible</p>
-                  <p style={{ fontSize: 15, fontWeight: 600, color: stats.solde >= 0 ? '#185FA5' : '#A32D2D' }}>{stats.solde.toLocaleString()}</p>
-                  <p style={{ fontSize: 9, color: '#888' }}>FCFA</p>
-                </div>
-              </div>
-            </div>
+          <div>
+            <p style={{ fontSize: 11, fontWeight: 600, color: '#9CA3AF', letterSpacing: '0.07em', marginBottom: 10 }}>FINANCES</p>
+            <div style={{ background: '#fff', borderRadius: 12, border: '0.5px solid #F3F4F6', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', padding: 16 }}>
 
-            {/* Budget global */}
-            {stats.budgetGlobal > 0 && (
-              <div style={{ padding: '10px 14px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                  <span style={{ fontSize: 11, color: '#444' }}>Budget global</span>
-                  <span style={{ fontSize: 11, fontWeight: 500, color: '#1a1a1a' }}>{Math.round(pctBudget)}% — {stats.totalRecettes.toLocaleString()} / {stats.budgetGlobal.toLocaleString()} FCFA</span>
-                </div>
-                <div style={{ background: '#f0f0ee', borderRadius: 3, height: 5 }}>
-                  <div style={{ background: pctBudget >= 100 ? '#085041' : '#854F0B', borderRadius: 3, height: 5, width: `${pctBudget}%`, transition: 'width .4s' }} />
-                </div>
-                <p style={{ fontSize: 10, color: '#888', marginTop: 4 }}>
-                  {pctBudget >= 100 ? '✓ Objectif atteint' : `Reste ${(stats.budgetGlobal - stats.totalRecettes).toLocaleString()} FCFA à collecter`}
+              {/* Montant collecté mis en valeur */}
+              <div style={{ marginBottom: 16 }}>
+                <p style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 4 }}>Montant collecté</p>
+                <p style={{ fontSize: 30, fontWeight: 700, color: '#059669', margin: 0, lineHeight: 1 }}>
+                  {stats.montantCollecte.toLocaleString()}
+                  <span style={{ fontSize: 14, fontWeight: 400, color: '#6B7280', marginLeft: 4 }}>FCFA</span>
                 </p>
               </div>
-            )}
+
+              {/* Solde */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, borderTop: '0.5px solid #F3F4F6', marginBottom: 16 }}>
+                <p style={{ fontSize: 12, color: '#6B7280', margin: 0 }}>Solde disponible</p>
+                <p style={{ fontSize: 15, fontWeight: 600, color: stats.solde >= 0 ? '#2563EB' : '#DC2626', margin: 0 }}>
+                  {stats.solde.toLocaleString()} FCFA
+                </p>
+              </div>
+
+              {/* Jauge budget global */}
+              {stats.budgetGlobal > 0 && (
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                    <span style={{ fontSize: 11, color: '#6B7280' }}>Budget global</span>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: '#054035' }}>{Math.round(pctBudget)}% atteint</span>
+                  </div>
+                  <div style={{ background: '#F3F4F6', borderRadius: 8, height: 10, overflow: 'hidden' }}>
+                    <div style={{
+                      height: 10,
+                      borderRadius: 8,
+                      width: `${pctBudget}%`,
+                      background: pctBudget >= 100 ? '#059669' : pctBudget >= 60 ? '#0EA5E9' : '#F59E0B',
+                      transition: 'width .4s ease',
+                    }} />
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 5 }}>
+                    <span style={{ fontSize: 10, color: '#9CA3AF' }}>{stats.totalRecettes.toLocaleString()} collectés</span>
+                    <span style={{ fontSize: 10, color: '#9CA3AF' }}>Objectif : {stats.budgetGlobal.toLocaleString()} FCFA</span>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Dernières inscriptions */}
-          <div style={{ background: '#fff', borderRadius: 14, border: '0.5px solid #e5e5e0', overflow: 'hidden' }}>
-            <div style={{ padding: '12px 14px', borderBottom: '0.5px solid #f0f0ee', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <p style={{ fontSize: 9, fontWeight: 600, color: '#085041', letterSpacing: '0.05em' }}>DERNIÈRES INSCRIPTIONS</p>
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+              <p style={{ fontSize: 11, fontWeight: 600, color: '#9CA3AF', letterSpacing: '0.07em', margin: 0 }}>DERNIÈRES INSCRIPTIONS</p>
               <button onClick={() => navigate('/admin/campeurs')}
-                style={{ fontSize: 10, color: '#085041', background: 'none', border: 'none', cursor: 'pointer' }}>Voir tout →</button>
+                style={{ fontSize: 11, color: '#054035', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 500 }}>
+                Voir tout →
+              </button>
             </div>
-            {dernieres.length === 0 && (
-              <p style={{ fontSize: 12, color: '#888', textAlign: 'center', padding: '16px' }}>Aucune inscription.</p>
+
+            {dernieres.length === 0 ? (
+              <div style={{ background: '#fff', borderRadius: 12, border: '0.5px solid #F3F4F6', padding: '20px', textAlign: 'center' }}>
+                <p style={{ fontSize: 13, color: '#9CA3AF' }}>Aucune inscription.</p>
+              </div>
+            ) : (
+              <div style={{ background: '#fff', borderRadius: 12, border: '0.5px solid #F3F4F6', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', overflow: 'hidden' }}>
+                {dernieres.map((ins, i) => {
+                  const sb = statutBadge[ins.statut_paiement] || { bg: '#F3F4F6', color: '#374151', label: ins.statut_paiement }
+                  return (
+                    <div key={ins.id} style={{
+                      display: 'flex', alignItems: 'center', gap: 10,
+                      padding: '11px 14px',
+                      borderBottom: i < dernieres.length - 1 ? '0.5px solid #F9FAFB' : 'none',
+                    }}>
+                      <div style={{ width: 34, height: 34, borderRadius: '50%', background: '#ECFDF5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <span style={{ fontSize: 12, fontWeight: 600, color: '#059669' }}>{ins.nom_complet?.charAt(0)}</span>
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ fontSize: 13, fontWeight: 500, color: '#111827', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ins.nom_complet}</p>
+                        <p style={{ fontSize: 10, color: '#9CA3AF', margin: '2px 0 0' }}>
+                          {ins.tranche_age === 'Jeunes & Adultes' ? 'Jeune/Adulte' : 'Enfant/Ado'} · {new Date(ins.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                        </p>
+                      </div>
+                      <span style={{
+                        fontSize: 10, fontWeight: 500,
+                        background: sb.bg, color: sb.color,
+                        borderRadius: 20, padding: '3px 9px',
+                        flexShrink: 0,
+                      }}>
+                        {sb.label}
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
             )}
-            {dernieres.map((ins, i) => {
-              const sc = statutColor[ins.statut_paiement] || { bg: '#f0f0f0', color: '#666' }
-              return (
-                <div key={ins.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderBottom: i < dernieres.length - 1 ? '0.5px solid #f0f0ee' : 'none' }}>
-                  <div style={{ width: 34, height: 34, borderRadius: '50%', background: '#E1F5EE', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <span style={{ fontSize: 12, fontWeight: 600, color: '#085041' }}>{ins.nom_complet?.charAt(0)}</span>
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontSize: 12, fontWeight: 500, color: '#1a1a1a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ins.nom_complet}</p>
-                    <p style={{ fontSize: 10, color: '#888' }}>
-                      {ins.tranche_age === 'Jeunes & Adultes' ? 'Jeune/Adulte' : 'Enfant/Ado'} · {new Date(ins.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
-                    </p>
-                  </div>
-                  <span style={{ fontSize: 9, background: sc.bg, color: sc.color, borderRadius: 20, padding: '2px 7px', fontWeight: 500, flexShrink: 0 }}>
-                    {ins.statut_paiement}
-                  </span>
-                </div>
-              )
-            })}
           </div>
 
         </div>
