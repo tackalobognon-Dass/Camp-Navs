@@ -163,14 +163,13 @@ export default function DocumentsPage() {
 
         {/* Document mis en avant */}
         {featured && (
-          <div onClick={async () => {
+          <div onClick={() => {
             if (!featured.lien_fichier) return
-            try {
-                const a = document.createElement('a')
-                a.href = featured.lien_fichier
-                a.download = featured.nom
-                a.target = '_blank'
-                a.click()
+            const a = document.createElement('a')
+            a.href = featured.lien_fichier
+            a.download = featured.nom
+            a.target = '_blank'
+            a.click()
           }}
             style={{ background: 'linear-gradient(140deg,#054035,#0D7A5A)', borderRadius: 20, padding: '18px 16px', marginBottom: 16, position: 'relative', overflow: 'hidden', cursor: 'pointer' }}>
             <div style={{ position: 'absolute', width: 100, height: 100, borderRadius: '50%', background: 'rgba(255,255,255,0.06)', top: -30, right: -20 }} />
