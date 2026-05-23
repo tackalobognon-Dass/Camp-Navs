@@ -9,7 +9,7 @@ import InscriptionPage from './pages/public/InscriptionPage'
 import ChantsPage from './pages/public/ChantsPage'
 import DocumentsPage from './pages/public/DocumentsPage'
 import ProgrammePage from './pages/public/ProgrammePage'
-import CommentairesPage from './pages/public/CommentairesPage'
+import TemoignagesPage from './pages/public/TemoignagesPage'
 import ContactPage from './pages/public/ContactPage'
 import SuiviPage from './pages/public/SuiviPage'
 import LieuPage from './pages/public/LieuPage'
@@ -28,7 +28,6 @@ import SoireePage from './pages/admin/SoireePage'
 import SantePage from './pages/admin/SantePage'
 import LogistiquePage from './pages/admin/LogistiquePage'
 import SuiviPostCampPage from './pages/admin/SuiviPostCampPage'
-import TemoignagesPage from './pages/public/TemoignagesPage'
 import TemoignagesAdminPage from './pages/admin/TemoignagesAdminPage'
 import ParametresPage from './pages/admin/ParametresPage'
 
@@ -45,10 +44,9 @@ function App() {
         <Route path="/chants" element={<ChantsPage />} />
         <Route path="/documents" element={<DocumentsPage />} />
         <Route path="/programme" element={<ProgrammePage />} />
-        <Route path="/discussion" element={<CommentairesPage />} />
+        <Route path="/temoignages" element={<TemoignagesPage />} />
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/suivi" element={<SuiviPage />} />
-        <Route path="/temoignages" element={<TemoignagesPage />} />
         <Route path="/lieu" element={<LieuPage />} />
 
         <Route path="/admin/login" element={<LoginPage />} />
