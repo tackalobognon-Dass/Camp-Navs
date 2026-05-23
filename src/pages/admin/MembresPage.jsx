@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { supabase } from '../../lib/supabase'
 import AdminLayout from '../../components/admin/AdminLayout'
 
@@ -21,8 +21,18 @@ export default function MembresPage() {
   const [editId, setEditId] = useState(null)
   const [saving, setSaving] = useState(false)
   const [recherche, setRecherche] = useState('')
+  const [menuOuvert, setMenuOuvert] = useState(null)
+  const menuRef = useRef(null)
 
   useEffect(() => { fetchMembres() }, [])
+
+  useEffect(() => {
+    function handleClick(e) {
+      if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOuvert(null)
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
 
   async function fetchMembres() {
     const { data } = await supabase.from('bureau_membres').select('*').order('role', { ascending: true })
@@ -32,38 +42,22 @@ export default function MembresPage() {
 
   function setF(key, val) { setForm(f => ({ ...f, [key]: val })) }
 
-  function openNew() {
-    setForm(EMPTY_FORM)
-    setEditId(null)
-    setShowForm(true)
-  }
+  function openNew() { setForm(EMPTY_FORM); setEditId(null); setShowForm(true) }
 
   function openEdit(m) {
-    setForm({
-      nom_complet: m.nom_complet,
-      role: m.role || '',
-      telephone: m.telephone || '',
-      email: m.email || '',
-      commission: m.commission || '',
-    })
+    setForm({ nom_complet: m.nom_complet, role: m.role || '', telephone: m.telephone || '', email: m.email || '', commission: m.commission || '' })
     setEditId(m.id)
     setShowForm(true)
+    setMenuOuvert(null)
   }
 
   async function handleSave() {
     if (!form.nom_complet || !form.role) return
     setSaving(true)
-    const payload = {
-      nom_complet: form.nom_complet,
-      role: form.role,
-      telephone: form.telephone,
-      email: form.email,
-      commission: form.commission,
-    }
     if (editId) {
-      await supabase.from('bureau_membres').update(payload).eq('id', editId)
+      await supabase.from('bureau_membres').update(form).eq('id', editId)
     } else {
-      await supabase.from('bureau_membres').insert([payload])
+      await supabase.from('bureau_membres').insert([form])
     }
     setSaving(false)
     setShowForm(false)
@@ -75,25 +69,24 @@ export default function MembresPage() {
   async function supprimerMembre(id) {
     if (!window.confirm('Supprimer ce membre ?')) return
     await supabase.from('bureau_membres').delete().eq('id', id)
+    setMenuOuvert(null)
     fetchMembres()
   }
 
   async function monterOrdre(index) {
     if (index === 0) return
     const newList = [...membres]
-    const temp = newList[index]
-    newList[index] = newList[index - 1]
-    newList[index - 1] = temp
+    ;[newList[index], newList[index - 1]] = [newList[index - 1], newList[index]]
     setMembres(newList)
+    setMenuOuvert(null)
   }
 
   async function descendreOrdre(index) {
     if (index === membres.length - 1) return
     const newList = [...membres]
-    const temp = newList[index]
-    newList[index] = newList[index + 1]
-    newList[index + 1] = temp
+    ;[newList[index], newList[index + 1]] = [newList[index + 1], newList[index]]
     setMembres(newList)
+    setMenuOuvert(null)
   }
 
   const filtres = membres.filter(m =>
@@ -119,38 +112,32 @@ export default function MembresPage() {
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={showForm && !editId ? "M6 18L18 6M6 6l12 12" : "M12 4v16m8-8H4"} />
           </svg>
-          {showForm && !editId ? 'Fermer' : 'Ajouter un membre'}
+          {showForm && !editId ? 'Fermer' : 'Ajouter'}
         </button>
       </div>
 
       {/* Formulaire */}
       {showForm && (
-        <div className="bg-white border border-gray-100 rounded-2xl p-4 mb-5">
-          <h2 className="text-sm font-medium text-gray-700 mb-4">
-            {editId ? 'Modifier le membre' : 'Nouveau membre'}
-          </h2>
-
+        <div className="bg-white border border-gray-100 rounded-xl p-4 mb-5">
+          <h2 className="text-sm font-medium text-gray-700 mb-4">{editId ? 'Modifier' : 'Nouveau membre'}</h2>
           <div className="mb-3">
             <label className="block text-xs text-gray-500 mb-1">Nom complet *</label>
             <input type="text" value={form.nom_complet} onChange={e => setF('nom_complet', e.target.value)}
               placeholder="Ex : N'DRI SERGE PACOME"
               className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-white outline-none focus:border-emerald-400" />
           </div>
-
           <div className="mb-3">
             <label className="block text-xs text-gray-500 mb-1">Rôle *</label>
             <input type="text" value={form.role} onChange={e => setF('role', e.target.value)}
               placeholder="Ex : Directeur du camp"
               className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-white outline-none focus:border-emerald-400" />
           </div>
-
           <div className="mb-3">
-            <label className="block text-xs text-gray-500 mb-1">Commission / Département</label>
+            <label className="block text-xs text-gray-500 mb-1">Commission</label>
             <input type="text" value={form.commission} onChange={e => setF('commission', e.target.value)}
-              placeholder="Ex : Logistique, Louange, Finance..."
+              placeholder="Ex : Logistique, Louange..."
               className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-white outline-none focus:border-emerald-400" />
           </div>
-
           <div className="grid grid-cols-2 gap-3 mb-4">
             <div>
               <label className="block text-xs text-gray-500 mb-1">Téléphone</label>
@@ -165,12 +152,9 @@ export default function MembresPage() {
                 className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-white outline-none focus:border-emerald-400" />
             </div>
           </div>
-
           <div className="flex gap-3">
             <button onClick={() => { setShowForm(false); setEditId(null) }}
-              className="flex-1 bg-gray-100 text-gray-600 text-sm font-medium py-3 rounded-xl">
-              Annuler
-            </button>
+              className="flex-1 bg-gray-100 text-gray-600 text-sm font-medium py-3 rounded-xl">Annuler</button>
             <button onClick={handleSave} disabled={saving || !form.nom_complet || !form.role}
               className="flex-1 bg-emerald-700 text-white text-sm font-medium py-3 rounded-xl disabled:opacity-60">
               {saving ? 'Enregistrement...' : editId ? 'Modifier' : 'Ajouter'}
@@ -181,75 +165,68 @@ export default function MembresPage() {
 
       {/* Recherche */}
       <input type="text" value={recherche} onChange={e => setRecherche(e.target.value)}
-        placeholder="Rechercher par nom, rôle ou commission..."
+        placeholder="Rechercher..."
         className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm mb-4 bg-white outline-none focus:border-emerald-400" />
 
-      {/* Liste */}
       {loading && <p className="text-sm text-gray-400 text-center py-8">Chargement...</p>}
-
       {!loading && membres.length === 0 && (
         <div className="bg-white border border-gray-100 rounded-xl p-6 text-center">
           <p className="text-sm text-gray-400">Aucun membre enregistré.</p>
-          <button onClick={openNew} className="mt-3 text-sm text-emerald-700 font-medium">
-            + Ajouter le premier membre
-          </button>
+          <button onClick={openNew} className="mt-3 text-sm text-emerald-700 font-medium">+ Ajouter le premier membre</button>
         </div>
       )}
 
-      <div className="space-y-2">
+      {/* Liste compacte */}
+      <div className="space-y-1.5" ref={menuRef}>
         {filtres.map((m, index) => {
           const av = getAvatar(m.nom_complet, index)
+          const infos = [m.commission, m.telephone].filter(Boolean).join(' · ')
           return (
-            <div key={m.id} className="bg-white border border-gray-100 rounded-xl p-3">
-              <div className="flex items-center gap-3">
-                {/* Avatar */}
-                <div style={{ width: 42, height: 42, borderRadius: '50%', background: av.bg, color: av.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 600, flexShrink: 0 }}>
+            <div key={m.id} style={{ background: '#fff', borderRadius: 10, border: '0.5px solid #e5e5e0', padding: '10px 12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                {/* Avatar compact */}
+                <div style={{ width: 36, height: 36, borderRadius: '50%', background: av.bg, color: av.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 600, flexShrink: 0 }}>
                   {av.initiales}
                 </div>
 
-                {/* Infos */}
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-800 truncate">{m.nom_complet}</p>
-                  <p className="text-xs text-emerald-700">{m.role}</p>
-                  {m.commission && <p className="text-xs text-gray-400">{m.commission}</p>}
-                  <div className="flex gap-3 mt-0.5 flex-wrap">
-                    {m.telephone && <p className="text-xs text-gray-400">{m.telephone}</p>}
-                    {m.email && <p className="text-xs text-gray-400">{m.email}</p>}
+                {/* Infos compactes */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, flexWrap: 'wrap' }}>
+                    <p style={{ fontSize: 13, fontWeight: 500, color: '#1a1a1a', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 160 }}>{m.nom_complet}</p>
+                    <span style={{ fontSize: 10, color: '#085041', fontWeight: 500, flexShrink: 0 }}>{m.role}</span>
                   </div>
+                  {infos && <p style={{ fontSize: 11, color: '#aaa', margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{infos}</p>}
                 </div>
 
-                {/* Actions */}
-                <div className="flex flex-col gap-1 flex-shrink-0">
-                  {/* Ordre */}
-                  <div className="flex gap-1">
-                    <button onClick={() => monterOrdre(index)}
-                      style={{ width: 26, height: 26, borderRadius: 6, background: '#f5f5f3', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <svg style={{ width: 12, height: 12, color: '#666' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                      </svg>
-                    </button>
-                    <button onClick={() => descendreOrdre(index)}
-                      style={{ width: 26, height: 26, borderRadius: 6, background: '#f5f5f3', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <svg style={{ width: 12, height: 12, color: '#666' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </button>
-                  </div>
-                  {/* Edit/Delete */}
-                  <div className="flex gap-1">
-                    <button onClick={() => openEdit(m)}
-                      style={{ width: 26, height: 26, borderRadius: 6, background: '#E1F5EE', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <svg style={{ width: 12, height: 12, color: '#085041' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                      </svg>
-                    </button>
-                    <button onClick={() => supprimerMembre(m.id)}
-                      style={{ width: 26, height: 26, borderRadius: 6, background: '#FCEBEB', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <svg style={{ width: 12, height: 12, color: '#A32D2D' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
-                  </div>
+                {/* Menu ... */}
+                <div style={{ position: 'relative', flexShrink: 0 }}>
+                  <button onClick={() => setMenuOuvert(menuOuvert === m.id ? null : m.id)}
+                    style={{ width: 28, height: 28, borderRadius: 7, background: '#f5f5f3', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, color: '#666' }}>
+                    ···
+                  </button>
+                  {menuOuvert === m.id && (
+                    <div style={{ position: 'absolute', right: 0, top: 32, background: '#fff', borderRadius: 10, border: '0.5px solid #e5e5e0', boxShadow: '0 4px 16px rgba(0,0,0,0.1)', zIndex: 20, minWidth: 160, overflow: 'hidden' }}>
+                      <button onClick={() => openEdit(m)}
+                        style={{ width: '100%', padding: '9px 14px', fontSize: 13, color: '#1a1a1a', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
+                        Modifier
+                      </button>
+                      <div style={{ height: '0.5px', background: '#f0f0ee' }} />
+                      <button onClick={() => monterOrdre(index)}
+                        style={{ width: '100%', padding: '9px 14px', fontSize: 13, color: '#1a1a1a', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
+                        Monter
+                      </button>
+                      <div style={{ height: '0.5px', background: '#f0f0ee' }} />
+                      <button onClick={() => descendreOrdre(index)}
+                        style={{ width: '100%', padding: '9px 14px', fontSize: 13, color: '#1a1a1a', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
+                        Descendre
+                      </button>
+                      <div style={{ height: '0.5px', background: '#f0f0ee' }} />
+                      <button onClick={() => supprimerMembre(m.id)}
+                        style={{ width: '100%', padding: '9px 14px', fontSize: 13, color: '#A32D2D', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
+                        Supprimer
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
