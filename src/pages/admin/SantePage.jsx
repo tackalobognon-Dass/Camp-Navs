@@ -284,21 +284,6 @@ export default function SantePage() {
         </button>
       </div>
 
-      {/* Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 20 }}>
-        {[
-          { label: 'Total malades', val: totalMalades, bg: '#1565C0', color: '#fff' },
-          { label: 'Guéris', val: gueris, bg: '#1A7A4A', color: '#fff' },
-          { label: 'En traitement', val: enTraitement, bg: '#E65100', color: '#fff' },
-          { label: 'Évacués', val: evacues, bg: '#C0392B', color: '#fff' },
-        ].map(s => (
-          <div key={s.label} style={{ background: s.bg, borderRadius: 8, padding: '12px 14px' }}>
-            <p style={{ fontSize: 22, fontWeight: 700, color: s.color }}>{s.val}</p>
-            <p style={{ fontSize: 11, color: s.color, opacity: 0.85 }}>{s.label}</p>
-          </div>
-        ))}
-      </div>
-
       {/* Onglets */}
       <div style={{ display: 'flex', gap: 6, marginBottom: 16, borderBottom: '1px solid #e0e0e0', paddingBottom: 0 }}>
         {[
@@ -318,7 +303,7 @@ export default function SantePage() {
       {onglet === 'malades' && (
         <>
           <button onClick={() => { setShowFiche(!showFiche); if (showFiche) { setEditFicheId(null); setFiche(EMPTY_FICHE) } else openNouvelleFiche() }}
-            style={{ ...btnPrimary, width: '100%', marginBottom: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+            style={{ ...btnPrimary, width: '100%', marginBottom: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, borderRadius: 14 }}>
             <svg style={{ width: 15, height: 15 }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={showFiche && !editFicheId ? "M6 18L18 6M6 6l12 12" : "M12 4v16m8-8H4"} /></svg>
             {showFiche && !editFicheId ? 'Fermer' : 'Nouvelle fiche malade'}
           </button>
@@ -499,7 +484,7 @@ export default function SantePage() {
       {onglet === 'medicaments' && (
         <>
           <button onClick={() => { setShowMed(!showMed); setEditMedId(null); setMedForm({ nom: '', quantite_initiale: 0, unite: 'comprimé(s)' }) }}
-            style={{ ...btnPrimary, width: '100%', marginBottom: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+            style={{ ...btnPrimary, width: '100%', marginBottom: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, borderRadius: 14 }}>
             <svg style={{ width: 15, height: 15 }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={showMed ? "M6 18L18 6M6 6l12 12" : "M12 4v16m8-8H4"} /></svg>
             {showMed ? 'Fermer' : 'Ajouter un médicament'}
           </button>
@@ -580,7 +565,7 @@ export default function SantePage() {
       {onglet === 'personnel' && (
         <>
           <button onClick={() => { setShowPersonnel(!showPersonnel); setEditPersonnelId(null); setPersonnelForm(EMPTY_PERSONNEL) }}
-            style={{ ...btnPrimary, width: '100%', marginBottom: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+            style={{ ...btnPrimary, width: '100%', marginBottom: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, borderRadius: 14 }}>
             <svg style={{ width: 15, height: 15 }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={showPersonnel ? "M6 18L18 6M6 6l12 12" : "M12 4v16m8-8H4"} /></svg>
             {showPersonnel ? 'Fermer' : 'Ajouter du personnel'}
           </button>
@@ -651,61 +636,89 @@ export default function SantePage() {
       {/* RAPPORT */}
       {onglet === 'rapport' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <div style={{ background: '#fff', borderRadius: 8, border: '0.5px solid #ddd', padding: 14 }}>
-            <p style={{ fontSize: 11, fontWeight: 600, color: '#054035', marginBottom: 12, letterSpacing: '0.05em' }}>RÉSUMÉ GÉNÉRAL</p>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-              {[
-                { label: 'Total malades', val: totalMalades, bg: '#1565C0' },
-                { label: 'Guéris', val: gueris, bg: '#1A7A4A' },
-                { label: 'En traitement', val: enTraitement, bg: '#E65100' },
-                { label: 'Évacués', val: evacues, bg: '#C0392B' },
-              ].map(s => (
-                <div key={s.label} style={{ background: s.bg, borderRadius: 8, padding: '10px 12px' }}>
-                  <p style={{ fontSize: 20, fontWeight: 700, color: '#fff' }}>{s.val}</p>
-                  <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.85)' }}>{s.label}</p>
-                </div>
-              ))}
-            </div>
+
+          {/* Header rapport avec bouton outline */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <p style={{ fontSize: 11, fontWeight: 600, color: '#9CA3AF', letterSpacing: '0.06em', margin: 0 }}>RAPPORT D'INFIRMERIE</p>
+            <button style={{ background: 'transparent', color: '#6B7280', border: '0.5px solid #D1D5DB', borderRadius: 8, padding: '6px 12px', fontSize: 11, fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5 }}>
+              <svg style={{ width: 13, height: 13 }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+              Exporter PDF
+            </button>
           </div>
 
+          {/* KPI Cards */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            {[
+              { label: 'Total malades', val: totalMalades, iconBg: '#EFF6FF', iconColor: '#2563EB', valColor: '#1D4ED8',
+                icon: <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg> },
+              { label: 'Guéris', val: gueris, iconBg: '#ECFDF5', iconColor: '#059669', valColor: '#065F46',
+                icon: <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> },
+              { label: 'En traitement', val: enTraitement, iconBg: '#FFFBEB', iconColor: '#D97706', valColor: '#92400E',
+                icon: <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> },
+              { label: 'Évacués', val: evacues, iconBg: '#FEF2F2', iconColor: '#DC2626', valColor: '#991B1B',
+                icon: <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg> },
+            ].map(s => (
+              <div key={s.label} style={{ background: '#fff', borderRadius: 12, border: '0.5px solid #F3F4F6', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', padding: 14 }}>
+                <div style={{ width: 30, height: 30, borderRadius: 8, background: s.iconBg, color: s.iconColor, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
+                  {s.icon}
+                </div>
+                <p style={{ fontSize: 24, fontWeight: 700, color: s.valColor, margin: 0, lineHeight: 1 }}>{s.val}</p>
+                <p style={{ fontSize: 11, color: '#6B7280', margin: '4px 0 0' }}>{s.label}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Évacuations */}
           {evacues > 0 && (
-            <div style={{ background: '#fff', borderRadius: 8, border: '0.5px solid #C0392B', padding: 14 }}>
-              <p style={{ fontSize: 11, fontWeight: 600, color: '#C0392B', marginBottom: 10, letterSpacing: '0.05em' }}>ÉVACUATIONS</p>
+            <div style={{ background: '#fff', borderRadius: 12, border: '0.5px solid #FCA5A5', padding: 14 }}>
+              <p style={{ fontSize: 11, fontWeight: 600, color: '#DC2626', marginBottom: 10, letterSpacing: '0.06em' }}>ÉVACUATIONS</p>
               {fiches.filter(f => f.statut === 'Évacué').map(f => (
-                <div key={f.id} style={{ background: '#FFEBEE', borderRadius: 8, padding: '10px 12px', marginBottom: 6 }}>
-                  <p style={{ fontSize: 13, fontWeight: 600, color: '#C0392B' }}>{f.nom_campeur}</p>
-                  <p style={{ fontSize: 11, color: '#555' }}>Hôpital : {f.hopital || '-'}</p>
-                  <p style={{ fontSize: 11, color: '#555' }}>Accompagnateur : {f.accompagnateur || '-'}</p>
+                <div key={f.id} style={{ background: '#FEF2F2', borderRadius: 10, padding: '10px 12px', marginBottom: 6 }}>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: '#991B1B', margin: '0 0 4px' }}>{f.nom_campeur}</p>
+                  <p style={{ fontSize: 11, color: '#555', margin: '0 0 2px' }}>Hôpital : {f.hopital || '-'}</p>
+                  <p style={{ fontSize: 11, color: '#555', margin: 0 }}>Accompagnateur : {f.accompagnateur || '-'}</p>
                 </div>
               ))}
             </div>
           )}
 
-          <div style={{ background: '#fff', borderRadius: 8, border: '0.5px solid #ddd', padding: 14 }}>
-            <p style={{ fontSize: 11, fontWeight: 600, color: '#054035', marginBottom: 10, letterSpacing: '0.05em' }}>STOCK MÉDICAMENTS</p>
-            {medicaments.map(m => {
+          {/* Stock médicaments avec jauges */}
+          <div style={{ background: '#fff', borderRadius: 12, border: '0.5px solid #F3F4F6', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', padding: 14 }}>
+            <p style={{ fontSize: 11, fontWeight: 600, color: '#9CA3AF', marginBottom: 12, letterSpacing: '0.06em' }}>STOCK MÉDICAMENTS</p>
+            {medicaments.length === 0 && <p style={{ fontSize: 12, color: '#9CA3AF', textAlign: 'center' }}>Aucun médicament enregistré.</p>}
+            {medicaments.map((m, i) => {
               const initial = m.quantite_initiale || 0
               const utilise = m.quantite_utilisee || 0
               const restant = initial - utilise
+              const pct = initial > 0 ? (restant / initial) * 100 : 0
+              const epuise = restant <= 0
+              const critique = pct > 0 && pct <= 20
+              const couleur = epuise ? '#DC2626' : critique ? '#D97706' : '#059669'
               return (
-                <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '7px 0', borderBottom: '0.5px solid #f0f0ee' }}>
-                  <p style={{ fontSize: 12, color: '#333' }}>{m.nom}</p>
-                  <div style={{ display: 'flex', gap: 10, fontSize: 12 }}>
-                    <span style={{ color: '#888' }}>Initial : {initial}</span>
-                    <span style={{ color: '#C0392B' }}>Utilisé : {utilise}</span>
-                    <span style={{ color: restant <= 0 ? '#C0392B' : '#1A7A4A', fontWeight: 600 }}>Restant : {restant}</span>
+                <div key={m.id} style={{ marginBottom: i < medicaments.length - 1 ? 14 : 0, paddingBottom: i < medicaments.length - 1 ? 14 : 0, borderBottom: i < medicaments.length - 1 ? '0.5px solid #F9FAFB' : 'none' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ fontSize: 13, fontWeight: 500, color: '#111827' }}>{m.nom}</span>
+                      {epuise && <span style={{ fontSize: 10, background: '#FEF2F2', color: '#DC2626', borderRadius: 4, padding: '1px 7px', fontWeight: 600 }}>Épuisé</span>}
+                      {critique && <span style={{ fontSize: 10, background: '#FFFBEB', color: '#D97706', borderRadius: 4, padding: '1px 7px', fontWeight: 600 }}>Critique</span>}
+                    </div>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: couleur }}>{restant} {m.unite || 'cp'}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
+                    <span style={{ fontSize: 10, color: '#9CA3AF' }}>Initial : {initial}</span>
+                    <span style={{ fontSize: 10, color: '#9CA3AF' }}>Utilisé : {utilise}</span>
+                  </div>
+                  <div style={{ background: '#F3F4F6', borderRadius: 8, height: 6 }}>
+                    <div style={{ background: couleur, borderRadius: 8, height: 6, width: `${Math.max(pct, 0)}%`, transition: 'width .3s' }} />
                   </div>
                 </div>
               )
             })}
           </div>
 
-          <button style={{ ...btnDanger, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-            <svg style={{ width: 15, height: 15 }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-            Exporter le rapport PDF
-          </button>
         </div>
       )}
+
     </AdminLayout>
   )
 }
