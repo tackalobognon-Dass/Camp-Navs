@@ -7,6 +7,17 @@ function getMontantDu(r) {
   return r.tranche_age === 'Enfants & Adolescents' ? 25000 : 30000
 }
 
+function copierNumero(numero) {
+  navigator.clipboard.writeText(numero).catch(() => {
+    const el = document.createElement('textarea')
+    el.value = numero
+    document.body.appendChild(el)
+    el.select()
+    document.execCommand('copy')
+    document.body.removeChild(el)
+  })
+}
+
 export default function SuiviPage() {
   const navigate = useNavigate()
   const [telephone, setTelephone] = useState('')
@@ -14,6 +25,7 @@ export default function SuiviPage() {
   const [versementsMap, setVersementsMap] = useState({})
   const [loading, setLoading] = useState(false)
   const [rechercheFaite, setRechercheFaite] = useState(false)
+  const [copie, setCopie] = useState('')
 
   async function handleRecherche() {
     if (!telephone.trim()) return
@@ -32,7 +44,6 @@ export default function SuiviPage() {
     setResultats(inscrits)
     setRechercheFaite(true)
 
-    // Charger les versements pour chaque inscription
     if (inscrits.length > 0) {
       const ids = inscrits.map(i => i.id)
       const { data: vers } = await supabase
@@ -48,159 +59,182 @@ export default function SuiviPage() {
       })
       setVersementsMap(map)
     }
-
     setLoading(false)
   }
 
+  function handleCopier(numero) {
+    copierNumero(numero)
+    setCopie(numero)
+    setTimeout(() => setCopie(''), 2000)
+  }
+
+  const contacts = [
+    { nom: 'Bureau des Navigateurs', numero: '0778484879', affiche: '07 78 48 48 79' },
+    { nom: 'Mme OBODJI', numero: '0709626265', affiche: '07 09 62 62 65' },
+  ]
+
   return (
-    <div style={{ minHeight: '100vh', background: '#f8f8f6', maxWidth: 480, margin: '0 auto' }}>
+    <div style={{ minHeight: '100vh', background: '#F0F4F0', maxWidth: 480, margin: '0 auto' }}>
 
       {/* Header */}
-      <div style={{ background: 'linear-gradient(160deg,#054035,#085041)', padding: '44px 16px 24px', color: '#fff' }}>
-        <button onClick={() => navigate(-1)} style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#9FE1CB', fontSize: 12, background: 'none', border: 'none', cursor: 'pointer', marginBottom: 14 }}>
-          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>
+      <div style={{ background: '#054035', padding: '44px 16px 20px' }}>
+        <button onClick={() => navigate(-1)}
+          style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'rgba(255,255,255,0.6)', fontSize: 11, background: 'none', border: 'none', cursor: 'pointer', marginBottom: 12 }}>
+          <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>
           Retour
         </button>
-        <div style={{ fontSize: 20, fontWeight: 500, color: '#fff', marginBottom: 4 }}>Mon inscription</div>
-        <div style={{ fontSize: 11, color: '#9FE1CB' }}>Vérifiez votre statut de paiement</div>
+        <p style={{ fontSize: 20, fontWeight: 500, color: '#fff', marginBottom: 3 }}>Mon inscription</p>
+        <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>Camp-Navs 2026 · La Sablière, Bingerville</p>
       </div>
 
-      <div style={{ padding: '20px 16px 80px' }}>
+      <div style={{ padding: '16px 14px 60px', display: 'flex', flexDirection: 'column', gap: 14 }}>
 
-        {/* Formulaire */}
-        <div style={{ background: '#fff', borderRadius: 14, border: '0.5px solid #e5e5e0', padding: 20, marginBottom: 16 }}>
-          <label style={{ display: 'block', fontSize: 13, color: '#444', marginBottom: 8 }}>Votre numéro de téléphone</label>
-          <input type="tel" value={telephone} onChange={e => setTelephone(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && handleRecherche()}
-            placeholder="Ex : 07 XX XX XX XX"
-            style={{ width: '100%', border: '0.5px solid #e5e5e0', borderRadius: 10, padding: '12px 14px', fontSize: 14, color: '#1a1a1a', background: '#fafaf8', outline: 'none', marginBottom: 12 }} />
-          <button onClick={handleRecherche} disabled={loading || !telephone.trim()}
-            style={{ width: '100%', background: '#085041', color: '#fff', border: 'none', borderRadius: 10, padding: '13px', fontSize: 14, fontWeight: 500, cursor: 'pointer', opacity: loading || !telephone.trim() ? 0.6 : 1 }}>
-            {loading ? 'Recherche...' : 'Rechercher'}
-          </button>
+        {/* Recherche */}
+        <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #dde8dd', padding: 18 }}>
+          <label style={{ fontSize: 12, color: '#555', marginBottom: 8, display: 'block', fontWeight: 500 }}>
+            Votre numéro de téléphone
+          </label>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <input type="tel" value={telephone} onChange={e => setTelephone(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleRecherche()}
+              placeholder="07 XX XX XX XX"
+              style={{ flex: 1, border: '0.5px solid #ccc', borderRadius: 10, padding: '10px 12px', fontSize: 13, outline: 'none', background: '#F8FAF8', color: '#1a1a1a' }} />
+            <button onClick={handleRecherche} disabled={loading || !telephone.trim()}
+              style={{ background: '#054035', color: '#fff', border: 'none', borderRadius: 10, padding: '10px 16px', fontSize: 12, fontWeight: 500, cursor: 'pointer', opacity: loading || !telephone.trim() ? 0.6 : 1, whiteSpace: 'nowrap' }}>
+              {loading ? '...' : 'Rechercher'}
+            </button>
+          </div>
         </div>
 
         {/* Aucun résultat */}
         {rechercheFaite && resultats.length === 0 && (
-          <div style={{ background: '#FCEBEB', border: '0.5px solid #F09595', borderRadius: 14, padding: '16px 18px', textAlign: 'center' }}>
+          <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #F09595', padding: '18px', textAlign: 'center' }}>
             <p style={{ fontSize: 13, color: '#A32D2D', fontWeight: 500, marginBottom: 4 }}>Aucune inscription trouvée</p>
-            <p style={{ fontSize: 11, color: '#993C1D' }}>Vérifiez votre numéro ou inscrivez-vous.</p>
+            <p style={{ fontSize: 11, color: '#888' }}>Vérifiez votre numéro ou inscrivez-vous si ce n'est pas encore fait.</p>
           </div>
         )}
 
         {/* Résultats */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          {resultats.map(r => {
-            const total = getMontantDu(r)
-            const versements = versementsMap[r.id] || []
-            const totalVerse = versements.reduce((s, v) => s + v.montant, 0)
-            const reste = Math.max(total - totalVerse, 0)
-            const statut = r.statut_paiement
+        {resultats.map(r => {
+          const total = getMontantDu(r)
+          const versements = versementsMap[r.id] || []
+          const totalVerse = versements.reduce((s, v) => s + v.montant, 0)
+          const reste = Math.max(total - totalVerse, 0)
+          const statut = r.statut_paiement
+          const initiales = r.nom_complet?.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()
 
-            return (
-              <div key={r.id} style={{ background: '#fff', borderRadius: 14, border: '0.5px solid #e5e5e0', overflow: 'hidden' }}>
+          const badgeConfig = {
+            'payé':       { label: 'Inscription validée', bg: '#5DCAA5', color: '#04342C' },
+            'partiel':    { label: 'Paiement en cours',  bg: '#C9A84C', color: '#412402' },
+            'en attente': { label: 'En attente de paiement', bg: '#EF9F27', color: '#412402' },
+          }
+          const badge = badgeConfig[statut] || badgeConfig['en attente']
 
-                {/* En-tête */}
-                <div style={{ padding: '14px 16px', borderBottom: '0.5px solid #f0f0ee', display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <div style={{ width: 44, height: 44, background: '#E1F5EE', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <span style={{ fontSize: 16, fontWeight: 600, color: '#085041' }}>{r.nom_complet?.charAt(0)}</span>
+          return (
+            <div key={r.id} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+
+              {/* Badge campeur / Pass */}
+              <div style={{ background: '#054035', borderRadius: 20, padding: 20, color: '#fff', position: 'relative', overflow: 'hidden' }}>
+                <div style={{ position: 'absolute', width: 140, height: 140, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.06)', top: -40, right: -40 }} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+                  <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, fontWeight: 500, color: '#fff', flexShrink: 0 }}>
+                    {initiales}
                   </div>
                   <div>
-                    <p style={{ fontSize: 14, fontWeight: 500, color: '#1a1a1a' }}>{r.nom_complet}</p>
-                    <p style={{ fontSize: 11, color: '#888', marginTop: 2 }}>{r.tranche_age}</p>
+                    <p style={{ fontSize: 15, fontWeight: 500, color: '#fff', margin: 0 }}>{r.nom_complet}</p>
+                    <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', margin: '3px 0 0' }}>{r.tranche_age}</p>
                   </div>
                 </div>
 
-                {/* Compteurs */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5px', background: '#f0f0ee' }}>
-                  <div style={{ background: '#f8f8f6', padding: '10px', textAlign: 'center' }}>
-                    <p style={{ fontSize: 14, fontWeight: 600, color: '#1a1a1a' }}>{total.toLocaleString()}</p>
-                    <p style={{ fontSize: 9, color: '#888' }}>Total dû</p>
-                  </div>
-                  <div style={{ background: '#E1F5EE', padding: '10px', textAlign: 'center' }}>
-                    <p style={{ fontSize: 14, fontWeight: 600, color: '#085041' }}>{totalVerse.toLocaleString()}</p>
-                    <p style={{ fontSize: 9, color: '#085041' }}>Versé</p>
-                  </div>
-                  <div style={{ background: reste > 0 ? '#FAEEDA' : '#E1F5EE', padding: '10px', textAlign: 'center' }}>
-                    <p style={{ fontSize: 14, fontWeight: 600, color: reste > 0 ? '#854F0B' : '#085041' }}>{reste.toLocaleString()}</p>
-                    <p style={{ fontSize: 9, color: reste > 0 ? '#854F0B' : '#085041' }}>Reste</p>
-                  </div>
+                <span style={{ background: badge.bg, color: badge.color, fontSize: 10, fontWeight: 600, borderRadius: 20, padding: '3px 10px', display: 'inline-block', marginBottom: 16 }}>
+                  {badge.label}
+                </span>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+                  {[
+                    { n: `${total.toLocaleString()}`, l: 'Total dû', highlight: false },
+                    { n: `${totalVerse.toLocaleString()}`, l: 'Versé', highlight: false },
+                    { n: `${reste.toLocaleString()}`, l: 'Reste', highlight: true },
+                  ].map(s => (
+                    <div key={s.l} style={{
+                      background: s.highlight && reste > 0 ? 'rgba(201,168,76,0.25)' : s.highlight && reste === 0 ? 'rgba(93,202,165,0.25)' : 'rgba(255,255,255,0.1)',
+                      border: s.highlight && reste > 0 ? '0.5px solid rgba(201,168,76,0.4)' : s.highlight && reste === 0 ? '0.5px solid rgba(93,202,165,0.4)' : 'none',
+                      borderRadius: 10, padding: '10px 8px', textAlign: 'center',
+                    }}>
+                      <p style={{ fontSize: 14, fontWeight: 500, color: s.highlight && reste > 0 ? '#FAC775' : s.highlight && reste === 0 ? '#9FE1CB' : '#fff', margin: 0 }}>{s.n}</p>
+                      <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.5)', margin: '3px 0 0' }}>{s.l}</p>
+                    </div>
+                  ))}
                 </div>
-
-                {/* Historique versements */}
-                {versements.length > 0 && (
-                  <div style={{ padding: '12px 16px', borderBottom: '0.5px solid #f0f0ee' }}>
-                    <p style={{ fontSize: 10, fontWeight: 600, color: '#085041', marginBottom: 8, letterSpacing: '0.05em' }}>HISTORIQUE DES VERSEMENTS</p>
-                    {versements.map((v, i) => (
-                      <div key={v.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', borderBottom: i < versements.length - 1 ? '0.5px solid #f8f8f6' : 'none' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#085041', flexShrink: 0 }} />
-                          <span style={{ fontSize: 11, color: '#555' }}>
-                            {new Date(v.date_versement).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
-                          </span>
-                          {v.note && <span style={{ fontSize: 10, color: '#aaa' }}>· {v.note}</span>}
-                        </div>
-                        <span style={{ fontSize: 12, fontWeight: 500, color: '#085041' }}>{v.montant.toLocaleString()} FCFA</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Message selon statut */}
-                {statut === 'payé' && (
-                  <div style={{ margin: '12px 14px 14px', background: '#E1F5EE', borderRadius: 10, padding: '14px 16px' }}>
-                    <p style={{ fontSize: 13, fontWeight: 600, color: '#085041', marginBottom: 4 }}>Paiement confirmé !</p>
-                    <p style={{ fontSize: 11, color: '#0F6E56', lineHeight: 1.6 }}>
-                      Votre place au Camp-Navs 2026 est réservée. Nous avons hâte de vous accueillir à La Sablière le 23 août !
-                    </p>
-                  </div>
-                )}
-
-                {statut === 'partiel' && (
-                  <div style={{ margin: '12px 14px 14px', background: '#E6F1FB', borderRadius: 10, padding: '14px 16px' }}>
-                    <p style={{ fontSize: 13, fontWeight: 600, color: '#185FA5', marginBottom: 4 }}>Paiement partiel reçu</p>
-                    <p style={{ fontSize: 11, color: '#185FA5', lineHeight: 1.6, marginBottom: 10 }}>
-                      Il vous reste <strong>{reste.toLocaleString()} FCFA</strong> à payer. Envoyez le solde via Wave ou Orange Money :
-                    </p>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                      <div style={{ background: '#fff', borderRadius: 8, padding: '8px 10px' }}>
-                        <p style={{ fontSize: 10, color: '#888', marginBottom: 2 }}>Bureau des Navigateurs</p>
-                        <p style={{ fontSize: 13, fontWeight: 600, color: '#085041' }}>07 78 48 48 79</p>
-                      </div>
-                      <div style={{ background: '#fff', borderRadius: 8, padding: '8px 10px' }}>
-                        <p style={{ fontSize: 10, color: '#888', marginBottom: 2 }}>Mme OBODJI</p>
-                        <p style={{ fontSize: 13, fontWeight: 600, color: '#085041' }}>07 09 62 62 65</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {statut === 'en attente' && (
-                  <div style={{ margin: '12px 14px 14px', background: '#FAEEDA', borderRadius: 10, padding: '14px 16px' }}>
-                    <p style={{ fontSize: 13, fontWeight: 600, color: '#854F0B', marginBottom: 4 }}>Paiement en attente</p>
-                    <p style={{ fontSize: 11, color: '#6B3D00', lineHeight: 1.6, marginBottom: 10 }}>
-                      Envoyez <strong>{total.toLocaleString()} FCFA</strong> via Wave ou Orange Money pour confirmer votre place :
-                    </p>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                      <div style={{ background: '#fff', borderRadius: 8, padding: '8px 10px' }}>
-                        <p style={{ fontSize: 10, color: '#888', marginBottom: 2 }}>Bureau des Navigateurs</p>
-                        <p style={{ fontSize: 13, fontWeight: 600, color: '#085041' }}>07 78 48 48 79</p>
-                      </div>
-                      <div style={{ background: '#fff', borderRadius: 8, padding: '8px 10px' }}>
-                        <p style={{ fontSize: 10, color: '#888', marginBottom: 2 }}>Mme OBODJI</p>
-                        <p style={{ fontSize: 13, fontWeight: 600, color: '#085041' }}>07 09 62 62 65</p>
-                      </div>
-                    </div>
-                    <p style={{ fontSize: 10, color: '#854F0B', marginTop: 8, fontStyle: 'italic' }}>
-                      Après paiement, confirmez par WhatsApp en envoyant votre nom et votre reçu.
-                    </p>
-                  </div>
-                )}
-
               </div>
-            )
-          })}
-        </div>
+
+              {/* Historique versements */}
+              {versements.length > 0 && (
+                <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #dde8dd', overflow: 'hidden' }}>
+                  <div style={{ padding: '12px 14px', borderBottom: '0.5px solid #f0f0ee', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: 11, fontWeight: 500, color: '#054035', letterSpacing: '0.04em' }}>Historique des versements</span>
+                    <span style={{ fontSize: 11, color: '#888' }}>{versements.length} versement(s)</span>
+                  </div>
+                  {versements.map((v, i) => (
+                    <div key={v.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderBottom: i < versements.length - 1 ? '0.5px solid #f8f8f8' : 'none' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#054035', flexShrink: 0 }} />
+                        <div>
+                          <p style={{ fontSize: 12, color: '#333', margin: 0 }}>
+                            {new Date(v.date_versement).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                          </p>
+                          {v.note && <p style={{ fontSize: 10, color: '#aaa', margin: '2px 0 0' }}>{v.note}</p>}
+                        </div>
+                      </div>
+                      <span style={{ fontSize: 13, fontWeight: 500, color: '#054035' }}>{v.montant.toLocaleString()} FCFA</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Contacts paiement si pas encore soldé */}
+              {reste > 0 && (
+                <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #dde8dd', overflow: 'hidden' }}>
+                  <div style={{ padding: '12px 14px', background: '#FFF8EC', borderBottom: '0.5px solid #F5E4C0' }}>
+                    <p style={{ fontSize: 11, fontWeight: 500, color: '#854F0B', margin: 0 }}>
+                      Il reste {reste.toLocaleString()} FCFA à régler pour confirmer votre place
+                    </p>
+                  </div>
+                  {contacts.map((c, i) => (
+                    <div key={c.numero} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', borderBottom: i === 0 ? '0.5px solid #f8f8f8' : 'none' }}>
+                      <div>
+                        <p style={{ fontSize: 12, fontWeight: 500, color: '#1a1a1a', margin: 0 }}>{c.nom}</p>
+                        <p style={{ fontSize: 14, fontWeight: 500, color: '#054035', margin: '3px 0 0' }}>{c.affiche}</p>
+                      </div>
+                      <button onClick={() => handleCopier(c.numero)}
+                        style={{ background: copie === c.numero ? '#E1F5EE' : '#F0F4F0', border: `0.5px solid ${copie === c.numero ? '#9FE1CB' : '#ccc'}`, borderRadius: 8, padding: '6px 12px', fontSize: 11, color: copie === c.numero ? '#054035' : '#555', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, transition: 'all .2s' }}>
+                        <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                        {copie === c.numero ? 'Copié !' : 'Copier'}
+                      </button>
+                    </div>
+                  ))}
+                  <div style={{ padding: '12px 14px', background: '#f8f8f8' }}>
+                    <p style={{ fontSize: 10, color: '#888', textAlign: 'center', lineHeight: 1.6 }}>
+                      Après paiement, envoyez votre reçu par WhatsApp en indiquant votre nom complet.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Message confirmé */}
+              {statut === 'payé' && (
+                <div style={{ background: '#E1F5EE', borderRadius: 16, border: '0.5px solid #9FE1CB', padding: '16px 18px', textAlign: 'center' }}>
+                  <p style={{ fontSize: 22, marginBottom: 6 }}>🎉</p>
+                  <p style={{ fontSize: 14, fontWeight: 500, color: '#054035', marginBottom: 4 }}>Place confirmée !</p>
+                  <p style={{ fontSize: 12, color: '#0F6E56', lineHeight: 1.6 }}>
+                    Votre paiement est complet. Nous avons hâte de vous accueillir à La Sablière le 23 août 2026 !
+                  </p>
+                </div>
+              )}
+
+            </div>
+          )
+        })}
       </div>
     </div>
   )
