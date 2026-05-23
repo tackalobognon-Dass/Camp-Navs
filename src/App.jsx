@@ -28,6 +28,8 @@ import SoireePage from './pages/admin/SoireePage'
 import SantePage from './pages/admin/SantePage'
 import LogistiquePage from './pages/admin/LogistiquePage'
 import SuiviPostCampPage from './pages/admin/SuiviPostCampPage'
+import TemoignagesPage from './pages/public/TemoignagesPage'
+import TemoignagesAdminPage from './pages/admin/TemoignagesAdminPage'
 import ParametresPage from './pages/admin/ParametresPage'
 
 function App() {
@@ -46,6 +48,7 @@ function App() {
         <Route path="/discussion" element={<CommentairesPage />} />
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/suivi" element={<SuiviPage />} />
+        <Route path="/temoignages" element={<TemoignagesPage />} />
         <Route path="/lieu" element={<LieuPage />} />
 
         <Route path="/admin/login" element={<LoginPage />} />
@@ -62,6 +65,7 @@ function App() {
         <Route path="/admin/sante" element={<PrivateRoute><SantePage /></PrivateRoute>} />
         <Route path="/admin/logistique" element={<PrivateRoute><LogistiquePage /></PrivateRoute>} />
         <Route path="/admin/suivi-post-camp" element={<PrivateRoute><SuiviPostCampPage /></PrivateRoute>} />
+        <Route path="/admin/temoignages" element={<PrivateRoute><TemoignagesAdminPage /></PrivateRoute>} />
         <Route path="/admin/parametres" element={<PrivateRoute><ParametresPage /></PrivateRoute>} />
       </Routes>
     </>
