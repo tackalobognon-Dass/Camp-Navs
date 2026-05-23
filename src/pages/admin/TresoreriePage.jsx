@@ -267,9 +267,15 @@ export default function TresoreriePage() {
         </div>
         <div className="flex gap-2">
           <button onClick={() => exportPDFTresorerie(recettes, commissions, depenses)}
-            style={{ background: '#A32D2D', color: '#fff', border: 'none', borderRadius: 10, padding: '7px 12px', fontSize: 11, fontWeight: 500, cursor: 'pointer' }}>PDF</button>
+            style={{ background: 'transparent', color: '#6B7280', border: '0.5px solid #D1D5DB', borderRadius: 8, padding: '7px 12px', fontSize: 11, fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5 }}>
+            <svg style={{ width: 13, height: 13 }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+            PDF
+          </button>
           <button onClick={() => exportExcelTresorerie(recettes, commissions, depenses)}
-            style={{ background: '#3B6D11', color: '#fff', border: 'none', borderRadius: 10, padding: '7px 12px', fontSize: 11, fontWeight: 500, cursor: 'pointer' }}>Excel</button>
+            style={{ background: 'transparent', color: '#6B7280', border: '0.5px solid #D1D5DB', borderRadius: 8, padding: '7px 12px', fontSize: 11, fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5 }}>
+            <svg style={{ width: 13, height: 13 }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+            Excel
+          </button>
         </div>
       </div>
 
@@ -291,112 +297,152 @@ export default function TresoreriePage() {
 
       {/* TABLEAU DE BORD */}
       {onglet === 'tableau_bord' && (
-        <div className="space-y-3">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-          {/* Budget global + stats en une seule carte */}
-          <div style={{ background: '#fff', borderRadius: 14, border: '0.5px solid #e5e5e0', overflow: 'hidden' }}>
-            {/* Budget */}
-            <div style={{ padding: '12px 14px', borderBottom: '0.5px solid #f0f0ee', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div>
-                <p style={{ fontSize: 9, color: '#888', letterSpacing: '0.05em', marginBottom: 2 }}>BUDGET GLOBAL</p>
-                {editBudget ? (
-                  <div className="flex gap-2 mt-1">
-                    <input type="number" value={budgetForm} onChange={e => setBudgetForm(e.target.value)}
-                      placeholder="Montant FCFA"
-                      style={{ width: 140, border: '0.5px solid #e5e5e0', borderRadius: 8, padding: '5px 8px', fontSize: 13, outline: 'none' }} />
-                    <button onClick={saveBudgetGlobal} disabled={saving}
-                      style={{ background: '#085041', color: '#fff', border: 'none', borderRadius: 8, padding: '5px 10px', fontSize: 11, cursor: 'pointer' }}>
-                      {saving ? '...' : 'OK'}
-                    </button>
-                  </div>
-                ) : (
-                  <p style={{ fontSize: 18, fontWeight: 700, color: '#1a1a1a' }}>
-                    {budgetGlobal > 0 ? `${budgetGlobal.toLocaleString()} FCFA` : <span style={{ fontSize: 12, color: '#888', fontWeight: 400 }}>Non défini</span>}
-                  </p>
-                )}
-                {budgetGlobal > 0 && !editBudget && (
-                  <p style={{ fontSize: 10, color: totalRecettes >= budgetGlobal ? '#085041' : '#854F0B', marginTop: 2 }}>
-                    {Math.round((totalRecettes / budgetGlobal) * 100)}% collecté · Reste {Math.max(budgetGlobal - totalRecettes, 0).toLocaleString()} FCFA
-                  </p>
-                )}
-              </div>
+          {/* Budget global */}
+          <div style={{ background: '#fff', borderRadius: 12, border: '0.5px solid #F3F4F6', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', padding: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+              <p style={{ fontSize: 11, fontWeight: 600, color: '#9CA3AF', letterSpacing: '0.06em', margin: 0 }}>BUDGET GLOBAL</p>
               <button onClick={() => { setEditBudget(!editBudget); setBudgetForm(budgetGlobal) }}
-                style={{ fontSize: 10, color: '#085041', background: '#E1F5EE', border: 'none', borderRadius: 8, padding: '5px 10px', cursor: 'pointer', flexShrink: 0 }}>
+                style={{ fontSize: 11, color: '#054035', background: 'transparent', border: '0.5px solid #054035', borderRadius: 6, padding: '3px 10px', cursor: 'pointer' }}>
                 {editBudget ? 'Annuler' : 'Modifier'}
               </button>
             </div>
+            {editBudget ? (
+              <div style={{ display: 'flex', gap: 8 }}>
+                <input type="number" value={budgetForm} onChange={e => setBudgetForm(e.target.value)}
+                  placeholder="Montant FCFA"
+                  style={{ flex: 1, border: '0.5px solid #D1D5DB', borderRadius: 8, padding: '8px 12px', fontSize: 14, outline: 'none' }} />
+                <button onClick={saveBudgetGlobal} disabled={saving}
+                  style={{ background: '#054035', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 14px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+                  {saving ? '...' : 'OK'}
+                </button>
+              </div>
+            ) : (
+              <>
+                <p style={{ fontSize: 24, fontWeight: 700, color: '#111827', margin: '0 0 4px' }}>
+                  {budgetGlobal > 0 ? `${budgetGlobal.toLocaleString()} FCFA` : <span style={{ fontSize: 14, color: '#9CA3AF', fontWeight: 400 }}>Non défini</span>}
+                </p>
+                {budgetGlobal > 0 && (
+                  <>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                      <span style={{ fontSize: 11, color: totalRecettes >= budgetGlobal ? '#059669' : '#D97706' }}>
+                        {Math.round((totalRecettes / budgetGlobal) * 100)}% collecté
+                      </span>
+                      <span style={{ fontSize: 11, color: '#6B7280' }}>
+                        Reste : {Math.max(budgetGlobal - totalRecettes, 0).toLocaleString()} FCFA
+                      </span>
+                    </div>
+                    <div style={{ background: '#F3F4F6', borderRadius: 8, height: 8 }}>
+                      <div style={{
+                        height: 8, borderRadius: 8,
+                        width: `${Math.min((totalRecettes / budgetGlobal) * 100, 100)}%`,
+                        background: totalRecettes >= budgetGlobal ? '#059669' : totalRecettes / budgetGlobal >= 0.6 ? '#0EA5E9' : '#F59E0B',
+                        transition: 'width .4s ease',
+                      }} />
+                    </div>
+                  </>
+                )}
+              </>
+            )}
+          </div>
 
-            {/* 4 stats compactes */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5px', background: '#f0f0ee' }}>
-              {[
-                { label: 'Recettes', val: totalRecettes, color: '#085041', bg: '#E1F5EE' },
-                { label: 'Dépenses', val: totalDepenses, color: '#A32D2D', bg: '#FCEBEB' },
-                { label: 'Solde', val: soldeGlobal, color: soldeGlobal >= 0 ? '#185FA5' : '#A32D2D', bg: soldeGlobal >= 0 ? '#E6F1FB' : '#FCEBEB' },
-                { label: 'Non alloué', val: soldeNonAlloue, color: '#854F0B', bg: '#FAEEDA' },
-              ].map(s => (
-                <div key={s.label} style={{ background: s.bg, padding: '10px 14px' }}>
-                  <p style={{ fontSize: 9, color: s.color, letterSpacing: '0.04em', marginBottom: 2 }}>{s.label.toUpperCase()}</p>
-                  <p style={{ fontSize: 15, fontWeight: 600, color: s.color }}>{s.val.toLocaleString()}</p>
-                  <p style={{ fontSize: 9, color: s.color, opacity: 0.7 }}>FCFA</p>
+          {/* KPI Cards */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            {[
+              {
+                label: 'Recettes totales', val: totalRecettes,
+                icon: <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>,
+                iconBg: '#ECFDF5', iconColor: '#059669', valColor: '#059669',
+              },
+              {
+                label: 'Dépenses totales', val: totalDepenses,
+                icon: <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M13 17H5m0 0v-8m0 8l8-8 4 4 6-6" /></svg>,
+                iconBg: '#FEF2F2', iconColor: '#DC2626', valColor: '#DC2626',
+              },
+              {
+                label: 'Solde disponible', val: soldeGlobal,
+                icon: <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>,
+                iconBg: soldeGlobal >= 0 ? '#EFF6FF' : '#FEF2F2',
+                iconColor: soldeGlobal >= 0 ? '#2563EB' : '#DC2626',
+                valColor: soldeGlobal >= 0 ? '#2563EB' : '#DC2626',
+              },
+              {
+                label: 'Non alloué', val: soldeNonAlloue,
+                icon: <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
+                iconBg: '#FFFBEB', iconColor: '#D97706', valColor: '#D97706',
+              },
+            ].map(k => (
+              <div key={k.label} style={{ background: '#fff', borderRadius: 12, border: '0.5px solid #F3F4F6', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', padding: '14px' }}>
+                <div style={{ width: 30, height: 30, borderRadius: 8, background: k.iconBg, color: k.iconColor, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
+                  {k.icon}
                 </div>
-              ))}
-            </div>
+                <p style={{ fontSize: 11, color: '#6B7280', margin: '0 0 4px', textAlign: 'left' }}>{k.label}</p>
+                <p style={{ fontSize: 18, fontWeight: 700, color: k.valColor, margin: 0, textAlign: 'left' }}>{k.val.toLocaleString()}</p>
+                <p style={{ fontSize: 9, color: '#9CA3AF', margin: '2px 0 0' }}>FCFA</p>
+              </div>
+            ))}
           </div>
 
           {/* Recettes par source */}
-          <div style={{ background: '#fff', borderRadius: 14, border: '0.5px solid #e5e5e0', padding: '12px 14px' }}>
-            <p style={{ fontSize: 9, fontWeight: 600, color: '#085041', letterSpacing: '0.05em', marginBottom: 10 }}>RECETTES PAR SOURCE</p>
-            {recettes.length === 0 && <p style={{ fontSize: 12, color: '#888', textAlign: 'center' }}>Aucune recette enregistrée.</p>}
-            {TYPES_RECETTE.map(t => {
-              const montant = recettes.filter(r => r.type === t.key).reduce((s, r) => s + (r.montant || r.valeur_estimee || 0), 0)
-              const pct = totalRecettes > 0 ? (montant / totalRecettes) * 100 : 0
-              if (montant === 0) return null
-              return (
-                <div key={t.key} style={{ marginBottom: 8 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
-                    <span style={{ fontSize: 11, color: '#333' }}>{t.label}</span>
-                    <span style={{ fontSize: 11, fontWeight: 500, color: t.color }}>{montant.toLocaleString()} FCFA</span>
+          {recettes.length > 0 && (
+            <div style={{ background: '#fff', borderRadius: 12, border: '0.5px solid #F3F4F6', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', padding: '14px 16px' }}>
+              <p style={{ fontSize: 11, fontWeight: 600, color: '#9CA3AF', letterSpacing: '0.06em', marginBottom: 12 }}>RECETTES PAR SOURCE</p>
+              {TYPES_RECETTE.map(t => {
+                const montant = recettes.filter(r => r.type === t.key).reduce((s, r) => s + (r.montant || r.valeur_estimee || 0), 0)
+                const pct = totalRecettes > 0 ? (montant / totalRecettes) * 100 : 0
+                if (montant === 0) return null
+                return (
+                  <div key={t.key} style={{ marginBottom: 10 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
+                      <span style={{ fontSize: 12, color: '#374151' }}>{t.label}</span>
+                      <span style={{ fontSize: 12, fontWeight: 600, color: '#111827' }}>{montant.toLocaleString()} FCFA</span>
+                    </div>
+                    <div style={{ background: '#F3F4F6', borderRadius: 8, height: 5 }}>
+                      <div style={{ background: '#054035', borderRadius: 8, height: 5, width: `${pct}%` }} />
+                    </div>
                   </div>
-                  <div style={{ background: '#f0f0ee', borderRadius: 3, height: 3 }}>
-                    <div style={{ background: t.color, borderRadius: 3, height: 3, width: `${pct}%` }} />
-                  </div>
-                </div>
-              )
-            })}
-          </div>
+                )
+              })}
+            </div>
+          )}
 
-          {/* Commissions */}
-          <div style={{ background: '#fff', borderRadius: 14, border: '0.5px solid #e5e5e0', padding: '12px 14px' }}>
-            <p style={{ fontSize: 9, fontWeight: 600, color: '#085041', letterSpacing: '0.05em', marginBottom: 10 }}>COMMISSIONS</p>
-            {commissions.length === 0 && <p style={{ fontSize: 12, color: '#888', textAlign: 'center' }}>Aucune commission créée.</p>}
-            {commissions.map((c, i) => {
-              const totalDep = depenses.filter(d => d.commission_id === c.id).reduce((s, d) => s + d.montant, 0)
-              const alloue = c.montant_alloue || 0
-              const solde = alloue - totalDep
-              const pct = alloue > 0 ? (totalDep / alloue) * 100 : 0
-              return (
-                <div key={c.id} style={{ paddingBottom: 10, marginBottom: 10, borderBottom: i < commissions.length - 1 ? '0.5px solid #f0f0ee' : 'none' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                    <span style={{ fontSize: 12, fontWeight: 500, color: '#1a1a1a' }}>{c.nom_commission}</span>
-                    <span style={{ fontSize: 10, fontWeight: 500, color: solde < 0 ? '#A32D2D' : '#085041' }}>
-                      Solde : {solde.toLocaleString()} FCFA
-                    </span>
+          {/* Commissions avec jauges modernes */}
+          {commissions.length > 0 && (
+            <div style={{ background: '#fff', borderRadius: 12, border: '0.5px solid #F3F4F6', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', padding: '14px 16px' }}>
+              <p style={{ fontSize: 11, fontWeight: 600, color: '#9CA3AF', letterSpacing: '0.06em', marginBottom: 12 }}>COMMISSIONS</p>
+              {commissions.map((c, i) => {
+                const totalDep = depenses.filter(d => d.commission_id === c.id).reduce((s, d) => s + d.montant, 0)
+                const alloue = c.montant_alloue || 0
+                const solde = alloue - totalDep
+                const pct = alloue > 0 ? Math.min((totalDep / alloue) * 100, 100) : 0
+                const enAlerte = solde < 0
+                const couleurJauge = enAlerte ? '#EF4444' : pct > 80 ? '#F59E0B' : '#0EA5E9'
+                return (
+                  <div key={c.id} style={{ marginBottom: i < commissions.length - 1 ? 14 : 0, paddingBottom: i < commissions.length - 1 ? 14 : 0, borderBottom: i < commissions.length - 1 ? '0.5px solid #F9FAFB' : 'none' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 4 }}>
+                      <span style={{ fontSize: 13, fontWeight: 500, color: '#111827' }}>{c.nom_commission}</span>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: enAlerte ? '#DC2626' : '#059669' }}>
+                        {enAlerte ? '−' : '+'}{Math.abs(solde).toLocaleString()} FCFA
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                      <span style={{ fontSize: 10, color: '#9CA3AF' }}>Alloué : {alloue.toLocaleString()}</span>
+                      <span style={{ fontSize: 10, color: enAlerte ? '#DC2626' : '#6B7280' }}>Dépensé : {totalDep.toLocaleString()}</span>
+                    </div>
+                    <div style={{ background: '#F3F4F6', borderRadius: 8, height: 6 }}>
+                      <div style={{ background: couleurJauge, borderRadius: 8, height: 6, width: `${pct}%`, transition: 'width .3s' }} />
+                    </div>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                    <span style={{ fontSize: 10, color: '#888' }}>Alloué : {alloue.toLocaleString()}</span>
-                    <span style={{ fontSize: 10, color: '#A32D2D' }}>Dépensé : {totalDep.toLocaleString()}</span>
-                  </div>
-                  <div style={{ background: '#f0f0ee', borderRadius: 3, height: 4 }}>
-                    <div style={{ background: pct > 100 ? '#A32D2D' : pct > 80 ? '#854F0B' : '#085041', borderRadius: 3, height: 4, width: `${Math.min(pct, 100)}%`, transition: 'width .3s' }} />
-                  </div>
-                </div>
-              )
-            })}
-          </div>
+                )
+              })}
+            </div>
+          )}
+
         </div>
       )}
 
-      {/* RECETTES */}
+            {/* RECETTES */}
       {onglet === 'recettes' && (
         <>
           <button onClick={() => setShowRecette(!showRecette)}
