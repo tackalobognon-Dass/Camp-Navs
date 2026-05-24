@@ -149,17 +149,17 @@ function ActivityCard({ item, isLast }) {
     )
   }
 
-  // Small — ligne discrète
+  // Small — carte compacte lisible
   return (
-    <div style={{ display: 'flex', gap: 10, marginBottom: 6, alignItems: 'center' }}>
+    <div style={{ display: 'flex', gap: 10, marginBottom: 8, alignItems: 'center' }}>
       <div style={{ width: 52, flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <p style={{ fontSize: 11, color: '#9CA3AF', textAlign: 'right', width: '100%', margin: 0 }}>{heure}</p>
-        {!isLast && <div style={{ width: 1, flex: 1, background: '#F3F4F6', marginTop: 2, minHeight: 14 }} />}
+        <p style={{ fontSize: 11, fontWeight: 500, color: '#6B7280', textAlign: 'right', width: '100%', margin: 0 }}>{heure}</p>
+        {!isLast && <div style={{ width: 1.5, flex: 1, background: '#E5E7EB', marginTop: 4, minHeight: 14 }} />}
       </div>
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8, padding: '4px 0' }}>
-        <div style={{ width: 6, height: 6, borderRadius: '50%', background: cfg.dot, flexShrink: 0 }} />
-        <p style={{ fontSize: 12, color: '#6B7280', margin: 0 }}>{item.activite || item.titre}</p>
-        {heureFin && <p style={{ fontSize: 10, color: '#D1D5DB', margin: 0 }}>– {heureFin}</p>}
+      <div style={{ flex: 1, background: '#F9FAFB', borderRadius: 10, border: '0.5px solid #E5E7EB', padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ width: 8, height: 8, borderRadius: '50%', background: cfg.dot, flexShrink: 0 }} />
+        <p style={{ fontSize: 13, color: '#374151', margin: 0, fontWeight: 400 }}>{item.activite || item.titre}</p>
+        {heureFin && <p style={{ fontSize: 10, color: '#9CA3AF', margin: '0 0 0 auto', flexShrink: 0 }}>– {heureFin}</p>}
       </div>
     </div>
   )
