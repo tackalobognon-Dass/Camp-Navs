@@ -8,7 +8,7 @@ const contacts = [
   {
     groupe: 'DIRECTION',
     membres: [
-      { initiales: 'NS', nom: "N'DRI SERGE PACOME", role: 'Directeur du camp', tel: '0779126221' },
+      { initiales: 'NS', nom: "N'DRI SERGE PACOME", role: 'Directeur du camp', tel: '0748924974' },
     ]
   },
   {
