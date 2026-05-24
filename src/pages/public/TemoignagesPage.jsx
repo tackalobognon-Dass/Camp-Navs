@@ -16,6 +16,7 @@ export default function TemoignagesPage() {
   const [recherche, setRecherche] = useState('')
   const [page, setPage] = useState(1)
   const [expanded, setExpanded] = useState({})
+  const [copie, setCopie] = useState('')
 
   useEffect(() => { fetchTemoignages() }, [])
 
@@ -194,7 +195,7 @@ export default function TemoignagesPage() {
               <div key={t.id} style={{ background: '#fff', borderRadius: 18, border: '0.5px solid #F3F4F6', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', padding: '18px 16px 14px', position: 'relative', overflow: 'hidden' }}>
 
                 {/* Grand guillemet décoratif */}
-                <div style={{ position: 'absolute', top: 12, right: 16, fontSize: 56, lineHeight: 1, color: '#E1F5EE', fontFamily: 'Georgia, serif', fontWeight: 700, userSelect: 'none', pointerEvents: 'none' }}>"</div>
+                <div style={{ position: 'absolute', top: 12, right: 16, fontSize: 56, lineHeight: 1, color: 'rgba(5,64,53,0.1)', fontFamily: 'Georgia, serif', fontWeight: 700, userSelect: 'none', pointerEvents: 'none' }}>"</div>
 
                 {/* Header auteur */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
