@@ -218,24 +218,19 @@ export default function TemoignagesPage() {
                 </div>
 
                 {/* Texte du témoignage */}
-                {(() => {
-                  const LIMITE = 200
-                  const isLong = t.contenu.length > LIMITE
-                  const isExpanded = expanded[t.id]
-                  return (
-                    <div style={{ marginBottom: 16, position: 'relative', zIndex: 1 }}>
-                      <p style={{ fontSize: 14, color: '#1F2937', lineHeight: 1.85, margin: 0, fontStyle: 'italic' }}>
-                        {isLong && !isExpanded ? t.contenu.slice(0, LIMITE) + '...' : t.contenu}
-                      </p>
-                      {isLong && (
-                        <button onClick={() => setExpanded(e => ({ ...e, [t.id]: !isExpanded }))}
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600, color: '#054035', padding: '6px 0 0', display: 'block' }}>
-                          {isExpanded ? 'Voir moins ↑' : 'Voir plus ↓'}
-                        </button>
-                      )}
-                    </div>
-                  )
-                })()}
+                <div style={{ marginBottom: 16, position: 'relative', zIndex: 1 }}>
+                  <p style={{ fontSize: 14, color: '#1F2937', lineHeight: 1.85, margin: 0, fontStyle: 'italic' }}>
+                    {t.contenu.length > 200 && !expanded[t.id]
+                      ? t.contenu.slice(0, 200) + '...'
+                      : t.contenu}
+                  </p>
+                  {t.contenu.length > 200 && (
+                    <button onClick={() => setExpanded(e => ({ ...e, [t.id]: !e[t.id] }))}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600, color: '#054035', padding: '6px 0 0', display: 'block' }}>
+                      {expanded[t.id] ? 'Voir moins ↑' : 'Voir plus ↓'}
+                    </button>
+                  )}
+                </div>
 
                 {/* Séparateur */}
                 <div style={{ height: '0.5px', background: '#F3F4F6', marginBottom: 12 }} />
