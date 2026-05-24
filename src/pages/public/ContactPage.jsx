@@ -21,6 +21,7 @@ const contacts = [
     groupe: 'ADMINISTRATEURS',
     membres: [
       { initiales: 'OS', nom: 'OBODJI SYLVAIN', role: 'Directeur Adjoint', tel: '0709416262' },
+      { initiales: 'MO', nom: 'Mme OBODJI', role: 'Trésorière', tel: '0709626265' },
       { initiales: 'EL', nom: 'LOBOGNON EMMANUEL', role: 'Administrateur', tel: '0789588315' },
       { initiales: 'HF', nom: 'HABA FLORENT', role: 'Administrateur', tel: '0789540616' },
     ]
