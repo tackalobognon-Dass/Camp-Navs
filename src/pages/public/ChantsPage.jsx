@@ -248,19 +248,17 @@ export default function ChantsPage() {
     <div style={{ minHeight: '100vh', background: '#F9FAFB', maxWidth: 480, margin: '0 auto' }}>
 
       {/* Header */}
-      <div style={{ background: 'linear-gradient(160deg,#054035,#085041)', padding: '44px 16px 20px' }}>
+      <div style={{ background: 'linear-gradient(160deg,#054035,#085041)', padding: '44px 16px 16px' }}>
         <button onClick={() => navigate(-1)}
           style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'rgba(255,255,255,0.6)', fontSize: 12, background: 'none', border: 'none', cursor: 'pointer', marginBottom: 12 }}>
           <IconArrowLeft /> Retour
         </button>
         <p style={{ fontSize: 20, fontWeight: 500, color: '#fff', margin: '0 0 3px' }}>Chants du camp</p>
-        <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', margin: 0 }}>{chants.length} chant(s) dans le répertoire</p>
-      </div>
+        <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', margin: '0 0 14px' }}>{chants.length} chant(s) dans le répertoire</p>
 
-      {/* Barre de recherche flottante */}
-      <div style={{ padding: '0 14px', marginTop: -20, marginBottom: 4, position: 'relative', zIndex: 10 }}>
-        <div style={{ background: '#fff', borderRadius: 14, boxShadow: '0 2px 12px rgba(0,0,0,0.1)', padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 10 }}>
-          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round">
+        {/* Barre de recherche dans le header */}
+        <div style={{ background: '#fff', borderRadius: 12, padding: '9px 13px', display: 'flex', alignItems: 'center', gap: 9, boxShadow: '0 1px 6px rgba(0,0,0,0.08)' }}>
+          <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round">
             <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
           </svg>
           <input type="text" value={recherche} onChange={e => setRecherche(e.target.value)}
@@ -268,7 +266,7 @@ export default function ChantsPage() {
             style={{ background: 'transparent', border: 'none', outline: 'none', fontSize: 13, color: '#1a1a1a', width: '100%' }} />
           {recherche && (
             <button onClick={() => setRecherche('')}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9CA3AF', fontSize: 16, lineHeight: 1, padding: 0, flexShrink: 0 }}>✕</button>
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9CA3AF', fontSize: 15, lineHeight: 1, padding: 0, flexShrink: 0 }}>✕</button>
           )}
         </div>
       </div>
@@ -299,12 +297,12 @@ export default function ChantsPage() {
             const couleur = COULEURS_ICONE[i % COULEURS_ICONE.length]
             return (
               <div key={c.id} onClick={() => setChantSelectionne(c)}
-                style={{ background: '#fff', borderRadius: 14, border: '0.5px solid #F3F4F6', boxShadow: '0 1px 3px rgba(0,0,0,0.04)', padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', transition: 'transform .1s' }}
+                style={{ background: '#fff', borderRadius: 12, border: '0.5px solid #F3F4F6', boxShadow: '0 1px 3px rgba(0,0,0,0.04)', padding: '10px 12px', display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', transition: 'transform .1s' }}
                 onTouchStart={e => e.currentTarget.style.transform = 'scale(0.98)'}
                 onTouchEnd={e => e.currentTarget.style.transform = 'scale(1)'}>
 
                 {/* Icône note de musique */}
-                <div style={{ width: 44, height: 44, borderRadius: 12, background: couleur.bg, color: couleur.color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <div style={{ width: 38, height: 38, borderRadius: 10, background: couleur.bg, color: couleur.color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   <NoteIcon />
                 </div>
 
