@@ -67,8 +67,8 @@ const TYPE_CONFIG = {
   },
   'Repas et repos': {
     size: 'small',
-    dot: '#6B7280',
-    icon: <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>,
+    dot: '#D97706',
+    icon: null,
   },
   'Sports et loisirs': {
     size: 'medium',
@@ -156,10 +156,18 @@ function ActivityCard({ item, isLast }) {
         <p style={{ fontSize: 11, fontWeight: 500, color: '#6B7280', textAlign: 'right', width: '100%', margin: 0 }}>{heure}</p>
         {!isLast && <div style={{ width: 1.5, flex: 1, background: '#E5E7EB', marginTop: 4, minHeight: 14 }} />}
       </div>
-      <div style={{ flex: 1, background: '#F9FAFB', borderRadius: 10, border: '0.5px solid #E5E7EB', padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
-        <div style={{ width: 8, height: 8, borderRadius: '50%', background: cfg.dot, flexShrink: 0 }} />
-        <p style={{ fontSize: 13, color: '#374151', margin: 0, fontWeight: 400 }}>{item.activite || item.titre}</p>
-        {heureFin && <p style={{ fontSize: 10, color: '#9CA3AF', margin: '0 0 0 auto', flexShrink: 0 }}>– {heureFin}</p>}
+      <div style={{ flex: 1, background: '#F9FAFB', borderRadius: 10, border: '0.5px solid #E5E7EB', padding: '8px 12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ width: 8, height: 8, borderRadius: '50%', background: cfg.dot, flexShrink: 0 }} />
+          <p style={{ fontSize: 13, color: '#374151', margin: 0, fontWeight: 400, flex: 1 }}>{item.activite || item.titre}</p>
+          {heureFin && <p style={{ fontSize: 10, color: '#9CA3AF', margin: 0, flexShrink: 0 }}>– {heureFin}</p>}
+        </div>
+        {(item.lieu || item.responsable) && (
+          <div style={{ display: 'flex', gap: 8, marginTop: 3, paddingLeft: 16 }}>
+            {item.lieu && <p style={{ fontSize: 10, color: '#9CA3AF', margin: 0 }}>📍 {item.lieu}</p>}
+            {item.responsable && <p style={{ fontSize: 10, color: '#9CA3AF', margin: 0 }}>· {item.responsable}</p>}
+          </div>
+        )}
       </div>
     </div>
   )
