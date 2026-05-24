@@ -93,12 +93,21 @@ function ChantDetail({ chant, onBack }) {
   const pct = duration > 0 ? (currentTime / duration) * 100 : 0
   const hasAudio = !!chant.lien_audio
 
+  const headerRef = useRef(null)
+  const [headerHeight, setHeaderHeight] = useState(0)
+
+  useEffect(() => {
+    if (headerRef.current) {
+      setHeaderHeight(headerRef.current.offsetHeight)
+    }
+  }, [chant, playing])
+
   return (
-    <div style={{ minHeight: '100vh', background: '#fff', maxWidth: 480, margin: '0 auto', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ minHeight: '100vh', background: '#fff', maxWidth: 480, margin: '0 auto' }}>
       <style>{`@keyframes wave{0%,100%{transform:scaleY(1)}50%{transform:scaleY(.3)}}`}</style>
 
-      {/* Header compact avec lecteur intégré */}
-      <div style={{ background: 'linear-gradient(160deg,#054035,#085041)', padding: '44px 16px 16px', flexShrink: 0 }}>
+      {/* Header fixe avec lecteur intégré */}
+      <div ref={headerRef} style={{ position: 'fixed', top: 0, left: 0, right: 0, maxWidth: 480, margin: '0 auto', background: 'linear-gradient(160deg,#054035,#085041)', padding: '44px 16px 16px', zIndex: 20 }}>
 
         {/* Bouton retour */}
         <button onClick={onBack}
@@ -176,8 +185,8 @@ function ChantDetail({ chant, onBack }) {
         )}
       </div>
 
-      {/* Zone paroles — scrollable */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '28px 20px 60px', background: '#fff' }}>
+      {/* Zone paroles — scrollable sous le header fixe */}
+      <div style={{ paddingTop: headerHeight || 260, padding: `${headerHeight || 260}px 20px 80px`, background: '#fff', minHeight: '100vh' }}>
         {chant.paroles ? (
           <>
             {/* Label PAROLES */}
