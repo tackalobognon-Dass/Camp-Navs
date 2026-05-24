@@ -208,6 +208,21 @@ function ChantDetail({ chant, onBack }) {
   )
 }
 
+const NoteIcon = () => (
+  <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+  </svg>
+)
+
+const COULEURS_ICONE = [
+  { bg: '#E1F5EE', color: '#054035' },
+  { bg: '#EFF6FF', color: '#1D4ED8' },
+  { bg: '#F5F3FF', color: '#6D28D9' },
+  { bg: '#FFF7ED', color: '#C2410C' },
+  { bg: '#F0FDF4', color: '#166534' },
+  { bg: '#FEF2F2', color: '#991B1B' },
+]
+
 export default function ChantsPage() {
   const navigate = useNavigate()
   const [chants, setChants] = useState([])
@@ -230,52 +245,100 @@ export default function ChantsPage() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f8f8f6', maxWidth: 480, margin: '0 auto' }}>
-      <div style={{ background: 'linear-gradient(160deg,#054035,#085041)', padding: '44px 16px 16px' }}>
+    <div style={{ minHeight: '100vh', background: '#F9FAFB', maxWidth: 480, margin: '0 auto' }}>
+
+      {/* Header */}
+      <div style={{ background: 'linear-gradient(160deg,#054035,#085041)', padding: '44px 16px 20px' }}>
         <button onClick={() => navigate(-1)}
-          style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#9FE1CB', fontSize: 12, background: 'none', border: 'none', cursor: 'pointer', marginBottom: 10 }}>
+          style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'rgba(255,255,255,0.6)', fontSize: 12, background: 'none', border: 'none', cursor: 'pointer', marginBottom: 12 }}>
           <IconArrowLeft /> Retour
         </button>
-        <div style={{ fontSize: 18, fontWeight: 500, color: '#fff', marginBottom: 2 }}>Chants du camp</div>
-        <div style={{ fontSize: 10, color: '#9FE1CB', marginBottom: 14 }}>{chants.length} chant(s) dans le répertoire</div>
-        <div style={{ background: 'rgba(255,255,255,0.15)', borderRadius: 12, padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{ color: 'rgba(255,255,255,0.6)', flexShrink: 0 }}><IconSearch /></div>
+        <p style={{ fontSize: 20, fontWeight: 500, color: '#fff', margin: '0 0 3px' }}>Chants du camp</p>
+        <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', margin: 0 }}>{chants.length} chant(s) dans le répertoire</p>
+      </div>
+
+      {/* Barre de recherche flottante */}
+      <div style={{ padding: '0 14px', marginTop: -20, marginBottom: 4, position: 'relative', zIndex: 10 }}>
+        <div style={{ background: '#fff', borderRadius: 14, boxShadow: '0 2px 12px rgba(0,0,0,0.1)', padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round">
+            <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+          </svg>
           <input type="text" value={recherche} onChange={e => setRecherche(e.target.value)}
-            placeholder="Rechercher un chant..."
-            style={{ background: 'transparent', border: 'none', outline: 'none', fontSize: 13, color: '#fff', width: '100%' }} />
+            placeholder="Rechercher un chant ou un artiste..."
+            style={{ background: 'transparent', border: 'none', outline: 'none', fontSize: 13, color: '#1a1a1a', width: '100%' }} />
+          {recherche && (
+            <button onClick={() => setRecherche('')}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9CA3AF', fontSize: 16, lineHeight: 1, padding: 0, flexShrink: 0 }}>✕</button>
+          )}
         </div>
       </div>
 
-      <div style={{ padding: '12px 14px 80px' }}>
-        {loading && <p style={{ textAlign: 'center', fontSize: 13, color: '#888', padding: '30px 0' }}>Chargement...</p>}
+      <div style={{ padding: '10px 14px 80px' }}>
+        {loading && <p style={{ textAlign: 'center', fontSize: 13, color: '#9CA3AF', padding: '30px 0' }}>Chargement...</p>}
+
         {!loading && chants.length === 0 && (
-          <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #e5e5e0', padding: 24, textAlign: 'center' }}>
-            <p style={{ fontSize: 13, color: '#888' }}>Aucun chant disponible pour le moment.</p>
+          <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #F3F4F6', padding: 28, textAlign: 'center', marginTop: 8 }}>
+            <div style={{ fontSize: 32, marginBottom: 8 }}>🎵</div>
+            <p style={{ fontSize: 13, color: '#6B7280', margin: 0 }}>Aucun chant disponible pour le moment.</p>
           </div>
         )}
+
         {!loading && recherche && filtres.length === 0 && (
-          <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #e5e5e0', padding: 20, textAlign: 'center' }}>
-            <p style={{ fontSize: 13, color: '#888' }}>Aucun résultat pour "{recherche}"</p>
+          <div style={{ background: '#fff', borderRadius: 14, border: '0.5px solid #F3F4F6', padding: 20, textAlign: 'center' }}>
+            <p style={{ fontSize: 13, color: '#9CA3AF', margin: 0 }}>Aucun résultat pour "{recherche}"</p>
           </div>
         )}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {filtres.map((c, i) => (
-            <div key={c.id} onClick={() => setChantSelectionne(c)}
-              style={{ background: '#fff', borderRadius: 14, border: '0.5px solid #e5e5e0', padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }}>
-              <div style={{ width: 36, height: 36, borderRadius: 10, background: '#E1F5EE', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <span style={{ fontSize: 12, fontWeight: 600, color: '#085041' }}>{c.ordre || i + 1}</span>
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 500, color: '#1a1a1a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.titre}</div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 3 }}>
-                  {c.artiste && <span style={{ fontSize: 10, color: '#888' }}>{c.artiste}</span>}
-                  {c.lien_audio && <span style={{ fontSize: 9, color: '#085041', background: '#E1F5EE', borderRadius: 20, padding: '1px 6px' }}>Audio</span>}
-                  {c.paroles && <span style={{ fontSize: 9, color: '#534AB7', background: '#EEEDFE', borderRadius: 20, padding: '1px 6px' }}>Paroles</span>}
+
+        {/* Compteur résultats si recherche active */}
+        {recherche && filtres.length > 0 && (
+          <p style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 10 }}>{filtres.length} résultat(s)</p>
+        )}
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {filtres.map((c, i) => {
+            const couleur = COULEURS_ICONE[i % COULEURS_ICONE.length]
+            return (
+              <div key={c.id} onClick={() => setChantSelectionne(c)}
+                style={{ background: '#fff', borderRadius: 14, border: '0.5px solid #F3F4F6', boxShadow: '0 1px 3px rgba(0,0,0,0.04)', padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', transition: 'transform .1s' }}
+                onTouchStart={e => e.currentTarget.style.transform = 'scale(0.98)'}
+                onTouchEnd={e => e.currentTarget.style.transform = 'scale(1)'}>
+
+                {/* Icône note de musique */}
+                <div style={{ width: 44, height: 44, borderRadius: 12, background: couleur.bg, color: couleur.color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <NoteIcon />
                 </div>
+
+                {/* Infos */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontSize: 14, fontWeight: 500, color: '#111827', margin: '0 0 3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {c.titre}
+                  </p>
+                  <p style={{ fontSize: 11, color: '#9CA3AF', margin: '0 0 5px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {c.artiste || 'Chant de camp'}
+                  </p>
+                  <div style={{ display: 'flex', gap: 5 }}>
+                    {c.lien_audio && (
+                      <span style={{ fontSize: 9, fontWeight: 600, color: '#1D4ED8', background: '#EFF6FF', border: '0.5px solid #BFDBFE', borderRadius: 20, padding: '2px 7px', display: 'flex', alignItems: 'center', gap: 3 }}>
+                        <svg width="8" height="8" fill="currentColor" viewBox="0 0 24 24"><path d="M3 18v-6a9 9 0 0118 0v6"/><path d="M21 19a2 2 0 01-2 2h-1a2 2 0 01-2-2v-3a2 2 0 012-2h3zM3 19a2 2 0 002 2h1a2 2 0 002-2v-3a2 2 0 00-2-2H3z"/></svg>
+                        Audio
+                      </span>
+                    )}
+                    {c.paroles && (
+                      <span style={{ fontSize: 9, fontWeight: 600, color: '#6D28D9', background: '#F5F3FF', border: '0.5px solid #DDD6FE', borderRadius: 20, padding: '2px 7px', display: 'flex', alignItems: 'center', gap: 3 }}>
+                        <svg width="8" height="8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        Paroles
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Flèche */}
+                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#D1D5DB" strokeWidth="1.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 18l6-6-6-6"/>
+                </svg>
               </div>
-              <div style={{ color: '#ccc', flexShrink: 0 }}><IconChevron /></div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       </div>
 
