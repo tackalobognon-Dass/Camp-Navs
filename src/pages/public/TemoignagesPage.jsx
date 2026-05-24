@@ -15,6 +15,7 @@ export default function TemoignagesPage() {
   const [succes, setSucces] = useState(false)
   const [recherche, setRecherche] = useState('')
   const [page, setPage] = useState(1)
+  const [expanded, setExpanded] = useState({})
 
   useEffect(() => { fetchTemoignages() }, [])
 
@@ -217,13 +218,24 @@ export default function TemoignagesPage() {
                 </div>
 
                 {/* Texte du témoignage */}
-                <p style={{
-                  fontSize: 14, color: '#1F2937', lineHeight: 1.85,
-                  margin: '0 0 16px', fontStyle: 'italic',
-                  position: 'relative', zIndex: 1,
-                }}>
-                  {t.contenu}
-                </p>
+                {(() => {
+                  const LIMITE = 200
+                  const isLong = t.contenu.length > LIMITE
+                  const isExpanded = expanded[t.id]
+                  return (
+                    <div style={{ marginBottom: 16, position: 'relative', zIndex: 1 }}>
+                      <p style={{ fontSize: 14, color: '#1F2937', lineHeight: 1.85, margin: 0, fontStyle: 'italic' }}>
+                        {isLong && !isExpanded ? t.contenu.slice(0, LIMITE) + '...' : t.contenu}
+                      </p>
+                      {isLong && (
+                        <button onClick={() => setExpanded(e => ({ ...e, [t.id]: !isExpanded }))}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600, color: '#054035', padding: '6px 0 0', display: 'block' }}>
+                          {isExpanded ? 'Voir moins ↑' : 'Voir plus ↓'}
+                        </button>
+                      )}
+                    </div>
+                  )
+                })()}
 
                 {/* Séparateur */}
                 <div style={{ height: '0.5px', background: '#F3F4F6', marginBottom: 12 }} />
@@ -238,12 +250,25 @@ export default function TemoignagesPage() {
                     </svg>
                     WhatsApp
                   </button>
-                  <button onClick={() => partagerNatif(t)}
-                    style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, background: 'transparent', color: '#6B7280', border: '1px solid #E5E7EB', borderRadius: 10, padding: '8px 10px', fontSize: 12, fontWeight: 500, cursor: 'pointer' }}>
+                  <button onClick={() => {
+                      const nom2 = t.anonyme ? 'Anonyme' : (t.nom || 'Anonyme')
+                      const texte = `Témoignage de ${nom2} :\n\n"${t.contenu}"\n\nCamp-Navs 2026`
+                      navigator.clipboard.writeText(texte).catch(() => {
+                        const el = document.createElement('textarea')
+                        el.value = texte
+                        document.body.appendChild(el)
+                        el.select()
+                        document.execCommand('copy')
+                        document.body.removeChild(el)
+                      })
+                      setCopie(t.id)
+                      setTimeout(() => setCopie(''), 2000)
+                    }}
+                    style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, background: copie === t.id ? '#E1F5EE' : 'transparent', color: copie === t.id ? '#054035' : '#6B7280', border: `1px solid ${copie === t.id ? '#054035' : '#E5E7EB'}`, borderRadius: 10, padding: '8px 10px', fontSize: 12, fontWeight: 500, cursor: 'pointer', transition: 'all .2s' }}>
                     <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
                     </svg>
-                    Partager
+                    {copie === t.id ? 'Copié !' : 'Copier'}
                   </button>
                 </div>
               </div>
