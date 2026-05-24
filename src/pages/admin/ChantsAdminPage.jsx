@@ -1,8 +1,14 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { supabase } from '../../lib/supabase'
 import AdminLayout from '../../components/admin/AdminLayout'
 
 const EMPTY_FORM = { titre: '', artiste: '', ordre: '', paroles: '' }
+
+const NoteIcon = () => (
+  <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+  </svg>
+)
 
 export default function ChantsAdminPage() {
   const [chants, setChants] = useState([])
@@ -12,9 +18,21 @@ export default function ChantsAdminPage() {
   const [editId, setEditId] = useState(null)
   const [fichierAudio, setFichierAudio] = useState(null)
   const [saving, setSaving] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
+  const [uploadEtape, setUploadEtape] = useState('')
   const [erreur, setErreur] = useState('')
+  const [menuOuvert, setMenuOuvert] = useState(null)
+  const menuRef = useRef(null)
 
   useEffect(() => { fetchChants() }, [])
+
+  useEffect(() => {
+    function handleClick(e) {
+      if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOuvert(null)
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
 
   async function fetchChants() {
     const { data } = await supabase.from('chants').select('*').order('ordre', { ascending: true })
@@ -29,6 +47,8 @@ export default function ChantsAdminPage() {
     setEditId(null)
     setFichierAudio(null)
     setErreur('')
+    setUploadProgress(0)
+    setUploadEtape('')
     setShowForm(true)
   }
 
@@ -42,30 +62,90 @@ export default function ChantsAdminPage() {
     setEditId(chant.id)
     setFichierAudio(null)
     setErreur('')
+    setUploadProgress(0)
+    setUploadEtape('')
     setShowForm(true)
+    setMenuOuvert(null)
   }
 
   async function handleSave() {
     if (!form.titre) return
     setSaving(true)
     setErreur('')
+    setUploadProgress(0)
 
     let lien_audio = editId ? chants.find(c => c.id === editId)?.lien_audio : ''
 
     if (fichierAudio) {
+      // Étape 1 : Préparation
+      setUploadEtape('Préparation du fichier...')
+      setUploadProgress(5)
+      await new Promise(r => setTimeout(r, 300))
+
       const ext = fichierAudio.name.split('.').pop().toLowerCase()
       const nomFichier = `${Date.now()}.${ext}`
-      const { error: uploadError } = await supabase.storage
-        .from('chants-audio')
-        .upload(nomFichier, fichierAudio, { cacheControl: '3600', upsert: true })
-      if (uploadError) {
-        setErreur(`Erreur audio : ${uploadError.message}`)
-        setSaving(false)
-        return
+      const tailleMo = (fichierAudio.size / 1024 / 1024).toFixed(1)
+
+      // Étape 2 : Upload avec XHR pour vrai suivi de progression
+      setUploadEtape(`Upload de ${tailleMo} MB...`)
+      setUploadProgress(10)
+
+      try {
+        // Utiliser XMLHttpRequest pour le vrai suivi de progression
+        const session = await supabase.auth.getSession()
+        const token = session.data?.session?.access_token
+        const projectUrl = 'https://zkyzcemlndruwgirmfgy.supabase.co'
+
+        await new Promise((resolve, reject) => {
+          const xhr = new XMLHttpRequest()
+          xhr.open('POST', `${projectUrl}/storage/v1/object/chants-audio/${nomFichier}`)
+          xhr.setRequestHeader('Authorization', `Bearer ${token}`)
+          xhr.setRequestHeader('x-upsert', 'true')
+
+          xhr.upload.onprogress = (e) => {
+            if (e.lengthComputable) {
+              const pct = Math.round((e.loaded / e.total) * 75) + 10
+              setUploadProgress(pct)
+              setUploadEtape(`Upload... ${Math.round((e.loaded / e.total) * 100)}%`)
+            }
+          }
+
+          xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300) resolve()
+            else reject(new Error(`Erreur ${xhr.status}`))
+          }
+          xhr.onerror = () => reject(new Error('Erreur réseau'))
+          xhr.send(fichierAudio)
+        })
+
+        setUploadProgress(88)
+        setUploadEtape('Récupération du lien...')
+        await new Promise(r => setTimeout(r, 200))
+
+        const { data: urlData } = supabase.storage.from('chants-audio').getPublicUrl(nomFichier)
+        lien_audio = urlData.publicUrl
+
+      } catch (err) {
+        // Fallback sur l'upload Supabase normal
+        setUploadEtape('Upload en cours...')
+        const { error: uploadError } = await supabase.storage
+          .from('chants-audio')
+          .upload(nomFichier, fichierAudio, { cacheControl: '3600', upsert: true })
+        if (uploadError) {
+          setErreur(`Erreur upload : ${uploadError.message}`)
+          setSaving(false)
+          setUploadProgress(0)
+          setUploadEtape('')
+          return
+        }
+        const { data: urlData } = supabase.storage.from('chants-audio').getPublicUrl(nomFichier)
+        lien_audio = urlData.publicUrl
       }
-      const { data: urlData } = supabase.storage.from('chants-audio').getPublicUrl(nomFichier)
-      lien_audio = urlData.publicUrl
     }
+
+    // Étape finale : Sauvegarde en base
+    setUploadProgress(93)
+    setUploadEtape('Sauvegarde...')
 
     const payload = {
       titre: form.titre,
@@ -81,11 +161,17 @@ export default function ChantsAdminPage() {
       await supabase.from('chants').insert([payload])
     }
 
+    setUploadProgress(100)
+    setUploadEtape('Terminé !')
+    await new Promise(r => setTimeout(r, 600))
+
     setSaving(false)
     setShowForm(false)
     setEditId(null)
     setForm(EMPTY_FORM)
     setFichierAudio(null)
+    setUploadProgress(0)
+    setUploadEtape('')
     fetchChants()
   }
 
@@ -96,8 +182,11 @@ export default function ChantsAdminPage() {
       await supabase.storage.from('chants-audio').remove([nomFichier])
     }
     await supabase.from('chants').delete().eq('id', chant.id)
+    setMenuOuvert(null)
     fetchChants()
   }
+
+  const inputStyle = "w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-white outline-none focus:border-emerald-400"
 
   return (
     <AdminLayout>
@@ -125,28 +214,28 @@ export default function ChantsAdminPage() {
           <div className="mb-3">
             <label className="block text-xs text-gray-500 mb-1">Titre *</label>
             <input type="text" value={form.titre} onChange={e => setF('titre', e.target.value)}
-              placeholder="Ex : Grand Dieu nous te louons"
-              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-white outline-none focus:border-emerald-400" />
+              placeholder="Ex : Grand Dieu nous te louons" className={inputStyle} />
           </div>
 
           <div className="grid grid-cols-2 gap-3 mb-3">
             <div>
               <label className="block text-xs text-gray-500 mb-1">Artiste</label>
               <input type="text" value={form.artiste} onChange={e => setF('artiste', e.target.value)}
-                placeholder="Ex : Navigateurs CI"
-                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-white outline-none focus:border-emerald-400" />
+                placeholder="Ex : Navigateurs CI" className={inputStyle} />
             </div>
             <div>
               <label className="block text-xs text-gray-500 mb-1">Ordre</label>
               <input type="number" value={form.ordre} onChange={e => setF('ordre', e.target.value)}
-                placeholder="Ex : 1"
-                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-white outline-none focus:border-emerald-400" />
+                placeholder="Ex : 1" className={inputStyle} />
             </div>
           </div>
 
           {/* Audio */}
           <div className="mb-3">
-            <label className="block text-xs text-gray-500 mb-1">Fichier audio (MP3, WAV, M4A)</label>
+            <label className="block text-xs text-gray-500 mb-1">
+              Fichier audio
+              <span style={{ color: '#9CA3AF', fontWeight: 400 }}> · MP3 128kbps recommandé</span>
+            </label>
             <div className="border border-dashed border-gray-300 rounded-xl p-3 text-center">
               {fichierAudio ? (
                 <div className="flex items-center justify-between">
@@ -156,7 +245,10 @@ export default function ChantsAdminPage() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
                       </svg>
                     </div>
-                    <span className="text-xs text-gray-700 truncate max-w-40">{fichierAudio.name}</span>
+                    <div style={{ textAlign: 'left' }}>
+                      <p className="text-xs text-gray-700 truncate max-w-40">{fichierAudio.name}</p>
+                      <p className="text-xs text-gray-400">{(fichierAudio.size / 1024 / 1024).toFixed(1)} MB</p>
+                    </div>
                   </div>
                   <button onClick={() => setFichierAudio(null)} className="text-red-400 text-xs">Retirer</button>
                 </div>
@@ -166,6 +258,7 @@ export default function ChantsAdminPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                   </svg>
                   <p className="text-xs text-gray-400">Appuyez pour sélectionner un fichier audio</p>
+                  <p className="text-xs text-gray-300 mt-1">MP3, WAV, M4A</p>
                   <input type="file" accept="audio/*" className="hidden" onChange={e => setFichierAudio(e.target.files[0])} />
                 </label>
               )}
@@ -177,12 +270,32 @@ export default function ChantsAdminPage() {
 
           {/* Paroles */}
           <div className="mb-4">
-            <label className="block text-xs text-gray-500 mb-1">Paroles</label>
+            <label className="block text-xs text-gray-500 mb-1">
+              Paroles
+              <span style={{ color: '#9CA3AF', fontWeight: 400 }}> · Commencez le refrain par "R:" ou "Refrain :"</span>
+            </label>
             <textarea value={form.paroles} onChange={e => setF('paroles', e.target.value)}
-              placeholder="Saisissez les paroles du chant ici..."
-              rows={6}
+              placeholder="Saisissez les paroles du chant ici..." rows={6}
               className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-white outline-none focus:border-emerald-400 resize-none leading-relaxed" />
           </div>
+
+          {/* Barre de progression réelle */}
+          {saving && (
+            <div className="mb-4">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                <span style={{ fontSize: 11, color: '#054035', fontWeight: 500 }}>{uploadEtape}</span>
+                <span style={{ fontSize: 11, color: '#054035', fontWeight: 600 }}>{uploadProgress}%</span>
+              </div>
+              <div style={{ background: '#E1F5EE', borderRadius: 8, height: 6, overflow: 'hidden' }}>
+                <div style={{
+                  background: uploadProgress === 100 ? '#059669' : '#054035',
+                  height: 6, borderRadius: 8,
+                  width: `${uploadProgress}%`,
+                  transition: 'width 0.3s ease',
+                }} />
+              </div>
+            </div>
+          )}
 
           {erreur && (
             <div className="mb-3 bg-red-50 border border-red-100 rounded-xl p-3">
@@ -203,7 +316,6 @@ export default function ChantsAdminPage() {
         </div>
       )}
 
-      {/* Liste chants */}
       {loading && <p className="text-sm text-gray-400 text-center py-8">Chargement...</p>}
 
       {!loading && chants.length === 0 && (
@@ -215,37 +327,49 @@ export default function ChantsAdminPage() {
         </div>
       )}
 
-      <div className="space-y-2">
+      {/* Liste */}
+      <div className="space-y-2" ref={menuRef}>
         {chants.map((c, i) => (
           <div key={c.id} className="bg-white border border-gray-100 rounded-xl p-3 flex items-center gap-3">
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: '#E1F5EE', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <span style={{ fontSize: 12, fontWeight: 600, color: '#085041' }}>{c.ordre || i + 1}</span>
+            {/* Icône note */}
+            <div style={{ width: 38, height: 38, borderRadius: 10, background: '#E1F5EE', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: '#085041' }}>
+              <NoteIcon />
             </div>
+
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-800 truncate">{c.titre}</p>
               <div className="flex items-center gap-2 mt-1 flex-wrap">
                 {c.artiste && <span className="text-xs text-gray-400">{c.artiste}</span>}
                 {c.lien_audio && (
-                  <span style={{ fontSize: 9, color: '#085041', background: '#E1F5EE', borderRadius: 20, padding: '1px 6px' }}>Audio</span>
+                  <span style={{ fontSize: 9, fontWeight: 600, color: '#1D4ED8', background: '#EFF6FF', border: '0.5px solid #BFDBFE', borderRadius: 20, padding: '1px 7px' }}>Audio</span>
                 )}
                 {c.paroles && (
-                  <span style={{ fontSize: 9, color: '#534AB7', background: '#EEEDFE', borderRadius: 20, padding: '1px 6px' }}>Paroles</span>
+                  <span style={{ fontSize: 9, fontWeight: 600, color: '#6D28D9', background: '#F5F3FF', border: '0.5px solid #DDD6FE', borderRadius: 20, padding: '1px 7px' }}>Paroles</span>
                 )}
               </div>
             </div>
-            <div className="flex gap-2 flex-shrink-0">
-              <button onClick={() => openEdit(c)}
-                style={{ width: 32, height: 32, borderRadius: 8, background: '#E1F5EE', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <svg style={{ width: 14, height: 14, color: '#085041' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
+
+            {/* Menu ··· */}
+            <div style={{ position: 'relative', flexShrink: 0 }}>
+              <button onClick={() => setMenuOuvert(menuOuvert === c.id ? null : c.id)}
+                style={{ width: 30, height: 30, borderRadius: 8, background: '#f5f5f3', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: '#666' }}>
+                ···
               </button>
-              <button onClick={() => supprimerChant(c)}
-                style={{ width: 32, height: 32, borderRadius: 8, background: '#FCEBEB', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <svg style={{ width: 14, height: 14, color: '#A32D2D' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-              </button>
+              {menuOuvert === c.id && (
+                <div style={{ position: 'absolute', right: 0, top: 34, background: '#fff', borderRadius: 10, border: '0.5px solid #e5e5e0', boxShadow: '0 4px 16px rgba(0,0,0,0.1)', zIndex: 20, minWidth: 140, overflow: 'hidden' }}>
+                  <button onClick={() => openEdit(c)}
+                    style={{ width: '100%', padding: '10px 14px', fontSize: 13, color: '#1a1a1a', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <svg style={{ width: 14, height: 14 }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                    Modifier
+                  </button>
+                  <div style={{ height: '0.5px', background: '#f0f0ee' }} />
+                  <button onClick={() => supprimerChant(c)}
+                    style={{ width: '100%', padding: '10px 14px', fontSize: 13, color: '#DC2626', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <svg style={{ width: 14, height: 14 }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    Supprimer
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         ))}
