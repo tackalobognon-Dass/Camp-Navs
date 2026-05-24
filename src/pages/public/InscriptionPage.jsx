@@ -2,66 +2,56 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 
-const TSHIRT_SIZES = [
-  { label: 'XS', desc: 'Très petit', w: 28 },
-  { label: 'S', desc: 'Petit', w: 32 },
-  { label: 'M', desc: 'Moyen', w: 36 },
-  { label: 'L', desc: 'Grand', w: 40 },
-  { label: 'XL', desc: 'Très grand', w: 44 },
-  { label: 'XXL', desc: 'Extra large', w: 48 },
-  { label: 'XXXL', desc: '3X large', w: 52 },
-]
+const VERT = '#054035'
+const OR = '#E8A020'
+const VERT_CLAIR = '#E8F5E8'
 
-function TshirtIcon({ w = 40, color = '#085041' }) {
-  return (
-    <svg viewBox="0 0 60 60" style={{ width: w, height: w * 0.9 }}>
-      <path d="M10,8 L22,4 L22,8 Q30,14 38,8 L38,4 L50,8 L54,22 L44,22 L44,56 L16,56 L16,22 L6,22 Z" fill={color} />
-      <path d="M22,4 Q30,10 38,4" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" />
-    </svg>
-  )
-}
-
-function FieldCard({ label, hint, children }) {
-  return (
-    <div style={{ background: '#fff', borderRadius: 14, border: '0.5px solid #e5e5e0', padding: '12px' }}>
-      <div style={{ fontSize: 10, fontWeight: 600, color: '#085041', marginBottom: 8 }}>{label}</div>
-      {children}
-      {hint && <div style={{ fontSize: 9, color: '#888', marginTop: 5 }}>{hint}</div>}
-    </div>
-  )
-}
-
-function ChoiceBtn({ emoji, text, selected, onClick }) {
-  return (
-    <div onClick={onClick} style={{
-      border: `0.5px solid ${selected ? '#085041' : '#e5e5e0'}`,
-      borderRadius: 12, padding: '10px 8px', cursor: 'pointer', textAlign: 'center',
-      background: selected ? '#085041' : '#fff', transition: 'all .2s',
-    }}>
-      <div style={{ fontSize: 20, marginBottom: 4 }}>{emoji}</div>
-      <div style={{ fontSize: 10, fontWeight: 500, color: selected ? '#fff' : '#444' }}>{text}</div>
-    </div>
-  )
-}
-
-function AgeBtn({ label, selected, onClick }) {
-  return (
-    <div onClick={onClick} style={{
-      border: `0.5px solid ${selected ? '#0F6E56' : '#e5e5e0'}`,
-      borderRadius: 10, padding: '8px', cursor: 'pointer', textAlign: 'center',
-      background: selected ? '#0F6E56' : '#fff', transition: 'all .2s',
-    }}>
-      <div style={{ fontSize: 10, fontWeight: 500, color: selected ? '#fff' : '#555' }}>{label}</div>
-    </div>
-  )
-}
+const TSHIRT_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL']
 
 const STEPS = [
-  { emoji: '👤', label: 'Identité', color: '#085041' },
-  { emoji: '📱', label: 'Coordonnées', color: '#0F6E56' },
-  { emoji: '🏥', label: 'Santé', color: '#185FA5' },
-  { emoji: '👕', label: 'Pratique', color: '#854F0B' },
+  { label: 'Identité', icon: <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg> },
+  { label: 'Coordonnées', icon: <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg> },
+  { label: 'Santé', icon: <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg> },
+  { label: 'Logistique', icon: <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg> },
 ]
+
+function SelectCard({ label, sublabel, selected, onClick }) {
+  return (
+    <div onClick={onClick} style={{
+      border: `2px solid ${selected ? VERT : '#E5E7EB'}`,
+      borderRadius: 14, padding: '12px 10px', cursor: 'pointer', textAlign: 'center',
+      background: selected ? VERT_CLAIR : '#fff',
+      transition: 'all .2s',
+    }}>
+      <p style={{ fontSize: 13, fontWeight: 600, color: selected ? VERT : '#374151', margin: 0 }}>{label}</p>
+      {sublabel && <p style={{ fontSize: 10, color: selected ? VERT : '#9CA3AF', margin: '3px 0 0' }}>{sublabel}</p>}
+    </div>
+  )
+}
+
+function Switch({ value, onChange }) {
+  return (
+    <button onClick={() => onChange(!value)}
+      style={{ width: 48, height: 26, borderRadius: 13, background: value ? VERT : '#D1D5DB', border: 'none', cursor: 'pointer', position: 'relative', transition: 'background .2s', flexShrink: 0 }}>
+      <div style={{ position: 'absolute', width: 20, height: 20, borderRadius: '50%', background: '#fff', top: 3, left: value ? 25 : 3, transition: 'left .2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
+    </button>
+  )
+}
+
+function InputField({ icon, label, required, hint, children }) {
+  return (
+    <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #E5E7EB', overflow: 'hidden' }}>
+      <div style={{ padding: '10px 14px 4px', display: 'flex', alignItems: 'center', gap: 8 }}>
+        <span style={{ color: '#9CA3AF', flexShrink: 0 }}>{icon}</span>
+        <span style={{ fontSize: 10, fontWeight: 600, color: '#6B7280', letterSpacing: '0.04em' }}>
+          {label}{required && <span style={{ color: '#EF4444', marginLeft: 2 }}>*</span>}
+        </span>
+      </div>
+      <div style={{ padding: '0 14px 10px 36px' }}>{children}</div>
+      {hint && <div style={{ padding: '0 14px 10px 36px', fontSize: 10, color: '#9CA3AF', fontStyle: 'italic' }}>{hint}</div>}
+    </div>
+  )
+}
 
 export default function InscriptionPage() {
   const navigate = useNavigate()
@@ -69,6 +59,7 @@ export default function InscriptionPage() {
   const [sending, setSending] = useState(false)
   const [done, setDone] = useState(false)
   const [erreur, setErreur] = useState('')
+  const [copie, setCopie] = useState('')
 
   const [nomComplet, setNomComplet] = useState('')
   const [genre, setGenre] = useState('')
@@ -78,13 +69,26 @@ export default function InscriptionPage() {
   const [occupation, setOccupation] = useState('')
   const [lieuHabitation, setLieuHabitation] = useState('')
   const [antecedents, setAntecedents] = useState('')
-  const [dejaParticipe, setDejaParticipe] = useState('')
+  const [dejaParticipe, setDejaParticipe] = useState(false)
   const [motivation, setMotivation] = useState('')
   const [tailleTshirt, setTailleTshirt] = useState('')
   const [contactUrgence, setContactUrgence] = useState('')
-  const [invite, setInvite] = useState('')
+  const [invite, setInvite] = useState(false)
 
-  const frais = statut === 'Enfant / Ado (0-15 ans)' ? '25 000' : '30 000'
+  const isEnfant = statut === 'Enfant / Ado (0-15 ans)'
+  const frais = isEnfant ? '25 000' : '30 000'
+  const fraisNum = isEnfant ? 25000 : 30000
+
+  function copierNumero(num) {
+    navigator.clipboard.writeText(num).catch(() => {})
+    setCopie(num)
+    setTimeout(() => setCopie(''), 2000)
+  }
+
+  function whatsappConfirmation() {
+    const msg = `Bonjour, je viens de m'inscrire au Camp-Navs 2026.\n\nNom : ${nomComplet}\nTéléphone : ${telephone}\nCatégorie : ${statut}\nMontant à payer : ${frais} FCFA\n\nJe vais effectuer le paiement. Merci !`
+    window.open(`https://wa.me/2250778484879?text=${encodeURIComponent(msg)}`, '_blank')
+  }
 
   async function handleSubmit() {
     if (!nomComplet || !genre || !statut || !telephone) {
@@ -95,7 +99,7 @@ export default function InscriptionPage() {
     const { error } = await supabase.from('inscriptions').insert([{
       nom_complet: nomComplet,
       telephone,
-      tranche_age: statut === 'Enfant / Ado (0-15 ans)' ? 'Enfants & Adolescents' : 'Jeunes & Adultes',
+      tranche_age: isEnfant ? 'Enfants & Adolescents' : 'Jeunes & Adultes',
       statut_paiement: 'en attente',
       montant_paye: 0,
       genre,
@@ -104,277 +108,284 @@ export default function InscriptionPage() {
       occupation,
       lieu_habitation: lieuHabitation,
       antecedents_medicaux: antecedents,
-      deja_participe: dejaParticipe,
+      deja_participe: dejaParticipe ? 'Oui' : 'Non',
       motivation,
       taille_tshirt: tailleTshirt,
       contact_urgence: contactUrgence,
-      invite,
+      invite: invite ? 'Oui' : 'Non',
     }])
     setSending(false)
     if (error) setErreur('Une erreur est survenue. Réessayez.')
     else setDone(true)
   }
 
+  // ÉCRAN SUCCÈS
   if (done) {
     return (
-      <div style={{ minHeight: '100vh', background: '#f8f8f6', maxWidth: 480, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-        <div style={{ background: '#fff', borderRadius: 24, border: '0.5px solid #e5e5e0', padding: '32px 24px', textAlign: 'center', width: '100%' }}>
-          <div style={{ fontSize: 56, marginBottom: 16 }}>🎉</div>
-          <div style={{ fontSize: 20, fontWeight: 600, color: '#085041', marginBottom: 8 }}>
-            Félicitations {nomComplet.split(' ')[0]} !
-          </div>
-          <div style={{ fontSize: 13, color: '#666', lineHeight: 1.6, marginBottom: 20 }}>
-            Votre inscription au <strong>Camp-Navs 2026</strong> a bien été enregistrée.
-          </div>
+      <div style={{ minHeight: '100vh', background: '#F0F7F0', maxWidth: 480, margin: '0 auto', padding: '32px 16px 40px' }}>
 
-          <div style={{ background: '#E1F5EE', borderRadius: 16, padding: 16, marginBottom: 14, textAlign: 'left' }}>
-            <div style={{ fontSize: 11, fontWeight: 600, color: '#085041', marginBottom: 6 }}>💰 Frais de participation</div>
-            <div style={{ fontSize: 22, fontWeight: 700, color: '#085041', marginBottom: 2 }}>{frais} FCFA</div>
-            <div style={{ fontSize: 10, color: '#0F6E56' }}>
-              {statut === 'Enfant / Ado (0-15 ans)' ? 'Tarif Enfants & Adolescents' : 'Tarif Jeunes & Adultes'}
+        {/* Badge participant */}
+        <div style={{ background: VERT, borderRadius: 24, padding: '28px 20px', marginBottom: 16, position: 'relative', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', width: 150, height: 150, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.08)', top: -40, right: -40 }} />
+          <div style={{ textAlign: 'center', marginBottom: 20 }}>
+            <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', margin: '0 auto 12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="#fff" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             </div>
+            <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', margin: '0 0 4px', letterSpacing: '0.06em' }}>INSCRIPTION CONFIRMÉE</p>
+            <p style={{ fontSize: 20, fontWeight: 600, color: '#fff', margin: 0 }}>{nomComplet}</p>
+            <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', margin: '4px 0 0' }}>{statut}</p>
           </div>
-
-          <div style={{ background: '#FAEEDA', borderRadius: 16, padding: 16, marginBottom: 20, textAlign: 'left' }}>
-            <div style={{ fontSize: 11, fontWeight: 600, color: '#854F0B', marginBottom: 10 }}>📲 Comment payer ?</div>
-            <div style={{ fontSize: 11, color: '#6B3D00', lineHeight: 1.7 }}>
-              Envoyez le paiement via <strong>Wave</strong> ou <strong>Orange Money</strong> :
-            </div>
-            <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <div style={{ background: '#fff', borderRadius: 10, padding: '10px 12px' }}>
-                <div style={{ fontSize: 10, color: '#888', marginBottom: 2 }}>Bureau des Navigateurs</div>
-                <div style={{ fontSize: 15, fontWeight: 600, color: '#085041' }}>07 78 48 48 79</div>
-              </div>
-              <div style={{ background: '#fff', borderRadius: 10, padding: '10px 12px' }}>
-                <div style={{ fontSize: 10, color: '#888', marginBottom: 2 }}>Mme OBODJI</div>
-                <div style={{ fontSize: 15, fontWeight: 600, color: '#085041' }}>07 09 62 62 65</div>
-              </div>
-            </div>
-            <div style={{ fontSize: 10, color: '#854F0B', marginTop: 10, fontStyle: 'italic' }}>
-              Après paiement, confirmez par WhatsApp en envoyant votre nom complet et votre reçu.
-            </div>
+          <div style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 14, padding: '14px 16px', textAlign: 'center' }}>
+            <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.6)', margin: '0 0 4px' }}>FRAIS DE PARTICIPATION</p>
+            <p style={{ fontSize: 40, fontWeight: 700, color: '#fff', margin: 0, lineHeight: 1 }}>{frais}</p>
+            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', margin: '4px 0 0' }}>FCFA</p>
           </div>
-
-          <div style={{ fontSize: 11, color: '#888', lineHeight: 1.8, marginBottom: 20 }}>
-            📅 Camp-Navs 2026 · 23 – 29 août<br />
-            📍 La Sablière · Bingerville
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 16, marginTop: 14 }}>
+            <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', margin: 0 }}>📅 23–29 août 2026</p>
+            <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', margin: 0 }}>📍 La Sablière, Bingerville</p>
           </div>
-
-          <button onClick={() => navigate('/')} style={{
-            width: '100%', background: '#085041', color: '#fff', border: 'none',
-            borderRadius: 14, padding: 14, fontSize: 14, fontWeight: 500, cursor: 'pointer'
-          }}>
-            Retour à l'accueil
-          </button>
         </div>
+
+        {/* Comment payer */}
+        <div style={{ background: '#fff', borderRadius: 18, border: '1px solid #E5E7EB', padding: 18, marginBottom: 12 }}>
+          <p style={{ fontSize: 12, fontWeight: 700, color: '#374151', margin: '0 0 12px', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke={OR} strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            Comment payer ?
+          </p>
+          <p style={{ fontSize: 12, color: '#6B7280', margin: '0 0 12px', lineHeight: 1.6 }}>
+            Envoyez <strong style={{ color: VERT }}>{frais} FCFA</strong> via Wave ou Orange Money à l'un des contacts ci-dessous :
+          </p>
+          {[
+            { label: 'Bureau des Navigateurs', num: '0778484879', affiche: '07 78 48 48 79' },
+            { label: 'Mme OBODJI', num: '0709626265', affiche: '07 09 62 62 65' },
+          ].map(c => (
+            <div key={c.num} style={{ background: '#F9FAFB', borderRadius: 12, padding: '10px 14px', marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div>
+                <p style={{ fontSize: 10, color: '#9CA3AF', margin: 0 }}>{c.label}</p>
+                <p style={{ fontSize: 16, fontWeight: 700, color: VERT, margin: '2px 0 0' }}>{c.affiche}</p>
+              </div>
+              <button onClick={() => copierNumero(c.num)}
+                style={{ background: copie === c.num ? VERT_CLAIR : '#fff', border: `1px solid ${copie === c.num ? VERT : '#E5E7EB'}`, borderRadius: 8, padding: '6px 12px', fontSize: 11, color: copie === c.num ? VERT : '#6B7280', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, transition: 'all .2s' }}>
+                <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                {copie === c.num ? 'Copié !' : 'Copier'}
+              </button>
+            </div>
+          ))}
+          <p style={{ fontSize: 10, color: '#9CA3AF', margin: '8px 0 0', fontStyle: 'italic', lineHeight: 1.5 }}>
+            Après paiement, confirmez en envoyant votre reçu et votre nom complet par WhatsApp.
+          </p>
+        </div>
+
+        {/* Bouton WhatsApp */}
+        <button onClick={whatsappConfirmation}
+          style={{ width: '100%', background: '#25D366', color: '#fff', border: 'none', borderRadius: 14, padding: '14px', fontSize: 14, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 10 }}>
+          <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.533 5.859L.057 23.625a.5.5 0 00.612.612l5.766-1.476A11.95 11.95 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.9 0-3.7-.514-5.253-1.408l-.375-.223-3.886.995 1.013-3.786-.244-.388A9.955 9.955 0 012 12c0-5.514 4.486-10 10-10s10 4.486 10 10-4.486 10-10 10z"/></svg>
+          Confirmer via WhatsApp
+        </button>
+
+        <button onClick={() => navigate('/')}
+          style={{ width: '100%', background: 'transparent', color: VERT, border: `1.5px solid ${VERT}`, borderRadius: 14, padding: '13px', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}>
+          Retour à l'accueil
+        </button>
       </div>
     )
   }
 
   const progress = ((step + 1) / STEPS.length) * 100
+  const inputStyle = { width: '100%', border: 'none', outline: 'none', fontSize: 14, color: '#111827', background: 'transparent', lineHeight: 1.5 }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f8f8f6', maxWidth: 480, margin: '0 auto', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ minHeight: '100vh', background: '#F0F7F0', maxWidth: 480, margin: '0 auto', display: 'flex', flexDirection: 'column' }}>
 
-      {/* HERO */}
-      <div style={{ background: `linear-gradient(160deg,#054035,${STEPS[step].color})`, padding: '44px 16px 20px', position: 'relative', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', width: 120, height: 120, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.08)', top: -30, right: -30 }} />
+      {/* Header */}
+      <div style={{ background: VERT, padding: '44px 16px 20px', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', width: 130, height: 130, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.07)', top: -35, right: -35 }} />
+
         <button onClick={() => step > 0 ? setStep(s => s - 1) : navigate(-1)}
-          style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'rgba(255,255,255,0.7)', fontSize: 12, background: 'none', border: 'none', cursor: 'pointer', marginBottom: 12 }}>
-          ← Retour
+          style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'rgba(255,255,255,0.6)', fontSize: 12, background: 'none', border: 'none', cursor: 'pointer', marginBottom: 14 }}>
+          <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>
+          Retour
         </button>
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(255,255,255,0.15)', borderRadius: 20, padding: '4px 12px', fontSize: 10, color: '#9FE1CB', marginBottom: 8 }}>
-          <span style={{ fontSize: 14 }}>{STEPS[step].emoji}</span> {STEPS[step].label}
+
+        <p style={{ fontSize: 18, fontWeight: 600, color: '#fff', margin: '0 0 2px' }}>Inscription Camp-Navs</p>
+        <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', margin: '0 0 16px' }}>23–29 août 2026 · La Sablière · Bingerville</p>
+
+        {/* Barre de progression */}
+        <div style={{ background: 'rgba(255,255,255,0.15)', borderRadius: 10, height: 4, overflow: 'hidden', marginBottom: 8 }}>
+          <div style={{ background: OR, borderRadius: 10, height: 4, width: `${progress}%`, transition: 'width .4s ease' }} />
         </div>
-        <div style={{ fontSize: 17, fontWeight: 600, color: '#fff', marginBottom: 2 }}>Inscription Camp-Navs 2026</div>
-        <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.65)' }}>23–29 août · La Sablière · Bingerville</div>
-        <div style={{ marginTop: 14 }}>
-          <div style={{ background: 'rgba(255,255,255,0.15)', borderRadius: 10, height: 4, overflow: 'hidden' }}>
-            <div style={{ background: 'linear-gradient(90deg,#9FE1CB,#fff)', borderRadius: 10, height: 4, width: `${progress}%`, transition: 'width .4s ease' }} />
-          </div>
-          <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.6)', marginTop: 4 }}>Étape {step + 1} sur {STEPS.length}</div>
-        </div>
-      </div>
 
-      {/* Dots */}
-      <div style={{ display: 'flex', gap: 5, justifyContent: 'center', padding: '10px 0 4px' }}>
-        {STEPS.map((_, i) => (
-          <div key={i} style={{ height: 5, borderRadius: 3, background: i === step ? '#085041' : '#ddd', width: i === step ? 18 : 5, transition: 'all .3s' }} />
-        ))}
-      </div>
-
-      {/* ÉTAPE 1 */}
-      {step === 0 && (
-        <div style={{ flex: 1, padding: '8px 14px 100px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <FieldCard label="👤 Nom & Prénoms *">
-            <input
-              type="text"
-              placeholder="Ex : YAO Jean-Pierre"
-              value={nomComplet}
-              onChange={e => setNomComplet(e.target.value)}
-              style={{ width: '100%', border: 'none', outline: 'none', fontSize: 13, color: '#1a1a1a', background: 'transparent' }}
-            />
-          </FieldCard>
-
-          <FieldCard label="⚥ Genre *">
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 4 }}>
-              <ChoiceBtn emoji="👩" text="Féminin" selected={genre === 'Féminin'} onClick={() => setGenre('Féminin')} />
-              <ChoiceBtn emoji="👨" text="Masculin" selected={genre === 'Masculin'} onClick={() => setGenre('Masculin')} />
-            </div>
-          </FieldCard>
-
-          <FieldCard label="🎂 Statut *">
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 4 }}>
-              <ChoiceBtn emoji="🧒" text="Enfant / Ado (0-15 ans)" selected={statut === 'Enfant / Ado (0-15 ans)'} onClick={() => setStatut('Enfant / Ado (0-15 ans)')} />
-              <ChoiceBtn emoji="🧑" text="Jeune / Adulte (+15 ans)" selected={statut === 'Jeune / Adulte (+15 ans)'} onClick={() => setStatut('Jeune / Adulte (+15 ans)')} />
-            </div>
-            {statut && (
-              <div style={{ marginTop: 8, background: '#E1F5EE', borderRadius: 8, padding: '6px 10px', fontSize: 10, color: '#085041', fontWeight: 500 }}>
-                Frais : {statut === 'Enfant / Ado (0-15 ans)' ? '25 000' : '30 000'} FCFA
+        {/* Étapes */}
+        <div style={{ display: 'flex', gap: 0 }}>
+          {STEPS.map((s, i) => (
+            <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+              <div style={{ width: 24, height: 24, borderRadius: '50%', background: i <= step ? OR : 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .3s' }}>
+                {i < step
+                  ? <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="#fff" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>
+                  : <span style={{ color: i === step ? '#fff' : 'rgba(255,255,255,0.4)', display: 'flex' }}>{s.icon}</span>
+                }
               </div>
-            )}
-          </FieldCard>
-
-          <FieldCard label="📊 Tranche d'âge *">
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginTop: 4 }}>
-              {['30 ans et +', '20 – 29 ans', '16 – 19 ans', '11 – 15 ans', '10 ans et –'].map(a => (
-                <AgeBtn key={a} label={a} selected={trancheAge === a} onClick={() => setTrancheAge(a)} />
-              ))}
+              <span style={{ fontSize: 8, color: i <= step ? OR : 'rgba(255,255,255,0.3)', fontWeight: i === step ? 600 : 400 }}>{s.label}</span>
             </div>
-          </FieldCard>
+          ))}
         </div>
-      )}
+      </div>
 
-      {/* ÉTAPE 2 */}
-      {step === 1 && (
-        <div style={{ flex: 1, padding: '8px 14px 100px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <FieldCard label="📱 Numéro de téléphone *" hint="Un numéro WhatsApp de préférence">
-            <input
-              type="tel"
-              placeholder="07 XX XX XX XX"
-              value={telephone}
-              onChange={e => setTelephone(e.target.value)}
-              style={{ width: '100%', border: 'none', outline: 'none', fontSize: 13, color: '#1a1a1a', background: 'transparent' }}
-            />
-          </FieldCard>
+      {/* Contenu scrollable */}
+      <div style={{ flex: 1, padding: '14px 14px 110px', display: 'flex', flexDirection: 'column', gap: 10 }}>
 
-          <FieldCard label="💼 Occupation *">
-            <textarea
-              placeholder="Que faites-vous dans la vie ?"
-              value={occupation}
-              onChange={e => setOccupation(e.target.value)}
-              rows={3}
-              style={{ width: '100%', border: 'none', outline: 'none', fontSize: 13, color: '#1a1a1a', background: 'transparent', resize: 'none', lineHeight: 1.5 }}
-            />
-          </FieldCard>
+        {/* ÉTAPE 1 — Identité */}
+        {step === 0 && (
+          <>
+            <InputField label="NOM & PRÉNOMS" required
+              icon={<svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>}>
+              <input type="text" placeholder="Ex : YAO Jean-Pierre" value={nomComplet} onChange={e => setNomComplet(e.target.value)} style={inputStyle} />
+            </InputField>
 
-          <FieldCard label="📍 Lieu d'habitation *">
-            <input
-              type="text"
-              placeholder="Votre quartier / commune / ville"
-              value={lieuHabitation}
-              onChange={e => setLieuHabitation(e.target.value)}
-              style={{ width: '100%', border: 'none', outline: 'none', fontSize: 13, color: '#1a1a1a', background: 'transparent' }}
-            />
-          </FieldCard>
-        </div>
-      )}
-
-      {/* ÉTAPE 3 */}
-      {step === 2 && (
-        <div style={{ flex: 1, padding: '8px 14px 100px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <FieldCard label="🏥 Antécédents médicaux *" hint={`Allergies, asthme, etc. Écrire "Aucun" si pas d'antécédents.`}>
-            <textarea
-              placeholder={`Écrire "Aucun" si pas d'antécédents médicaux.`}
-              value={antecedents}
-              onChange={e => setAntecedents(e.target.value)}
-              rows={3}
-              style={{ width: '100%', border: 'none', outline: 'none', fontSize: 13, color: '#1a1a1a', background: 'transparent', resize: 'none', lineHeight: 1.5 }}
-            />
-          </FieldCard>
-
-          <FieldCard label="⛺ Déjà participé à un camp des Navigateurs ? *">
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 4 }}>
-              <ChoiceBtn emoji="✅" text="Oui" selected={dejaParticipe === 'Oui'} onClick={() => setDejaParticipe('Oui')} />
-              <ChoiceBtn emoji="🙂" text="Non" selected={dejaParticipe === 'Non'} onClick={() => setDejaParticipe('Non')} />
+            <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #E5E7EB', padding: '12px 14px' }}>
+              <p style={{ fontSize: 10, fontWeight: 600, color: '#6B7280', margin: '0 0 10px', letterSpacing: '0.04em' }}>GENRE <span style={{ color: '#EF4444' }}>*</span></p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                <SelectCard label="Féminin" selected={genre === 'Féminin'} onClick={() => setGenre('Féminin')} />
+                <SelectCard label="Masculin" selected={genre === 'Masculin'} onClick={() => setGenre('Masculin')} />
+              </div>
             </div>
-          </FieldCard>
 
-          <FieldCard label="💬 Pourquoi souhaitez-vous participer ? *">
-            <textarea
-              placeholder="En quelques mots, dites-nous pourquoi..."
-              value={motivation}
-              onChange={e => setMotivation(e.target.value)}
-              rows={4}
-              style={{ width: '100%', border: 'none', outline: 'none', fontSize: 13, color: '#1a1a1a', background: 'transparent', resize: 'none', lineHeight: 1.5 }}
-            />
-          </FieldCard>
-        </div>
-      )}
+            <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #E5E7EB', padding: '12px 14px' }}>
+              <p style={{ fontSize: 10, fontWeight: 600, color: '#6B7280', margin: '0 0 10px', letterSpacing: '0.04em' }}>CATÉGORIE <span style={{ color: '#EF4444' }}>*</span></p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                <SelectCard label="Enfant / Ado" sublabel="0–15 ans · 25 000 FCFA" selected={statut === 'Enfant / Ado (0-15 ans)'} onClick={() => setStatut('Enfant / Ado (0-15 ans)')} />
+                <SelectCard label="Jeune / Adulte" sublabel="+15 ans · 30 000 FCFA" selected={statut === 'Jeune / Adulte (+15 ans)'} onClick={() => setStatut('Jeune / Adulte (+15 ans)')} />
+              </div>
+              {statut && (
+                <div style={{ marginTop: 10, background: VERT_CLAIR, borderRadius: 10, padding: '8px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: 11, color: VERT }}>Frais à payer</span>
+                  <span style={{ fontSize: 16, fontWeight: 700, color: VERT }}>{frais} FCFA</span>
+                </div>
+              )}
+            </div>
 
-      {/* ÉTAPE 4 */}
-      {step === 3 && (
-        <div style={{ flex: 1, padding: '8px 14px 100px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-
-          <FieldCard label="👕 Taille de T-shirt *">
-            <div style={{ overflowX: 'auto', paddingBottom: 8 }}>
-              <div style={{ display: 'flex', gap: 8, paddingTop: 8, minWidth: 'max-content' }}>
-                {TSHIRT_SIZES.map(s => (
-                  <div key={s.label} onClick={() => setTailleTshirt(s.label)}
-                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, cursor: 'pointer', padding: '8px 6px', borderRadius: 12,
-                      background: tailleTshirt === s.label ? '#E1F5EE' : 'transparent', transition: 'all .2s' }}>
-                    <TshirtIcon w={s.w} color={tailleTshirt === s.label ? '#085041' : '#ccc'} />
-                    <div style={{ fontSize: 11, fontWeight: 600, color: tailleTshirt === s.label ? '#085041' : '#888' }}>{s.label}</div>
-                    <div style={{ fontSize: 8, color: '#aaa' }}>{s.desc}</div>
-                  </div>
+            <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #E5E7EB', padding: '12px 14px' }}>
+              <p style={{ fontSize: 10, fontWeight: 600, color: '#6B7280', margin: '0 0 10px', letterSpacing: '0.04em' }}>TRANCHE D'ÂGE <span style={{ color: '#EF4444' }}>*</span></p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                {['30 ans et +', '20 – 29 ans', '16 – 19 ans', '11 – 15 ans', '10 ans et –'].map(a => (
+                  <SelectCard key={a} label={a} selected={trancheAge === a} onClick={() => setTrancheAge(a)} />
                 ))}
               </div>
             </div>
-            {tailleTshirt && (
-              <div style={{ marginTop: 6, background: '#E1F5EE', borderRadius: 8, padding: '6px 10px', fontSize: 10, color: '#085041', fontWeight: 500 }}>
-                Taille sélectionnée : {tailleTshirt}
+          </>
+        )}
+
+        {/* ÉTAPE 2 — Coordonnées */}
+        {step === 1 && (
+          <>
+            <InputField label="TÉLÉPHONE" required hint="Un numéro WhatsApp de préférence"
+              icon={<svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>}>
+              <input type="tel" inputMode="numeric" placeholder="07 XX XX XX XX" value={telephone} onChange={e => setTelephone(e.target.value)} style={inputStyle} />
+            </InputField>
+
+            <InputField label="OCCUPATION" required
+              icon={<svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>}>
+              <textarea placeholder="Étudiant, employé, commerçant..." value={occupation} onChange={e => setOccupation(e.target.value)} rows={2} style={{ ...inputStyle, resize: 'none' }} />
+            </InputField>
+
+            <InputField label="LIEU D'HABITATION" required
+              icon={<svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>}>
+              <input type="text" placeholder="Quartier / Commune / Ville" value={lieuHabitation} onChange={e => setLieuHabitation(e.target.value)} style={inputStyle} />
+            </InputField>
+          </>
+        )}
+
+        {/* ÉTAPE 3 — Santé & Engagement */}
+        {step === 2 && (
+          <>
+            <InputField label="ANTÉCÉDENTS MÉDICAUX" required hint="Ces informations sont strictement confidentielles."
+              icon={<svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>}>
+              <textarea placeholder={`Allergies, asthme, etc. Écrire "Aucun" si pas d'antécédents.`} value={antecedents} onChange={e => setAntecedents(e.target.value)} rows={3} style={{ ...inputStyle, resize: 'none' }} />
+            </InputField>
+
+            <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #E5E7EB', padding: '14px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                <div>
+                  <p style={{ fontSize: 13, fontWeight: 500, color: '#111827', margin: 0 }}>Déjà participé à un camp Navigateurs ?</p>
+                  <p style={{ fontSize: 10, color: '#9CA3AF', margin: '3px 0 0' }}>{dejaParticipe ? 'Oui, je suis un ancien campeur' : 'Non, c\'est ma première fois'}</p>
+                </div>
+                <Switch value={dejaParticipe} onChange={setDejaParticipe} />
+              </div>
+            </div>
+
+            <InputField label="MOTIVATION" required
+              icon={<svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>}>
+              <textarea placeholder="Pourquoi souhaitez-vous participer ?" value={motivation} onChange={e => setMotivation(e.target.value)} rows={3} style={{ ...inputStyle, resize: 'none' }} />
+            </InputField>
+          </>
+        )}
+
+        {/* ÉTAPE 4 — Logistique */}
+        {step === 3 && (
+          <>
+            <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #E5E7EB', padding: '14px' }}>
+              <p style={{ fontSize: 10, fontWeight: 600, color: '#6B7280', margin: '0 0 12px', letterSpacing: '0.04em' }}>TAILLE DE T-SHIRT <span style={{ color: '#EF4444' }}>*</span></p>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 6, marginBottom: 8 }}>
+                {TSHIRT_SIZES.map(s => (
+                  <div key={s} onClick={() => setTailleTshirt(s)}
+                    style={{ border: `2px solid ${tailleTshirt === s ? VERT : '#E5E7EB'}`, borderRadius: 10, padding: '10px 4px', cursor: 'pointer', textAlign: 'center', background: tailleTshirt === s ? VERT_CLAIR : '#fff', transition: 'all .2s' }}>
+                    <p style={{ fontSize: 14, fontWeight: 700, color: tailleTshirt === s ? VERT : '#374151', margin: 0 }}>{s}</p>
+                  </div>
+                ))}
+              </div>
+              {tailleTshirt && (
+                <div style={{ background: VERT_CLAIR, borderRadius: 8, padding: '6px 12px', fontSize: 11, color: VERT, fontWeight: 500 }}>
+                  Taille sélectionnée : {tailleTshirt}
+                </div>
+              )}
+            </div>
+
+            <div style={{ background: '#fff', borderRadius: 14, border: `2px solid ${OR}`, padding: '14px' }}>
+              <p style={{ fontSize: 10, fontWeight: 600, color: '#92400E', margin: '0 0 8px', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: 5 }}>
+                <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke={OR} strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                CONTACT D'URGENCE <span style={{ color: '#EF4444' }}>*</span>
+              </p>
+              <p style={{ fontSize: 11, color: '#9CA3AF', margin: '0 0 8px' }}>Personne à contacter en cas d'urgence médicale</p>
+              <input type="text" placeholder="Ex : Marie KOUASSI — 07 89 78 88 98" value={contactUrgence} onChange={e => setContactUrgence(e.target.value)}
+                style={{ ...inputStyle, fontSize: 13 }} />
+            </div>
+
+            <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #E5E7EB', padding: '14px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div>
+                  <p style={{ fontSize: 13, fontWeight: 500, color: '#111827', margin: 0 }}>Avez-vous été invité ?</p>
+                  <p style={{ fontSize: 10, color: '#9CA3AF', margin: '3px 0 0' }}>{invite ? 'Oui, j\'ai été invité' : 'Non, inscription personnelle'}</p>
+                </div>
+                <Switch value={invite} onChange={setInvite} />
+              </div>
+            </div>
+
+            {erreur && (
+              <div style={{ background: '#FEF2F2', border: '1px solid #FCA5A5', borderRadius: 12, padding: '10px 14px' }}>
+                <p style={{ fontSize: 12, color: '#DC2626', margin: 0 }}>{erreur}</p>
               </div>
             )}
-          </FieldCard>
+          </>
+        )}
+      </div>
 
-          <FieldCard label="🚨 Contact d'urgence *">
-            <input
-              type="text"
-              placeholder="Ex : Jean Martin, 07 89 78 88 98"
-              value={contactUrgence}
-              onChange={e => setContactUrgence(e.target.value)}
-              style={{ width: '100%', border: 'none', outline: 'none', fontSize: 13, color: '#1a1a1a', background: 'transparent' }}
-            />
-          </FieldCard>
-
-          <FieldCard label="🎟 Avez-vous été invité ? *">
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 4 }}>
-              <ChoiceBtn emoji="🎉" text="Oui" selected={invite === 'Oui'} onClick={() => setInvite('Oui')} />
-              <ChoiceBtn emoji="🙂" text="Non" selected={invite === 'Non'} onClick={() => setInvite('Non')} />
-            </div>
-          </FieldCard>
-
-          {erreur && (
-            <div style={{ background: '#FCEBEB', border: '0.5px solid #F09595', borderRadius: 12, padding: '10px 14px' }}>
-              <p style={{ fontSize: 12, color: '#A32D2D' }}>{erreur}</p>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* NAVIGATION */}
-      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, maxWidth: 480, margin: '0 auto', background: '#fff', borderTop: '0.5px solid #e5e5e0', padding: '10px 14px', display: 'flex', gap: 8, zIndex: 30 }}>
+      {/* Boutons navigation fixes */}
+      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, maxWidth: 480, margin: '0 auto', background: '#fff', borderTop: '0.5px solid #E5E7EB', padding: '12px 14px', display: 'flex', gap: 10, zIndex: 30 }}>
         {step > 0 && (
           <button onClick={() => setStep(s => s - 1)}
-            style={{ background: '#f5f5f3', color: '#666', border: 'none', borderRadius: 12, padding: '12px 16px', fontSize: 13, cursor: 'pointer' }}>
-            ← Retour
+            style={{ background: '#F3F4F6', color: '#374151', border: 'none', borderRadius: 14, padding: '14px 18px', fontSize: 14, fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>
+            Retour
           </button>
         )}
         <button
           onClick={() => step < STEPS.length - 1 ? setStep(s => s + 1) : handleSubmit()}
           disabled={sending}
-          style={{ flex: 1, background: '#085041', color: '#fff', border: 'none', borderRadius: 12, padding: 12, fontSize: 13, fontWeight: 500, cursor: 'pointer', opacity: sending ? 0.6 : 1 }}>
-          {sending ? 'Envoi...' : step < STEPS.length - 1 ? 'Continuer →' : '✓ Valider mon inscription'}
+          style={{ flex: 1, background: step === STEPS.length - 1 ? OR : VERT, color: '#fff', border: 'none', borderRadius: 14, padding: '14px', fontSize: 14, fontWeight: 600, cursor: 'pointer', opacity: sending ? 0.7 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+          {sending ? 'Envoi en cours...' : step < STEPS.length - 1
+            ? <><span>Continuer</span><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg></>
+            : <><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg><span>Valider mon inscription</span></>
+          }
         </button>
       </div>
     </div>
