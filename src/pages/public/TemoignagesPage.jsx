@@ -186,14 +186,14 @@ export default function TemoignagesPage() {
         {/* Liste témoignages */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {affiches.map(t => {
-            const nom = t.anonyme ? 'Un campeur discret' : (t.nom || 'Anonyme')
+            const nom = t.anonyme ? 'Anonyme' : (t.nom || 'Anonyme')
             const initiale = (t.anonyme ? 'A' : (t.nom || 'A')).charAt(0).toUpperCase()
             const date = new Date(t.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
             return (
               <div key={t.id} style={{ background: '#fff', borderRadius: 18, border: '0.5px solid #F3F4F6', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', padding: '18px 16px 14px', position: 'relative', overflow: 'hidden' }}>
 
                 {/* Grand guillemet décoratif */}
-                <div style={{ position: 'absolute', top: 12, right: 16, fontSize: 56, lineHeight: 1, color: '#F0FDF4', fontFamily: 'Georgia, serif', fontWeight: 700, userSelect: 'none', pointerEvents: 'none' }}>"</div>
+                <div style={{ position: 'absolute', top: 12, right: 16, fontSize: 56, lineHeight: 1, color: '#E1F5EE', fontFamily: 'Georgia, serif', fontWeight: 700, userSelect: 'none', pointerEvents: 'none' }}>"</div>
 
                 {/* Header auteur */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
