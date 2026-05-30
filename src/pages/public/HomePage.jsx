@@ -55,12 +55,16 @@ function NewsCard({ annonce }) {
 
   return (
     <div style={{
-      flexShrink: 0, width: 220,
+      flexShrink: 0,
+      width: 'calc(100vw - 44px)',
+      maxWidth: 436,
+      height: 140,
       background: '#fff', borderRadius: 16,
       border: '0.5px solid #F1F5F9',
       boxShadow: '0 2px 16px rgba(0,0,0,0.07)',
       padding: '13px 13px 12px',
-      display: 'flex', flexDirection: 'column', gap: 6,
+      display: 'flex', flexDirection: 'column', gap: 5,
+      overflow: 'hidden',
     }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 8px', borderRadius: 20, background: tc.bg, color: tc.color }}>{annonce.tag}</span>
@@ -70,13 +74,13 @@ function NewsCard({ annonce }) {
         {annonce.titre}
       </p>
       {annonce.contenu && (
-        <p style={{ fontSize: 11, color: '#64748B', lineHeight: 1.55, margin: 0, flex: 1, display: expanded ? 'block' : '-webkit-box', WebkitLineClamp: expanded ? 'unset' : 2, WebkitBoxOrient: 'vertical', overflow: expanded ? 'visible' : 'hidden' }}>
+        <p style={{ fontSize: 11, color: '#64748B', lineHeight: 1.55, margin: 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
           {annonce.contenu}
         </p>
       )}
       <button onClick={() => setExpanded(!expanded)}
-        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: 11, fontWeight: 600, color: '#054035', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 3 }}>
-        {expanded ? 'Voir moins ←' : 'Lire la suite →'}
+        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px 0 0', fontSize: 11, fontWeight: 600, color: '#054035', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 3, flexShrink: 0, marginTop: 'auto' }}>
+        Lire la suite →
       </button>
     </div>
   )
@@ -119,6 +123,9 @@ export default function HomePage() {
         <div style={{ position: 'absolute', width: 100, height: 100, borderRadius: '50%', background: 'rgba(255,255,255,0.04)', top: 20, right: 60 }} />
 
         <div style={{ position: 'relative', zIndex: 1 }}>
+          <p style={{ fontSize: 9, fontWeight: 400, color: 'rgba(255,255,255,0.7)', margin: '0 0 6px', letterSpacing: '0.08em', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            Mission Évangélique des Navigateurs CI
+          </p>
           <p style={{ fontSize: 22, fontWeight: 600, color: '#fff', margin: '0 0 6px', lineHeight: 1.1 }}>Camp-Navs 2026</p>
           <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.8)', lineHeight: 1.55, margin: 0, fontWeight: 300, maxWidth: '90%' }}>
             Les familles et réseaux relationnels pour une expansion naturelle de l'Évangile et du Royaume de Dieu
@@ -183,7 +190,7 @@ export default function HomePage() {
       </div>
 
       {/* ── 4. ACTUALITÉS ── */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '12px 14px 8px', minHeight: 0 }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '12px 14px 8px', minHeight: 0, paddingBottom: 64 }}>
         <p style={{ fontSize: 9, fontWeight: 600, color: '#94A3B8', letterSpacing: '0.12em', margin: '0 0 8px', textTransform: 'uppercase', flexShrink: 0 }}>Actualités</p>
         {annonces.length === 0 ? (
           <div style={{ flex: 1, background: '#fff', borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -218,7 +225,7 @@ export default function HomePage() {
       )}
 
       {/* ── BOTTOM NAV ── */}
-      <nav style={{ flexShrink: 0, background: '#fff', borderTop: '0.5px solid #E2E8F0', display: 'flex', zIndex: 30 }}>
+      <nav style={{ position: 'fixed', bottom: 0, left: 0, right: 0, maxWidth: 480, margin: '0 auto', background: '#fff', borderTop: '0.5px solid #E2E8F0', display: 'flex', zIndex: 30 }}>
         {[
           { label: 'Accueil', path: '/', active: true, icon: <svg style={{ width: 20, height: 20 }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0h6"/></svg> },
           { label: 'Planning', path: '/programme', icon: <svg style={{ width: 20, height: 20 }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg> },
