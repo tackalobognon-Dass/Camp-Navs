@@ -4,8 +4,6 @@ import { supabase } from '../../lib/supabase'
 
 function Countdown() {
   const [time, setTime] = useState({ j: '00', h: '00', m: '00', s: '00' })
-  const [pulse, setPulse] = useState(false)
-
   useEffect(() => {
     function tick() {
       const t = new Date('2026-08-23T00:00:00') - new Date()
@@ -16,87 +14,69 @@ function Countdown() {
         m: String(Math.floor((t % 3600000) / 60000)).padStart(2, '0'),
         s: String(Math.floor((t % 60000) / 1000)).padStart(2, '0'),
       })
-      setPulse(p => !p)
     }
     tick()
     const id = setInterval(tick, 1000)
     return () => clearInterval(id)
   }, [])
 
+  const labels = ['JOURS', 'HEURES', 'MIN', 'SEC']
+  const vals = [time.j, time.h, time.m, time.s]
+
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 6, marginTop: 12 }}>
-      <style>{`
-        @keyframes secPulse { 0%,100%{opacity:1} 50%{opacity:.55} }
-      `}</style>
-      {[
-        { v: time.j, l: 'JOURS', anim: false },
-        { v: time.h, l: 'HEURES', anim: false },
-        { v: time.m, l: 'MIN', anim: false },
-        { v: time.s, l: 'SEC', anim: true },
-      ].map(({ v, l, anim }) => (
-        <div key={l} style={{
-          background: 'rgba(0,0,0,0.22)',
-          border: '1px solid rgba(255,255,255,0.12)',
-          borderRadius: 10, padding: '7px 4px', textAlign: 'center',
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 6, marginTop: 14 }}>
+      <style>{`@keyframes secpulse{0%,100%{opacity:1}50%{opacity:.5}}`}</style>
+      {vals.map((v, i) => (
+        <div key={labels[i]} style={{
+          background: 'rgba(0,0,0,0.25)',
+          borderRadius: 10, padding: '8px 4px', textAlign: 'center',
         }}>
           <div style={{
-            fontSize: 20, fontWeight: 300, color: '#fff', lineHeight: 1,
-            letterSpacing: '0.02em',
-            animation: anim ? 'secPulse 1s ease-in-out infinite' : 'none',
-            transition: 'opacity .3s',
+            fontSize: 20, fontWeight: 600, color: '#fff', lineHeight: 1,
+            animation: i === 3 ? 'secpulse 1s ease-in-out infinite' : 'none',
           }}>{v}</div>
-          <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.45)', marginTop: 3, letterSpacing: '0.1em' }}>{l}</div>
+          <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.55)', marginTop: 3, letterSpacing: '0.08em' }}>{labels[i]}</div>
         </div>
       ))}
     </div>
   )
 }
 
-function NewsTicket({ annonce, onExpand }) {
+function NewsCard({ annonce }) {
+  const [expanded, setExpanded] = useState(false)
   const tagConfig = {
-    Nouveau:   { bg: '#E8F5E8', color: '#2D6A4F' },
-    Important: { bg: '#FEF9EC', color: '#92400E' },
+    Nouveau:   { bg: '#FFF0E6', color: '#C2410C' },
+    Important: { bg: '#FFF0E6', color: '#C2410C' },
     Document:  { bg: '#EFF6FF', color: '#1E40AF' },
-    Info:      { bg: '#F8FAFC', color: '#475569' },
+    Info:      { bg: '#F1F5F9', color: '#475569' },
   }
   const tc = tagConfig[annonce.tag] || tagConfig['Info']
+  const date = new Date(annonce.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
 
   return (
     <div style={{
-      flexShrink: 0,
-      width: 200,
-      height: '100%',
-      background: '#fff',
-      borderRadius: 16,
-      border: '1px solid #F1F5F9',
-      boxShadow: '0 4px 24px rgba(27,59,43,0.08), 0 1px 4px rgba(0,0,0,0.04)',
-      padding: '13px 13px 10px',
-      display: 'flex',
-      flexDirection: 'column',
+      flexShrink: 0, width: 220,
+      background: '#fff', borderRadius: 16,
+      border: '0.5px solid #F1F5F9',
+      boxShadow: '0 2px 16px rgba(0,0,0,0.07)',
+      padding: '13px 13px 12px',
+      display: 'flex', flexDirection: 'column', gap: 6,
     }}>
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 8px', borderRadius: 20, background: tc.bg, color: tc.color }}>{annonce.tag}</span>
-        <span style={{ fontSize: 9, color: '#CBD5E1' }}>
-          {new Date(annonce.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
-        </span>
+        <span style={{ fontSize: 10, color: '#94A3B8' }}>{date}</span>
       </div>
-
-      {/* Titre */}
-      <p style={{ fontSize: 13, fontWeight: 600, color: '#0F172A', lineHeight: 1.45, margin: '0 0 5px', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+      <p style={{ fontSize: 12, fontWeight: 600, color: '#0F172A', lineHeight: 1.4, margin: 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
         {annonce.titre}
       </p>
-
-      {/* Contenu tronqué à 2 lignes */}
-      <p style={{ fontSize: 11, color: '#64748B', lineHeight: 1.6, margin: 0, flex: 1, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-        {annonce.contenu || ''}
-      </p>
-
-      {/* Bouton voir plus calé en bas */}
-      <button onClick={() => onExpand(annonce)}
-        style={{ marginTop: 10, background: 'none', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'left', display: 'flex', alignItems: 'center', gap: 4 }}>
-        <span style={{ fontSize: 11, fontWeight: 600, color: '#1B3B2B' }}>Voir plus</span>
-        <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="#1B3B2B" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
+      {annonce.contenu && (
+        <p style={{ fontSize: 11, color: '#64748B', lineHeight: 1.55, margin: 0, flex: 1, display: expanded ? 'block' : '-webkit-box', WebkitLineClamp: expanded ? 'unset' : 2, WebkitBoxOrient: 'vertical', overflow: expanded ? 'visible' : 'hidden' }}>
+          {annonce.contenu}
+        </p>
+      )}
+      <button onClick={() => setExpanded(!expanded)}
+        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: 11, fontWeight: 600, color: '#054035', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 3 }}>
+        {expanded ? 'Voir moins ←' : 'Lire la suite →'}
       </button>
     </div>
   )
@@ -107,7 +87,6 @@ export default function HomePage() {
   const [annonces, setAnnonces] = useState([])
   const [places, setPlaces] = useState({ jeunes: 0, enfants: 0 })
   const [plusOpen, setPlusOpen] = useState(false)
-  const [annonceOuverte, setAnnonceOuverte] = useState(null)
 
   useEffect(() => {
     async function fetchData() {
@@ -131,98 +110,91 @@ export default function HomePage() {
   ]
 
   return (
-    <div style={{ height: '100dvh', maxWidth: 480, margin: '0 auto', display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#F8FAFC' }}>
+    <div style={{ height: '100dvh', maxWidth: 480, margin: '0 auto', display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#F4F6F9' }}>
 
-      {/* ── 1. HEADER VERT RECTANGULAIRE (pas d'arrondi) ── */}
-      <div style={{
-        background: '#1B3B2B',
-        padding: '44px 18px 16px',
-        flexShrink: 0,
-        borderRadius: 0,
-      }}>
-        <p style={{ fontSize: 8, color: 'rgba(255,255,255,0.45)', letterSpacing: '0.16em', fontWeight: 500, margin: '0 0 8px', textTransform: 'uppercase' }}>
-          Mission Évangélique des Navigateurs CI
-        </p>
-        <p style={{ fontSize: 26, fontWeight: 800, color: '#fff', letterSpacing: '0.04em', lineHeight: 1, margin: '0 0 10px', textTransform: 'uppercase' }}>
-          CAMP-NAVS 2026
-        </p>
-        <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.8)', lineHeight: 1.55, margin: 0, maxWidth: '95%' }}>
-          Les familles et réseaux relationnels pour une expansion naturelle de l'Évangile et du Royaume de Dieu
-        </p>
-        <Countdown />
+      {/* ── 1. HEADER VERT ── */}
+      <div style={{ background: '#054035', padding: '44px 16px 16px', flexShrink: 0, position: 'relative', overflow: 'hidden' }}>
+        {/* Cercle décoratif coin supérieur droit */}
+        <div style={{ position: 'absolute', width: 180, height: 180, borderRadius: '50%', background: 'rgba(255,255,255,0.06)', top: -50, right: -40 }} />
+        <div style={{ position: 'absolute', width: 100, height: 100, borderRadius: '50%', background: 'rgba(255,255,255,0.04)', top: 20, right: 60 }} />
+
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          <p style={{ fontSize: 22, fontWeight: 600, color: '#fff', margin: '0 0 6px', lineHeight: 1.1 }}>Camp-Navs 2026</p>
+          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.8)', lineHeight: 1.55, margin: 0, fontWeight: 300, maxWidth: '90%' }}>
+            Les familles et réseaux relationnels pour une expansion naturelle de l'Évangile et du Royaume de Dieu
+          </p>
+          <Countdown />
+        </div>
       </div>
 
       {/* ── 2. CARTES INSCRITS ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, padding: '10px 14px 0', flexShrink: 0 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, padding: '12px 14px 0', flexShrink: 0 }}>
         {[
           { label: 'Jeunes & Adultes', val: places.jeunes, max: 100, prix: '30 000 FCFA' },
           { label: 'Enfants & Ados', val: places.enfants, max: 50, prix: '25 000 FCFA' },
         ].map(({ label, val, max, prix }) => {
           const pct = Math.min((val / max) * 100, 100)
           return (
-            <div key={label} style={{ background: '#fff', borderRadius: 12, padding: '10px 12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                <p style={{ fontSize: 10, color: '#94A3B8', margin: 0, fontWeight: 500, flexShrink: 0, maxWidth: '60%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{label}</p>
-                <p style={{ fontSize: 13, fontWeight: 700, color: '#0F172A', margin: 0 }}>{val}<span style={{ fontSize: 10, fontWeight: 400, color: '#94A3B8' }}> / {max}</span></p>
+            <div key={label} style={{ background: '#fff', borderRadius: 14, padding: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.07)' }}>
+              <p style={{ fontSize: 10, color: '#94A3B8', margin: '0 0 4px', fontWeight: 500 }}>{label}</p>
+              <p style={{ fontSize: 17, fontWeight: 700, color: '#0F172A', margin: '0 0 6px', lineHeight: 1 }}>
+                {val}<span style={{ fontSize: 11, fontWeight: 400, color: '#94A3B8' }}> / {max}</span>
+              </p>
+              <div style={{ background: '#E8F5E8', borderRadius: 4, height: 4, marginBottom: 8 }}>
+                <div style={{ background: '#054035', height: 4, borderRadius: 4, width: `${pct}%`, transition: 'width .5s' }} />
               </div>
-              <div style={{ background: '#F1F5F9', borderRadius: 4, height: 3, marginBottom: 6 }}>
-                <div style={{ background: '#1B3B2B', height: 3, borderRadius: 4, width: `${pct}%` }} />
-              </div>
-              <p style={{ fontSize: 10, fontWeight: 600, color: '#1B3B2B', margin: 0 }}>{prix}</p>
+              <span style={{ fontSize: 10, fontWeight: 600, color: '#054035', background: '#E8F5E8', padding: '3px 8px', borderRadius: 20 }}>{prix}</span>
             </div>
           )
         })}
       </div>
 
-      {/* ── 3. BOUTONS D'ACTION ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, padding: '8px 14px 0', flexShrink: 0 }}>
-        <button onClick={() => navigate('/inscription')}
-          style={{ background: '#1B3B2B', border: 'none', borderRadius: 12, padding: '12px 8px', fontSize: 13, fontWeight: 600, color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}>
-          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-          </svg>
-          S'inscrire
-        </button>
-        <button onClick={() => navigate('/suivi')}
-          style={{ background: '#fff', border: '1.5px solid #F39C12', borderRadius: 12, padding: '12px 8px', fontSize: 13, fontWeight: 600, color: '#F39C12', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}>
-          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-          </svg>
-          Voir mon inscription
-        </button>
+      {/* ── 3. ACTIONS RAPIDES ── */}
+      <div style={{ padding: '12px 14px 0', flexShrink: 0 }}>
+        <p style={{ fontSize: 9, fontWeight: 600, color: '#94A3B8', letterSpacing: '0.12em', margin: '0 0 8px', textTransform: 'uppercase' }}>Actions rapides</p>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          {[
+            {
+              path: '/inscription',
+              iconBg: '#E8F5E8', iconColor: '#054035',
+              icon: <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>,
+              title: "S'inscrire", sub: 'Réservez votre place',
+            },
+            {
+              path: '/suivi',
+              iconBg: '#FFF4E6', iconColor: '#C2410C',
+              icon: <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>,
+              title: 'voir mon inscription', sub: 'Voir mon statut',
+            },
+          ].map(item => (
+            <div key={item.path} onClick={() => navigate(item.path)}
+              style={{ background: '#fff', borderRadius: 18, padding: '14px 12px', cursor: 'pointer', position: 'relative', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', minHeight: 100, display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ width: 36, height: 36, borderRadius: 10, background: item.iconBg, color: item.iconColor, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {item.icon}
+              </div>
+              <div>
+                <p style={{ fontSize: 13, fontWeight: 600, color: '#0F172A', margin: '0 0 2px' }}>{item.title}</p>
+                <p style={{ fontSize: 10, color: '#94A3B8', margin: 0 }}>{item.sub}</p>
+              </div>
+              <span style={{ position: 'absolute', bottom: 12, right: 12, fontSize: 14, color: '#CBD5E1' }}>→</span>
+            </div>
+          ))}
+        </div>
       </div>
 
-      {/* ── 4. ACTUALITÉS FORMAT TICKET ── */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '10px 14px 8px', minHeight: 0 }}>
-        <p style={{ fontSize: 8, fontWeight: 700, color: '#94A3B8', letterSpacing: '0.14em', margin: '0 0 8px', textTransform: 'uppercase' }}>
-          Actualités du camp
-        </p>
-
+      {/* ── 4. ACTUALITÉS ── */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '12px 14px 8px', minHeight: 0 }}>
+        <p style={{ fontSize: 9, fontWeight: 600, color: '#94A3B8', letterSpacing: '0.12em', margin: '0 0 8px', textTransform: 'uppercase', flexShrink: 0 }}>Actualités</p>
         {annonces.length === 0 ? (
-          <div style={{ flex: 1, background: '#fff', borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 24px rgba(27,59,43,0.06)' }}>
+          <div style={{ flex: 1, background: '#fff', borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <p style={{ fontSize: 12, color: '#94A3B8', margin: 0 }}>Aucune actualité pour le moment.</p>
           </div>
         ) : (
-          <div style={{ display: 'flex', gap: 10, overflowX: 'auto', scrollbarWidth: 'none', flex: 1, alignItems: 'stretch' }}>
-            {annonces.map(a => (
-              <NewsTicket key={a.id} annonce={a} onExpand={setAnnonceOuverte} />
-            ))}
+          <div style={{ display: 'flex', gap: 10, overflowX: 'auto', scrollbarWidth: 'none', flex: 1, alignItems: 'stretch', paddingBottom: 2 }}>
+            {annonces.map(a => <NewsCard key={a.id} annonce={a} />)}
           </div>
         )}
       </div>
-
-      {/* ── MODAL ANNONCE ── */}
-      {annonceOuverte && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 50, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
-          onClick={() => setAnnonceOuverte(null)}>
-          <div style={{ background: '#fff', borderRadius: '20px 20px 0 0', width: '100%', maxWidth: 480, padding: '20px 18px 32px', maxHeight: '70vh', overflowY: 'auto' }}
-            onClick={e => e.stopPropagation()}>
-            <div style={{ width: 32, height: 3, background: '#E2E8F0', borderRadius: 2, margin: '0 auto 16px' }} />
-            <p style={{ fontSize: 16, fontWeight: 700, color: '#0F172A', margin: '0 0 10px', lineHeight: 1.4 }}>{annonceOuverte.titre}</p>
-            <p style={{ fontSize: 13, color: '#475569', lineHeight: 1.7, margin: 0 }}>{annonceOuverte.contenu}</p>
-          </div>
-        </div>
-      )}
 
       {/* ── MENU PLUS ── */}
       {plusOpen && (
@@ -254,13 +226,13 @@ export default function HomePage() {
           { label: "S'inscrire", path: '/inscription', icon: <svg style={{ width: 20, height: 20 }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg> },
         ].map(item => (
           <button key={item.label} onClick={() => navigate(item.path)}
-            style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '8px 0 10px', color: item.active ? '#1B3B2B' : '#94A3B8', background: 'none', border: 'none', cursor: 'pointer' }}>
+            style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '8px 0 10px', color: item.active ? '#054035' : '#94A3B8', background: 'none', border: 'none', cursor: 'pointer' }}>
             {item.icon}
             <span style={{ fontSize: 10, marginTop: 2, fontWeight: item.active ? 700 : 400 }}>{item.label}</span>
           </button>
         ))}
         <button onClick={(e) => { e.stopPropagation(); setPlusOpen(!plusOpen) }}
-          style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '8px 0 10px', color: plusOpen ? '#1B3B2B' : '#94A3B8', background: 'none', border: 'none', cursor: 'pointer' }}>
+          style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '8px 0 10px', color: plusOpen ? '#054035' : '#94A3B8', background: 'none', border: 'none', cursor: 'pointer' }}>
           <svg style={{ width: 20, height: 20 }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"/></svg>
           <span style={{ fontSize: 10, marginTop: 2 }}>Plus</span>
         </button>
