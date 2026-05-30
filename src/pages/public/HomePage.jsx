@@ -185,9 +185,10 @@ export default function HomePage() {
               icon: <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>,
               title: 'voir mon inscription', sub: 'Voir mon statut',
             },
-          ].map(item => (
+          ].map((item, idx) => (
             <div key={item.path} onClick={() => navigate(item.path)}
-              style={{ background: '#fff', borderRadius: 18, padding: '14px 12px', cursor: 'pointer', position: 'relative', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', minHeight: 100, display: 'flex', flexDirection: 'column', gap: 8 }}>
+              className={idx === 0 ? 'btn-inscrire' : ''}
+              style={{ background: '#fff', borderRadius: 18, padding: '14px 12px', cursor: 'pointer', position: 'relative', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', minHeight: 100, display: 'flex', flexDirection: 'column', gap: 8, border: idx === 0 ? '2px solid #054035' : 'none' }}>
               <div style={{ width: 36, height: 36, borderRadius: 10, background: item.iconBg, color: item.iconColor, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 {item.icon}
               </div>
