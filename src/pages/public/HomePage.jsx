@@ -58,32 +58,30 @@ function NewsCard({ annonce, onExpand }) {
       flexShrink: 0,
       width: 'calc(100vw - 44px)',
       maxWidth: 436,
-      height: '90%',
+      height: '100%',
       background: '#fff', borderRadius: 16,
       border: '0.5px solid #F1F5F9',
       boxShadow: '0 2px 16px rgba(0,0,0,0.07)',
-      padding: '13px 13px 12px',
-      display: 'flex', flexDirection: 'column', gap: 5,
+      padding: '14px 14px 12px',
+      display: 'flex', flexDirection: 'column', gap: 6,
       overflow: 'hidden',
     }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 8px', borderRadius: 20, background: tc.bg, color: tc.color }}>{annonce.tag}</span>
         <span style={{ fontSize: 10, color: '#94A3B8' }}>{date}</span>
       </div>
-      <p style={{ fontSize: 12, fontWeight: 600, color: '#0F172A', lineHeight: 1.4, margin: 0 }}>
+      <p style={{ fontSize: 16, fontWeight: 700, color: '#1E293B', lineHeight: 1.3, margin: 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
         {annonce.titre}
       </p>
       {annonce.contenu && (
-        <p style={{ fontSize: 11, color: '#64748B', lineHeight: 1.55, margin: 0, flex: 1, overflow: 'hidden' }}>
+        <p style={{ fontSize: 14, color: '#475569', lineHeight: 1.45, margin: 0, flex: 1, display: '-webkit-box', WebkitLineClamp: 4, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
           {annonce.contenu}
         </p>
       )}
-      {annonce.contenu && annonce.contenu.length > 120 && (
-        <button onClick={() => onExpand(annonce)}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px 0 0', fontSize: 11, fontWeight: 600, color: '#054035', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 3, flexShrink: 0 }}>
-          Lire la suite →
-        </button>
-      )}
+      <button onClick={() => onExpand(annonce)}
+        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: 12, fontWeight: 600, color: '#054035', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 3, flexShrink: 0, marginTop: 'auto' }}>
+        Lire la suite →
+      </button>
     </div>
   )
 }
@@ -193,7 +191,7 @@ export default function HomePage() {
       </div>
 
       {/* ── 4. ACTUALITÉS ── */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '12px 14px 8px', minHeight: 0, paddingBottom: 64 }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '10px 14px 0', minHeight: 0, marginBottom: 70 }}>
         <p style={{ fontSize: 9, fontWeight: 600, color: '#94A3B8', letterSpacing: '0.12em', margin: '0 0 8px', textTransform: 'uppercase', flexShrink: 0 }}>Actualités</p>
         {annonces.length === 0 ? (
           <div style={{ flex: 1, background: '#fff', borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
