@@ -58,7 +58,7 @@ function NewsCard({ annonce }) {
       flexShrink: 0,
       width: 'calc(100vw - 44px)',
       maxWidth: 436,
-      height: 140,
+      height: '100%',
       background: '#fff', borderRadius: 16,
       border: '0.5px solid #F1F5F9',
       boxShadow: '0 2px 16px rgba(0,0,0,0.07)',
@@ -78,7 +78,7 @@ function NewsCard({ annonce }) {
           {annonce.contenu}
         </p>
       )}
-      <button onClick={() => setExpanded(!expanded)}
+      <button onClick={() => onExpand(annonce)}
         style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px 0 0', fontSize: 11, fontWeight: 600, color: '#054035', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 3, flexShrink: 0, marginTop: 'auto' }}>
         Lire la suite →
       </button>
@@ -91,6 +91,7 @@ export default function HomePage() {
   const [annonces, setAnnonces] = useState([])
   const [places, setPlaces] = useState({ jeunes: 0, enfants: 0 })
   const [plusOpen, setPlusOpen] = useState(false)
+  const [annonceOuverte, setAnnonceOuverte] = useState(null)
 
   useEffect(() => {
     async function fetchData() {
@@ -198,11 +199,24 @@ export default function HomePage() {
           </div>
         ) : (
           <div style={{ display: 'flex', gap: 10, overflowX: 'auto', scrollbarWidth: 'none', flex: 1, alignItems: 'stretch', paddingBottom: 2 }}>
-            {annonces.map(a => <NewsCard key={a.id} annonce={a} />)}
+            {annonces.map(a => <NewsCard key={a.id} annonce={a} onExpand={setAnnonceOuverte} />)}
           </div>
         )}
       </div>
 
+
+      {/* ── MODAL ANNONCE ── */}
+      {annonceOuverte && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 50, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
+          onClick={() => setAnnonceOuverte(null)}>
+          <div style={{ background: '#fff', borderRadius: '20px 20px 0 0', width: '100%', maxWidth: 480, padding: '20px 18px 32px', maxHeight: '70vh', overflowY: 'auto' }}
+            onClick={e => e.stopPropagation()}>
+            <div style={{ width: 32, height: 3, background: '#E2E8F0', borderRadius: 2, margin: '0 auto 16px' }} />
+            <p style={{ fontSize: 16, fontWeight: 700, color: '#0F172A', margin: '0 0 10px', lineHeight: 1.4 }}>{annonceOuverte.titre}</p>
+            <p style={{ fontSize: 13, color: '#475569', lineHeight: 1.7, margin: 0 }}>{annonceOuverte.contenu}</p>
+          </div>
+        </div>
+      )}
       {/* ── MENU PLUS ── */}
       {plusOpen && (
         <>
