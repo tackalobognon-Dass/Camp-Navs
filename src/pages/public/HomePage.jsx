@@ -42,7 +42,7 @@ function Countdown() {
   )
 }
 
-function NewsCard({ annonce }) {
+function NewsCard({ annonce, onExpand }) {
   const [expanded, setExpanded] = useState(false)
   const tagConfig = {
     Nouveau:   { bg: '#FFF0E6', color: '#C2410C' },
@@ -58,7 +58,7 @@ function NewsCard({ annonce }) {
       flexShrink: 0,
       width: 'calc(100vw - 44px)',
       maxWidth: 436,
-      height: '100%',
+      height: '90%',
       background: '#fff', borderRadius: 16,
       border: '0.5px solid #F1F5F9',
       boxShadow: '0 2px 16px rgba(0,0,0,0.07)',
