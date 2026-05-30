@@ -70,18 +70,20 @@ function NewsCard({ annonce, onExpand }) {
         <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 8px', borderRadius: 20, background: tc.bg, color: tc.color }}>{annonce.tag}</span>
         <span style={{ fontSize: 10, color: '#94A3B8' }}>{date}</span>
       </div>
-      <p style={{ fontSize: 12, fontWeight: 600, color: '#0F172A', lineHeight: 1.4, margin: 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+      <p style={{ fontSize: 12, fontWeight: 600, color: '#0F172A', lineHeight: 1.4, margin: 0 }}>
         {annonce.titre}
       </p>
       {annonce.contenu && (
-        <p style={{ fontSize: 11, color: '#64748B', lineHeight: 1.55, margin: 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+        <p style={{ fontSize: 11, color: '#64748B', lineHeight: 1.55, margin: 0, flex: 1, overflow: 'hidden' }}>
           {annonce.contenu}
         </p>
       )}
-      <button onClick={() => onExpand(annonce)}
-        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px 0 0', fontSize: 11, fontWeight: 600, color: '#054035', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 3, flexShrink: 0, marginTop: 'auto' }}>
-        Lire la suite →
-      </button>
+      {annonce.contenu && annonce.contenu.length > 120 && (
+        <button onClick={() => onExpand(annonce)}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px 0 0', fontSize: 11, fontWeight: 600, color: '#054035', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 3, flexShrink: 0 }}>
+          Lire la suite →
+        </button>
+      )}
     </div>
   )
 }
