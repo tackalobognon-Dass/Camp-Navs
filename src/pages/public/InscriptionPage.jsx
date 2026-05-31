@@ -6,7 +6,12 @@ const VERT = '#054035'
 const OR = '#E8A020'
 const VERT_CLAIR = '#E8F5E8'
 
-const TSHIRT_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL']
+const TSHIRT_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL', 'XXXXL']
+
+const TRANCHES_ADULTE = [
+  '16 – 19 ans', '20 – 25 ans', '26 – 30 ans',
+  '31 – 40 ans', '41 – 49 ans', '50 ans et +'
+]
 
 const STEPS = [
   { label: 'Identité', icon: <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg> },
@@ -20,8 +25,7 @@ function SelectCard({ label, sublabel, selected, onClick }) {
     <div onClick={onClick} style={{
       border: `2px solid ${selected ? VERT : '#E5E7EB'}`,
       borderRadius: 14, padding: '12px 10px', cursor: 'pointer', textAlign: 'center',
-      background: selected ? VERT_CLAIR : '#fff',
-      transition: 'all .2s',
+      background: selected ? VERT_CLAIR : '#fff', transition: 'all .2s',
     }}>
       <p style={{ fontSize: 13, fontWeight: 600, color: selected ? VERT : '#374151', margin: 0 }}>{label}</p>
       {sublabel && <p style={{ fontSize: 10, color: selected ? VERT : '#9CA3AF', margin: '3px 0 0' }}>{sublabel}</p>}
@@ -61,23 +65,36 @@ export default function InscriptionPage() {
   const [erreur, setErreur] = useState('')
   const [copie, setCopie] = useState('')
 
+  // Étape 1
   const [nomComplet, setNomComplet] = useState('')
   const [genre, setGenre] = useState('')
   const [statut, setStatut] = useState('')
   const [trancheAge, setTrancheAge] = useState('')
+  const [ageExact, setAgeExact] = useState('')
+
+  // Étape 2
   const [telephone, setTelephone] = useState('')
   const [occupation, setOccupation] = useState('')
-  const [lieuHabitation, setLieuHabitation] = useState('')
+  const [pays, setPays] = useState('Côte d\'Ivoire')
+  const [autresPays, setAutresPays] = useState('')
+  const [ville, setVille] = useState('')
+  const [commune, setCommune] = useState('')
+
+  // Étape 3
   const [antecedents, setAntecedents] = useState('')
   const [dejaParticipe, setDejaParticipe] = useState(false)
   const [motivation, setMotivation] = useState('')
+
+  // Étape 4
   const [tailleTshirt, setTailleTshirt] = useState('')
-  const [contactUrgence, setContactUrgence] = useState('')
+  const [nomUrgence, setNomUrgence] = useState('')
+  const [telUrgence, setTelUrgence] = useState('')
   const [invite, setInvite] = useState(false)
+  const [nomInviteur, setNomInviteur] = useState('')
 
   const isEnfant = statut === 'Enfant / Ado (0-15 ans)'
   const frais = isEnfant ? '25 000' : '30 000'
-  const fraisNum = isEnfant ? 25000 : 30000
+  const paysFinal = pays === 'Autre' ? autresPays : pays
 
   function copierNumero(num) {
     navigator.clipboard.writeText(num).catch(() => {})
@@ -104,15 +121,21 @@ export default function InscriptionPage() {
       montant_paye: 0,
       genre,
       statut_participant: statut,
-      tranche_age_detail: trancheAge,
+      tranche_age_detail: isEnfant ? `${ageExact} ans` : trancheAge,
       occupation,
-      lieu_habitation: lieuHabitation,
+      pays: paysFinal,
+      ville,
+      commune,
+      lieu_habitation: `${commune}, ${ville}, ${paysFinal}`,
       antecedents_medicaux: antecedents,
       deja_participe: dejaParticipe ? 'Oui' : 'Non',
       motivation,
       taille_tshirt: tailleTshirt,
-      contact_urgence: contactUrgence,
+      contact_urgence: `${nomUrgence} — ${telUrgence}`,
+      nom_urgence: nomUrgence,
+      tel_urgence: telUrgence,
       invite: invite ? 'Oui' : 'Non',
+      nom_inviteur: invite ? nomInviteur : '',
     }])
     setSending(false)
     if (error) setErreur('Une erreur est survenue. Réessayez.')
@@ -123,8 +146,6 @@ export default function InscriptionPage() {
   if (done) {
     return (
       <div style={{ minHeight: '100vh', background: '#F0F7F0', maxWidth: 480, margin: '0 auto', padding: '32px 16px 40px' }}>
-
-        {/* Badge participant */}
         <div style={{ background: VERT, borderRadius: 24, padding: '28px 20px', marginBottom: 16, position: 'relative', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', width: 150, height: 150, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.08)', top: -40, right: -40 }} />
           <div style={{ textAlign: 'center', marginBottom: 20 }}>
@@ -146,14 +167,13 @@ export default function InscriptionPage() {
           </div>
         </div>
 
-        {/* Comment payer */}
         <div style={{ background: '#fff', borderRadius: 18, border: '1px solid #E5E7EB', padding: 18, marginBottom: 12 }}>
           <p style={{ fontSize: 12, fontWeight: 700, color: '#374151', margin: '0 0 12px', display: 'flex', alignItems: 'center', gap: 6 }}>
             <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke={OR} strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             Comment payer ?
           </p>
           <p style={{ fontSize: 12, color: '#6B7280', margin: '0 0 12px', lineHeight: 1.6 }}>
-            Envoyez <strong style={{ color: VERT }}>{frais} FCFA</strong> via Wave ou Orange Money à l'un des contacts ci-dessous :
+            Envoyez <strong style={{ color: VERT }}>{frais} FCFA</strong> via Wave ou Orange Money :
           </p>
           {[
             { label: 'Bureau des Navigateurs', num: '0778484879', affiche: '07 78 48 48 79' },
@@ -171,12 +191,8 @@ export default function InscriptionPage() {
               </button>
             </div>
           ))}
-          <p style={{ fontSize: 10, color: '#9CA3AF', margin: '8px 0 0', fontStyle: 'italic', lineHeight: 1.5 }}>
-            Après paiement, confirmez en envoyant votre reçu et votre nom complet par WhatsApp.
-          </p>
         </div>
 
-        {/* Bouton WhatsApp */}
         <button onClick={whatsappConfirmation}
           style={{ width: '100%', background: '#25D366', color: '#fff', border: 'none', borderRadius: 14, padding: '14px', fontSize: 14, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 10 }}>
           <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.533 5.859L.057 23.625a.5.5 0 00.612.612l5.766-1.476A11.95 11.95 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.9 0-3.7-.514-5.253-1.408l-.375-.223-3.886.995 1.013-3.786-.244-.388A9.955 9.955 0 012 12c0-5.514 4.486-10 10-10s10 4.486 10 10-4.486 10-10 10z"/></svg>
@@ -198,24 +214,18 @@ export default function InscriptionPage() {
     <div style={{ minHeight: '100vh', background: '#F0F7F0', maxWidth: 480, margin: '0 auto', display: 'flex', flexDirection: 'column' }}>
 
       {/* Header */}
-      <div style={{ background: VERT, padding: '44px 16px 20px', position: 'relative', overflow: 'hidden' }}>
+      <div style={{ background: VERT, padding: '44px 16px 20px', position: 'relative', overflow: 'hidden', flexShrink: 0 }}>
         <div style={{ position: 'absolute', width: 130, height: 130, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.07)', top: -35, right: -35 }} />
-
         <button onClick={() => step > 0 ? setStep(s => s - 1) : navigate(-1)}
           style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'rgba(255,255,255,0.6)', fontSize: 12, background: 'none', border: 'none', cursor: 'pointer', marginBottom: 14 }}>
           <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>
           Retour
         </button>
-
         <p style={{ fontSize: 18, fontWeight: 600, color: '#fff', margin: '0 0 2px' }}>Inscription Camp-Navs</p>
         <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', margin: '0 0 16px' }}>23–29 août 2026 · La Sablière · Bingerville</p>
-
-        {/* Barre de progression */}
         <div style={{ background: 'rgba(255,255,255,0.15)', borderRadius: 10, height: 4, overflow: 'hidden', marginBottom: 8 }}>
           <div style={{ background: OR, borderRadius: 10, height: 4, width: `${progress}%`, transition: 'width .4s ease' }} />
         </div>
-
-        {/* Étapes */}
         <div style={{ display: 'flex', gap: 0 }}>
           {STEPS.map((s, i) => (
             <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
@@ -231,7 +241,7 @@ export default function InscriptionPage() {
         </div>
       </div>
 
-      {/* Contenu scrollable */}
+      {/* Contenu */}
       <div style={{ flex: 1, padding: '14px 14px 110px', display: 'flex', flexDirection: 'column', gap: 10 }}>
 
         {/* ÉTAPE 1 — Identité */}
@@ -253,8 +263,8 @@ export default function InscriptionPage() {
             <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #E5E7EB', padding: '12px 14px' }}>
               <p style={{ fontSize: 10, fontWeight: 600, color: '#6B7280', margin: '0 0 10px', letterSpacing: '0.04em' }}>CATÉGORIE <span style={{ color: '#EF4444' }}>*</span></p>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                <SelectCard label="Enfant / Ado" sublabel="0–15 ans · 25 000 FCFA" selected={statut === 'Enfant / Ado (0-15 ans)'} onClick={() => setStatut('Enfant / Ado (0-15 ans)')} />
-                <SelectCard label="Jeune / Adulte" sublabel="+15 ans · 30 000 FCFA" selected={statut === 'Jeune / Adulte (+15 ans)'} onClick={() => setStatut('Jeune / Adulte (+15 ans)')} />
+                <SelectCard label="Enfant / Ado" sublabel="0–15 ans · 25 000 FCFA" selected={statut === 'Enfant / Ado (0-15 ans)'} onClick={() => { setStatut('Enfant / Ado (0-15 ans)'); setTrancheAge(''); setAgeExact('') }} />
+                <SelectCard label="Jeune / Adulte" sublabel="16 ans et + · 30 000 FCFA" selected={statut === 'Jeune / Adulte (+15 ans)'} onClick={() => { setStatut('Jeune / Adulte (+15 ans)'); setAgeExact(''); setTrancheAge('') }} />
               </div>
               {statut && (
                 <div style={{ marginTop: 10, background: VERT_CLAIR, borderRadius: 10, padding: '8px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -264,14 +274,25 @@ export default function InscriptionPage() {
               )}
             </div>
 
-            <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #E5E7EB', padding: '12px 14px' }}>
-              <p style={{ fontSize: 10, fontWeight: 600, color: '#6B7280', margin: '0 0 10px', letterSpacing: '0.04em' }}>TRANCHE D'ÂGE <span style={{ color: '#EF4444' }}>*</span></p>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
-                {['30 ans et +', '20 – 29 ans', '16 – 19 ans', '11 – 15 ans', '10 ans et –'].map(a => (
-                  <SelectCard key={a} label={a} selected={trancheAge === a} onClick={() => setTrancheAge(a)} />
-                ))}
+            {/* Âge exact si enfant */}
+            {isEnfant && (
+              <InputField label="ÂGE EXACT" required
+                icon={<svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>}>
+                <input type="number" inputMode="numeric" placeholder="Ex : 12" min="0" max="15" value={ageExact} onChange={e => setAgeExact(e.target.value)} style={inputStyle} />
+              </InputField>
+            )}
+
+            {/* Tranche d'âge si adulte */}
+            {statut === 'Jeune / Adulte (+15 ans)' && (
+              <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #E5E7EB', padding: '12px 14px' }}>
+                <p style={{ fontSize: 10, fontWeight: 600, color: '#6B7280', margin: '0 0 10px', letterSpacing: '0.04em' }}>TRANCHE D'ÂGE <span style={{ color: '#EF4444' }}>*</span></p>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                  {TRANCHES_ADULTE.map(a => (
+                    <SelectCard key={a} label={a} selected={trancheAge === a} onClick={() => setTrancheAge(a)} />
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
           </>
         )}
 
@@ -283,14 +304,32 @@ export default function InscriptionPage() {
               <input type="tel" inputMode="numeric" placeholder="07 XX XX XX XX" value={telephone} onChange={e => setTelephone(e.target.value)} style={inputStyle} />
             </InputField>
 
-            <InputField label="OCCUPATION" required
+            <InputField label="OCCUPATION / FONCTION" required
               icon={<svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>}>
-              <textarea placeholder="Étudiant, employé, commerçant..." value={occupation} onChange={e => setOccupation(e.target.value)} rows={2} style={{ ...inputStyle, resize: 'none' }} />
+              <input type="text" placeholder="Ex : Étudiant, Enseignant, Commerçant..." value={occupation} onChange={e => setOccupation(e.target.value)} style={inputStyle} />
             </InputField>
 
-            <InputField label="LIEU D'HABITATION" required
+            {/* Pays */}
+            <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #E5E7EB', padding: '12px 14px' }}>
+              <p style={{ fontSize: 10, fontWeight: 600, color: '#6B7280', margin: '0 0 10px', letterSpacing: '0.04em' }}>PAYS <span style={{ color: '#EF4444' }}>*</span></p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: pays === 'Autre' ? 10 : 0 }}>
+                <SelectCard label="Côte d'Ivoire" selected={pays === "Côte d'Ivoire"} onClick={() => setPays("Côte d'Ivoire")} />
+                <SelectCard label="Autre pays" selected={pays === 'Autre'} onClick={() => setPays('Autre')} />
+              </div>
+              {pays === 'Autre' && (
+                <input type="text" placeholder="Précisez votre pays" value={autresPays} onChange={e => setAutresPays(e.target.value)}
+                  style={{ ...inputStyle, border: '1px solid #E5E7EB', borderRadius: 10, padding: '10px 12px', marginTop: 4 }} />
+              )}
+            </div>
+
+            <InputField label="VILLE" required
               icon={<svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>}>
-              <input type="text" placeholder="Quartier / Commune / Ville" value={lieuHabitation} onChange={e => setLieuHabitation(e.target.value)} style={inputStyle} />
+              <input type="text" placeholder="Ex : Abidjan, Bouaké, Yamoussoukro..." value={ville} onChange={e => setVille(e.target.value)} style={inputStyle} />
+            </InputField>
+
+            <InputField label="COMMUNE / QUARTIER" required
+              icon={<svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0h6"/></svg>}>
+              <input type="text" placeholder="Ex : Cocody, Yopougon, Abobo..." value={commune} onChange={e => setCommune(e.target.value)} style={inputStyle} />
             </InputField>
           </>
         )}
@@ -300,14 +339,14 @@ export default function InscriptionPage() {
           <>
             <InputField label="ANTÉCÉDENTS MÉDICAUX" required hint="Ces informations sont strictement confidentielles."
               icon={<svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>}>
-              <textarea placeholder={`Allergies, asthme, etc. Écrire "Aucun" si pas d'antécédents.`} value={antecedents} onChange={e => setAntecedents(e.target.value)} rows={3} style={{ ...inputStyle, resize: 'none' }} />
+              <textarea placeholder={`Allergies, asthme, etc. Écrire "Aucun" si rien.`} value={antecedents} onChange={e => setAntecedents(e.target.value)} rows={3} style={{ ...inputStyle, resize: 'none' }} />
             </InputField>
 
             <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #E5E7EB', padding: '14px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div>
                   <p style={{ fontSize: 13, fontWeight: 500, color: '#111827', margin: 0 }}>Déjà participé à un camp Navigateurs ?</p>
-                  <p style={{ fontSize: 10, color: '#9CA3AF', margin: '3px 0 0' }}>{dejaParticipe ? 'Oui, je suis un ancien campeur' : 'Non, c\'est ma première fois'}</p>
+                  <p style={{ fontSize: 10, color: '#9CA3AF', margin: '3px 0 0' }}>{dejaParticipe ? 'Oui, ancien campeur' : 'Non, première fois'}</p>
                 </div>
                 <Switch value={dejaParticipe} onChange={setDejaParticipe} />
               </div>
@@ -329,7 +368,7 @@ export default function InscriptionPage() {
                 {TSHIRT_SIZES.map(s => (
                   <div key={s} onClick={() => setTailleTshirt(s)}
                     style={{ border: `2px solid ${tailleTshirt === s ? VERT : '#E5E7EB'}`, borderRadius: 10, padding: '10px 4px', cursor: 'pointer', textAlign: 'center', background: tailleTshirt === s ? VERT_CLAIR : '#fff', transition: 'all .2s' }}>
-                    <p style={{ fontSize: 14, fontWeight: 700, color: tailleTshirt === s ? VERT : '#374151', margin: 0 }}>{s}</p>
+                    <p style={{ fontSize: 13, fontWeight: 700, color: tailleTshirt === s ? VERT : '#374151', margin: 0 }}>{s}</p>
                   </div>
                 ))}
               </div>
@@ -340,24 +379,32 @@ export default function InscriptionPage() {
               )}
             </div>
 
+            {/* Contact urgence — 2 champs */}
             <div style={{ background: '#fff', borderRadius: 14, border: `2px solid ${OR}`, padding: '14px' }}>
               <p style={{ fontSize: 10, fontWeight: 600, color: '#92400E', margin: '0 0 8px', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: 5 }}>
                 <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke={OR} strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
                 CONTACT D'URGENCE <span style={{ color: '#EF4444' }}>*</span>
               </p>
-              <p style={{ fontSize: 11, color: '#9CA3AF', margin: '0 0 8px' }}>Personne à contacter en cas d'urgence médicale</p>
-              <input type="text" placeholder="Ex : Marie KOUASSI — 07 89 78 88 98" value={contactUrgence} onChange={e => setContactUrgence(e.target.value)}
-                style={{ ...inputStyle, fontSize: 13 }} />
+              <p style={{ fontSize: 11, color: '#9CA3AF', margin: '0 0 10px' }}>Personne à contacter en cas d'urgence médicale</p>
+              <input type="text" placeholder="Nom complet de la personne" value={nomUrgence} onChange={e => setNomUrgence(e.target.value)}
+                style={{ ...inputStyle, border: '1px solid #E5E7EB', borderRadius: 10, padding: '10px 12px', marginBottom: 8 }} />
+              <input type="tel" inputMode="numeric" placeholder="Numéro de téléphone" value={telUrgence} onChange={e => setTelUrgence(e.target.value)}
+                style={{ ...inputStyle, border: '1px solid #E5E7EB', borderRadius: 10, padding: '10px 12px' }} />
             </div>
 
+            {/* Invité */}
             <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #E5E7EB', padding: '14px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: invite ? 12 : 0 }}>
                 <div>
                   <p style={{ fontSize: 13, fontWeight: 500, color: '#111827', margin: 0 }}>Avez-vous été invité ?</p>
-                  <p style={{ fontSize: 10, color: '#9CA3AF', margin: '3px 0 0' }}>{invite ? 'Oui, j\'ai été invité' : 'Non, inscription personnelle'}</p>
+                  <p style={{ fontSize: 10, color: '#9CA3AF', margin: '3px 0 0' }}>{invite ? "Oui, j'ai été invité" : 'Non, inscription personnelle'}</p>
                 </div>
                 <Switch value={invite} onChange={setInvite} />
               </div>
+              {invite && (
+                <input type="text" placeholder="Nom de la personne qui vous a invité" value={nomInviteur} onChange={e => setNomInviteur(e.target.value)}
+                  style={{ ...inputStyle, border: '1px solid #E5E7EB', borderRadius: 10, padding: '10px 12px' }} />
+              )}
             </div>
 
             {erreur && (
