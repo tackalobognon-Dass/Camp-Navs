@@ -144,7 +144,10 @@ export default function CampeursPage() {
   async function saveReduction() {
     if (!ficheOuverte) return
     setSavingReduction(true)
-    await supabase.from('inscriptions').update({ montant_personnalise: editMontantPerso !== '' ? parseInt(editMontantPerso) : null }).eq('id', ficheOuverte.id)
+    const montantPerso = editMontantPerso !== '' ? parseInt(editMontantPerso) : null
+    await supabase.from('inscriptions').update({ montant_personnalise: montantPerso }).eq('id', ficheOuverte.id)
+    // Mettre à jour ficheOuverte localement pour refléter le changement immédiatement
+    setFicheOuverte(prev => ({ ...prev, montant_personnalise: montantPerso }))
     setSavingReduction(false)
     fetchCampeurs()
   }
