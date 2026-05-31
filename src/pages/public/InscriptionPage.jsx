@@ -103,8 +103,8 @@ export default function InscriptionPage() {
   }
 
   function whatsappConfirmation() {
-    const msg = `Bonjour, je viens de m'inscrire au Camp-Navs 2026 et je souhaite effectuer mon paiement.\n\nNom : ${nomComplet}\nTéléphone : ${telephone}\nCatégorie : ${statut}\nMontant à régler : ${frais} FCFA\n\nMerci de me confirmer les modalités de paiement.`
-    window.open(`https://wa.me/2250778484879?text=${encodeURIComponent(msg)}`, '_blank')
+    const msg = `Bonjour Mme OBODJI, je viens de m'inscrire au Camp-Navs 2026.\n\nNom : ${nomComplet}\nTéléphone : ${telephone}\nCatégorie : ${statut}\nMontant à payer : ${frais} FCFA\n\nMerci !`
+    window.open(`https://wa.me/2250709626265?text=${encodeURIComponent(msg)}`, '_blank')
   }
 
   function validerEtape() {
