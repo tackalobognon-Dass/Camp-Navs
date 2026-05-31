@@ -10,6 +10,7 @@ import ChantsPage from './pages/public/ChantsPage'
 import DocumentsPage from './pages/public/DocumentsPage'
 import ProgrammePage from './pages/public/ProgrammePage'
 import TemoignagesPage from './pages/public/TemoignagesPage'
+import NotificationsPage from './pages/public/NotificationsPage'
 import ContactPage from './pages/public/ContactPage'
 import SuiviPage from './pages/public/SuiviPage'
 import LieuPage from './pages/public/LieuPage'
@@ -45,6 +46,7 @@ function App() {
         <Route path="/documents" element={<DocumentsPage />} />
         <Route path="/programme" element={<ProgrammePage />} />
         <Route path="/temoignages" element={<TemoignagesPage />} />
+        <Route path="/notifications" element={<NotificationsPage />} />
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/suivi" element={<SuiviPage />} />
         <Route path="/lieu" element={<LieuPage />} />

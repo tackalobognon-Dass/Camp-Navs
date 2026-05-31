@@ -91,6 +91,7 @@ export default function HomePage() {
   const [annonces, setAnnonces] = useState([])
   const [places, setPlaces] = useState({ jeunes: 0, enfants: 0 })
   const [plusOpen, setPlusOpen] = useState(false)
+  const [nbNotifs, setNbNotifs] = useState(0)
   const [annonceOuverte, setAnnonceOuverte] = useState(null)
 
   useEffect(() => {
@@ -103,6 +104,17 @@ export default function HomePage() {
       const jeunes = (insc || []).filter(i => i.tranche_age === 'Jeunes & Adultes').length
       const enfants = (insc || []).filter(i => i.tranche_age === 'Enfants & Adolescents').length
       setPlaces({ jeunes, enfants })
+
+      // Calculer notifications non lues
+      const lastSeen = localStorage.getItem('navs_last_seen') || new Date(0).toISOString()
+      const [{ data: docs }, { data: chants }, { data: temos }] = await Promise.all([
+        supabase.from('documents').select('created_at').order('created_at', { ascending: false }).limit(20),
+        supabase.from('chants').select('created_at').order('created_at', { ascending: false }).limit(20),
+        supabase.from('temoignages').select('created_at').eq('statut', 'approuve').order('created_at', { ascending: false }).limit(20),
+      ])
+      const all = [...(ann || []), ...(docs || []), ...(chants || []), ...(temos || [])]
+      const nb = all.filter(i => new Date(i.created_at) > new Date(lastSeen)).length
+      setNbNotifs(nb)
     }
     fetchData()
   }, [])
@@ -202,7 +214,7 @@ export default function HomePage() {
       </div>
 
       {/* ── 4. ACTUALITÉS ── */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '10px 14px 56px', minHeight: 0 }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '10px 14px 0', minHeight: 0, marginBottom: 70 }}>
         <p style={{ fontSize: 9, fontWeight: 600, color: '#94A3B8', letterSpacing: '0.12em', margin: '0 0 8px', textTransform: 'uppercase', flexShrink: 0 }}>Actualités</p>
         {annonces.length === 0 ? (
           <div style={{ flex: 1, background: '#fff', borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
