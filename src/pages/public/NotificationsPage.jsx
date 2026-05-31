@@ -5,56 +5,57 @@ import BottomNav from '../../components/public/BottomNav'
 
 const VERT = '#054035'
 
+function IconAnnonce() {
+  return <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>
+}
+function IconDocument() {
+  return <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+}
+function IconChant() {
+  return <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/></svg>
+}
+function IconTemoignage() {
+  return <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+}
+function IconProgramme() {
+  return <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+}
+
 const SOURCES = [
   {
-    key: 'annonces',
-    table: 'annonces',
-    label: 'Annonce',
+    key: 'annonces', table: 'annonces', label: 'Annonce',
     filtre: { colonne: 'publie', valeur: true },
     couleur: '#E8F5E8', textColor: '#054035',
-    icon: <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>,
-    path: '/',
+    Icon: IconAnnonce, path: '/',
     getTitle: item => item.titre,
-    getSub: item => item.contenu?.slice(0, 60) + (item.contenu?.length > 60 ? '...' : ''),
+    getSub: item => item.contenu ? item.contenu.slice(0, 60) + (item.contenu.length > 60 ? '...' : '') : '',
   },
   {
-    key: 'documents',
-    table: 'documents',
-    label: 'Document',
+    key: 'documents', table: 'documents', label: 'Document',
     couleur: '#FFF4E6', textColor: '#C2410C',
-    icon: <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>,
-    path: '/documents',
+    Icon: IconDocument, path: '/documents',
     getTitle: item => item.nom,
     getSub: item => item.description || 'Nouveau document disponible',
   },
   {
-    key: 'chants',
-    table: 'chants',
-    label: 'Chant',
+    key: 'chants', table: 'chants', label: 'Chant',
     couleur: '#F5F3FF', textColor: '#6D28D9',
-    icon: <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/></svg>,
-    path: '/chants',
+    Icon: IconChant, path: '/chants',
     getTitle: item => item.titre,
     getSub: item => item.artiste || 'Nouveau chant ajouté au répertoire',
   },
   {
-    key: 'temoignages',
-    table: 'temoignages',
-    label: 'Témoignage',
+    key: 'temoignages', table: 'temoignages', label: 'Témoignage',
     filtre: { colonne: 'statut', valeur: 'approuve' },
     couleur: '#EFF6FF', textColor: '#1D4ED8',
-    icon: <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>,
-    path: '/temoignages',
+    Icon: IconTemoignage, path: '/temoignages',
     getTitle: item => item.anonyme ? 'Nouveau témoignage anonyme' : `Témoignage de ${item.nom}`,
-    getSub: item => item.contenu?.slice(0, 60) + (item.contenu?.length > 60 ? '...' : ''),
+    getSub: item => item.contenu ? item.contenu.slice(0, 60) + (item.contenu.length > 60 ? '...' : '') : '',
   },
   {
-    key: 'programme',
-    table: 'programme_camp',
-    label: 'Programme',
+    key: 'programme', table: 'programme_camp', label: 'Programme',
     couleur: '#FEF3C7', textColor: '#D97706',
-    icon: <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>,
-    path: '/programme',
+    Icon: IconProgramme, path: '/programme',
     getTitle: item => item.activite,
     getSub: item => `${item.jour}${item.heure_debut ? ' · ' + item.heure_debut : ''}`,
   },
@@ -147,35 +148,32 @@ export default function NotificationsPage() {
           </div>
         )}
 
-        {notifications.map(({ id, source, item, date, isNew }) => (
-          <div key={id} onClick={() => navigate(source.path)}
-            style={{ background: '#fff', borderRadius: 14, border: `0.5px solid ${isNew ? '#054035' : '#F3F4F6'}`, boxShadow: '0 1px 4px rgba(0,0,0,0.05)', padding: '12px 14px', display: 'flex', alignItems: 'flex-start', gap: 12, cursor: 'pointer', position: 'relative' }}>
-
-            {/* Icône */}
-            <div style={{ width: 40, height: 40, borderRadius: 12, background: source.couleur, color: source.textColor, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              {source.icon}
-            </div>
-
-            {/* Contenu */}
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
-                <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 20, background: source.couleur, color: source.textColor }}>{source.label}</span>
-                <span style={{ fontSize: 10, color: '#9CA3AF' }}>{formatDate(date)}</span>
+        {notifications.map(({ id, source, item, date, isNew }) => {
+          const { Icon } = source
+          return (
+            <div key={id} onClick={() => navigate(source.path)}
+              style={{ background: '#fff', borderRadius: 14, border: `0.5px solid ${isNew ? '#054035' : '#F3F4F6'}`, boxShadow: '0 1px 4px rgba(0,0,0,0.05)', padding: '12px 14px', display: 'flex', alignItems: 'flex-start', gap: 12, cursor: 'pointer', position: 'relative' }}>
+              <div style={{ width: 40, height: 40, borderRadius: 12, background: source.couleur, color: source.textColor, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <Icon />
               </div>
-              <p style={{ fontSize: 13, fontWeight: 600, color: '#111827', margin: '0 0 2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {source.getTitle(item)}
-              </p>
-              <p style={{ fontSize: 11, color: '#6B7280', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {source.getSub(item)}
-              </p>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
+                  <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 20, background: source.couleur, color: source.textColor }}>{source.label}</span>
+                  <span style={{ fontSize: 10, color: '#9CA3AF' }}>{formatDate(date)}</span>
+                </div>
+                <p style={{ fontSize: 13, fontWeight: 600, color: '#111827', margin: '0 0 2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {source.getTitle(item)}
+                </p>
+                <p style={{ fontSize: 11, color: '#6B7280', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {source.getSub(item)}
+                </p>
+              </div>
+              {isNew && (
+                <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#EF4444', flexShrink: 0, marginTop: 4 }} />
+              )}
             </div>
-
-            {/* Point rouge si nouveau */}
-            {isNew && (
-              <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#EF4444', flexShrink: 0, marginTop: 4 }} />
-            )}
-          </div>
-        ))}
+          )
+        })}
       </div>
 
       <BottomNav />
