@@ -120,8 +120,8 @@ export default function SuiviPage() {
             <p style={{ fontSize: 13, color: '#A32D2D', fontWeight: 500, marginBottom: 4 }}>Aucune inscription trouvée</p>
             <p style={{ fontSize: 11, color: '#888' }}>
               {telephone.replace(/\s/g, '').length < 10
-                ? 'Veuillez entrer les 10 chiffres de votre numéro.'
-                : 'Vérifiez votre numéro ou inscrivez-vous si ce n'est pas encore fait.'}
+                ? 'Veuillez entrer les 10 chiffres de votre numero.'
+                : 'Verifiez votre numero ou inscrivez-vous si ce nest pas encore fait.'}
             </p>
           </div>
         )}
