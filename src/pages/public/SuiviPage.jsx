@@ -34,6 +34,12 @@ export default function SuiviPage() {
     setVersementsMap({})
     setRechercheFaite(false)
     const tel = telephone.replace(/\s/g, '')
+    if (tel.length !== 10) {
+      setResultats([])
+      setRechercheFaite(true)
+      setLoading(false)
+      return
+    }
     // Générer aussi le format avec espaces : 0708484879 → 07 08 48 48 79
     const telAvecEspaces = tel.replace(/(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})/, '$1 $2 $3 $4 $5')
     const { data } = await supabase
@@ -112,7 +118,11 @@ export default function SuiviPage() {
         {rechercheFaite && resultats.length === 0 && (
           <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #F09595', padding: '18px', textAlign: 'center' }}>
             <p style={{ fontSize: 13, color: '#A32D2D', fontWeight: 500, marginBottom: 4 }}>Aucune inscription trouvée</p>
-            <p style={{ fontSize: 11, color: '#888' }}>Vérifiez votre numéro ou inscrivez-vous si ce n'est pas encore fait.</p>
+            <p style={{ fontSize: 11, color: '#888' }}>
+              {telephone.replace(/\s/g, '').length < 10
+                ? 'Veuillez entrer les 10 chiffres de votre numéro.'
+                : 'Vérifiez votre numéro ou inscrivez-vous si ce n'est pas encore fait.'}
+            </p>
           </div>
         )}
 
