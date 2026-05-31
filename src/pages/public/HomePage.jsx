@@ -91,7 +91,6 @@ export default function HomePage() {
   const [annonces, setAnnonces] = useState([])
   const [places, setPlaces] = useState({ jeunes: 0, enfants: 0 })
   const [plusOpen, setPlusOpen] = useState(false)
-  const [nbNotifs, setNbNotifs] = useState(0)
   const [annonceOuverte, setAnnonceOuverte] = useState(null)
 
   useEffect(() => {
@@ -104,17 +103,6 @@ export default function HomePage() {
       const jeunes = (insc || []).filter(i => i.tranche_age === 'Jeunes & Adultes').length
       const enfants = (insc || []).filter(i => i.tranche_age === 'Enfants & Adolescents').length
       setPlaces({ jeunes, enfants })
-
-      // Calculer notifications non lues
-      const lastSeen = localStorage.getItem('navs_last_seen') || new Date(0).toISOString()
-      const [{ data: docs }, { data: chants }, { data: temos }] = await Promise.all([
-        supabase.from('documents').select('created_at').order('created_at', { ascending: false }).limit(20),
-        supabase.from('chants').select('created_at').order('created_at', { ascending: false }).limit(20),
-        supabase.from('temoignages').select('created_at').eq('statut', 'approuve').order('created_at', { ascending: false }).limit(20),
-      ])
-      const all = [...(ann || []), ...(docs || []), ...(chants || []), ...(temos || [])]
-      const nb = all.filter(i => new Date(i.created_at) > new Date(lastSeen)).length
-      setNbNotifs(nb)
     }
     fetchData()
   }, [])
@@ -147,9 +135,20 @@ export default function HomePage() {
         <div style={{ position: 'absolute', width: 100, height: 100, borderRadius: '50%', background: 'rgba(255,255,255,0.04)', top: 20, right: 60 }} />
 
         <div style={{ position: 'relative', zIndex: 1 }}>
-          <p style={{ fontSize: 9, fontWeight: 400, color: 'rgba(255,255,255,0.7)', margin: '0 0 6px', letterSpacing: '0.08em', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            Mission Évangélique des Navigateurs CI
-          </p>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+            <p style={{ fontSize: 9, fontWeight: 400, color: 'rgba(255,255,255,0.7)', margin: 0, letterSpacing: '0.08em', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1 }}>
+              Mission Évangélique des Navigateurs CI
+            </p>
+            <button onClick={() => navigate('/notifications')}
+              style={{ position: 'relative', background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 10, width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, marginLeft: 8 }}>
+              <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#fff" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+              {nbNotifs > 0 && (
+                <div style={{ position: 'absolute', top: -5, right: -5, background: '#EF4444', borderRadius: '50%', minWidth: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: '#fff', padding: '0 4px' }}>
+                  {nbNotifs > 99 ? '99+' : nbNotifs}
+                </div>
+              )}
+            </button>
+          </div>
           <p style={{ fontSize: 22, fontWeight: 600, color: '#fff', margin: '0 0 6px', lineHeight: 1.1 }}>Camp-Navs 2026</p>
           <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.8)', lineHeight: 1.55, margin: 0, fontWeight: 300, maxWidth: '90%' }}>
             Les familles et réseaux relationnels pour une expansion naturelle de l'Évangile et du Royaume de Dieu
