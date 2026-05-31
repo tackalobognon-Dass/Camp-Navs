@@ -65,7 +65,6 @@ function NewsCard({ annonce, onExpand }) {
       padding: '14px 14px 12px',
       display: 'flex', flexDirection: 'column', gap: 6,
       overflow: 'hidden',
-      boxSizing: 'border-box',
     }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 8px', borderRadius: 20, background: tc.bg, color: tc.color }}>{annonce.tag}</span>
@@ -75,7 +74,7 @@ function NewsCard({ annonce, onExpand }) {
         {annonce.titre}
       </p>
       {annonce.contenu && (
-        <p style={{ fontSize: 14, color: '#475569', lineHeight: 1.45, margin: 0, flex: 1, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+        <p style={{ fontSize: 14, color: '#475569', lineHeight: 1.45, margin: 0, flex: 1, display: '-webkit-box', WebkitLineClamp: 4, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
           {annonce.contenu}
         </p>
       )}
@@ -203,7 +202,7 @@ export default function HomePage() {
       </div>
 
       {/* ── 4. ACTUALITÉS ── */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '10px 14px 0', minHeight: 0, marginBottom: 70 }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '10px 14px 56px', minHeight: 0 }}>
         <p style={{ fontSize: 9, fontWeight: 600, color: '#94A3B8', letterSpacing: '0.12em', margin: '0 0 8px', textTransform: 'uppercase', flexShrink: 0 }}>Actualités</p>
         {annonces.length === 0 ? (
           <div style={{ flex: 1, background: '#fff', borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
