@@ -117,15 +117,7 @@ export default function HomePage() {
   return (
     <div style={{ height: '100dvh', maxWidth: 480, margin: '0 auto', display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#F4F6F9' }}>
       <style>{`
-        @keyframes borderGlow {
-          0%   { box-shadow: 0 0 0 0 rgba(5,64,53,0); border-color: #054035; }
-          30%  { box-shadow: 0 0 12px 4px rgba(5,64,53,0.55); border-color: #0F9B72; }
-          60%  { box-shadow: 0 0 18px 6px rgba(5,64,53,0.35); border-color: #0F9B72; }
-          100% { box-shadow: 0 0 0 0 rgba(5,64,53,0); border-color: #054035; }
-        }
-        .btn-inscrire {
-          animation: borderGlow 2s ease-out 0.3s 1;
-        }
+
       `}</style>
 
       {/* ── 1. HEADER VERT ── */}
@@ -185,10 +177,9 @@ export default function HomePage() {
               icon: <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>,
               title: 'voir mon inscription', sub: 'Voir mon statut',
             },
-          ].map((item, idx) => (
+          ].map(item => (
             <div key={item.path} onClick={() => navigate(item.path)}
-              className={idx === 0 ? 'btn-inscrire' : ''}
-              style={{ background: '#fff', borderRadius: 18, padding: '14px 12px', cursor: 'pointer', position: 'relative', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', minHeight: 100, display: 'flex', flexDirection: 'column', gap: 8, border: idx === 0 ? '2px solid #054035' : 'none' }}>
+              style={{ background: '#fff', borderRadius: 18, padding: '14px 12px', cursor: 'pointer', position: 'relative', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', minHeight: 100, display: 'flex', flexDirection: 'column', gap: 8 }}>
               <div style={{ width: 36, height: 36, borderRadius: 10, background: item.iconBg, color: item.iconColor, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 {item.icon}
               </div>
