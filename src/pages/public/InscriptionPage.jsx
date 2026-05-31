@@ -103,8 +103,35 @@ export default function InscriptionPage() {
   }
 
   function whatsappConfirmation() {
-    const msg = `Bonjour, je viens de m'inscrire au Camp-Navs 2026.\n\nNom : ${nomComplet}\nTéléphone : ${telephone}\nCatégorie : ${statut}\nMontant à payer : ${frais} FCFA\n\nJe vais effectuer le paiement. Merci !`
+    const msg = `Bonjour, je viens de m'inscrire au Camp-Navs 2026 et je souhaite effectuer mon paiement.\n\nNom : ${nomComplet}\nTéléphone : ${telephone}\nCatégorie : ${statut}\nMontant à régler : ${frais} FCFA\n\nMerci de me confirmer les modalités de paiement.`
     window.open(`https://wa.me/2250778484879?text=${encodeURIComponent(msg)}`, '_blank')
+  }
+
+  function validerEtape() {
+    if (step === 0) {
+      if (!nomComplet) { setErreur('Veuillez entrer votre nom et prénoms.'); return false }
+      if (!genre) { setErreur('Veuillez sélectionner votre genre.'); return false }
+      if (!statut) { setErreur('Veuillez sélectionner votre catégorie.'); return false }
+      if (isEnfant && !ageExact) { setErreur("Veuillez entrer l'âge exact."); return false }
+      if (!isEnfant && !trancheAge) { setErreur('Veuillez sélectionner votre tranche d'âge.'); return false }
+    }
+    if (step === 1) {
+      if (!telephone) { setErreur('Veuillez entrer votre numéro de téléphone.'); return false }
+      if (!occupation) { setErreur('Veuillez entrer votre occupation / fonction.'); return false }
+      if (pays === 'Autre' && !autresPays) { setErreur('Veuillez préciser votre pays.'); return false }
+      if (!ville) { setErreur('Veuillez entrer votre ville.'); return false }
+      if (!commune) { setErreur('Veuillez entrer votre commune ou quartier.'); return false }
+    }
+    if (step === 2) {
+      if (!antecedents) { setErreur('Veuillez renseigner vos antécédents médicaux (ou écrire "Aucun").'); return false }
+      if (!motivation) { setErreur('Veuillez entrer votre motivation.'); return false }
+    }
+    if (step === 3) {
+      if (!tailleTshirt) { setErreur('Veuillez sélectionner votre taille de t-shirt.'); return false }
+      if (invite && !nomInviteur) { setErreur("Veuillez entrer le nom de la personne qui vous a invité."); return false }
+    }
+    setErreur('')
+    return true
   }
 
   async function handleSubmit() {
@@ -176,8 +203,7 @@ export default function InscriptionPage() {
             Envoyez <strong style={{ color: VERT }}>{frais} FCFA</strong> via Wave ou Orange Money :
           </p>
           {[
-            { label: 'Bureau des Navigateurs', num: '0778484879', affiche: '07 78 48 48 79' },
-            { label: 'Mme OBODJI', num: '0709626265', affiche: '07 09 62 62 65' },
+            { label: 'Mme OBODJI (Trésorière)', num: '0709626265', affiche: '07 09 62 62 65' },
           ].map(c => (
             <div key={c.num} style={{ background: '#F9FAFB', borderRadius: 12, padding: '10px 14px', marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div>
@@ -193,16 +219,17 @@ export default function InscriptionPage() {
           ))}
         </div>
 
-        <button onClick={whatsappConfirmation}
-          style={{ width: '100%', background: '#25D366', color: '#fff', border: 'none', borderRadius: 14, padding: '14px', fontSize: 14, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 10 }}>
-          <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.533 5.859L.057 23.625a.5.5 0 00.612.612l5.766-1.476A11.95 11.95 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.9 0-3.7-.514-5.253-1.408l-.375-.223-3.886.995 1.013-3.786-.244-.388A9.955 9.955 0 012 12c0-5.514 4.486-10 10-10s10 4.486 10 10-4.486 10-10 10z"/></svg>
-          Confirmer via WhatsApp
-        </button>
-
-        <button onClick={() => navigate('/')}
-          style={{ width: '100%', background: 'transparent', color: VERT, border: `1.5px solid ${VERT}`, borderRadius: 14, padding: '13px', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}>
-          Retour à l'accueil
-        </button>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          <button onClick={whatsappConfirmation}
+            style={{ background: '#25D366', color: '#fff', border: 'none', borderRadius: 14, padding: '13px 8px', fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}>
+            <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.533 5.859L.057 23.625a.5.5 0 00.612.612l5.766-1.476A11.95 11.95 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.9 0-3.7-.514-5.253-1.408l-.375-.223-3.886.995 1.013-3.786-.244-.388A9.955 9.955 0 012 12c0-5.514 4.486-10 10-10s10 4.486 10 10-4.486 10-10 10z"/></svg>
+            WhatsApp
+          </button>
+          <button onClick={() => navigate('/')}
+            style={{ background: 'transparent', color: VERT, border: `1.5px solid ${VERT}`, borderRadius: 14, padding: '13px 8px', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}>
+            Retour accueil
+          </button>
+        </div>
       </div>
     )
   }
@@ -383,7 +410,7 @@ export default function InscriptionPage() {
             <div style={{ background: '#fff', borderRadius: 14, border: `2px solid ${OR}`, padding: '14px' }}>
               <p style={{ fontSize: 10, fontWeight: 600, color: '#92400E', margin: '0 0 8px', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: 5 }}>
                 <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke={OR} strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                CONTACT D'URGENCE <span style={{ color: '#EF4444' }}>*</span>
+                CONTACT D'URGENCE
               </p>
               <p style={{ fontSize: 11, color: '#9CA3AF', margin: '0 0 10px' }}>Personne à contacter en cas d'urgence médicale</p>
               <input type="text" placeholder="Nom complet de la personne" value={nomUrgence} onChange={e => setNomUrgence(e.target.value)}
@@ -407,17 +434,19 @@ export default function InscriptionPage() {
               )}
             </div>
 
-            {erreur && (
-              <div style={{ background: '#FEF2F2', border: '1px solid #FCA5A5', borderRadius: 12, padding: '10px 14px' }}>
-                <p style={{ fontSize: 12, color: '#DC2626', margin: 0 }}>{erreur}</p>
-              </div>
-            )}
+
           </>
         )}
       </div>
 
       {/* Boutons navigation fixes */}
-      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, maxWidth: 480, margin: '0 auto', background: '#fff', borderTop: '0.5px solid #E5E7EB', padding: '12px 14px', display: 'flex', gap: 10, zIndex: 30 }}>
+      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, maxWidth: 480, margin: '0 auto', background: '#fff', borderTop: '0.5px solid #E5E7EB', padding: '8px 14px 12px', display: 'flex', flexDirection: 'column', gap: 8, zIndex: 30 }}>
+        {erreur && (
+          <div style={{ background: '#FEF2F2', border: '1px solid #FCA5A5', borderRadius: 10, padding: '8px 12px' }}>
+            <p style={{ fontSize: 12, color: '#DC2626', margin: 0 }}>{erreur}</p>
+          </div>
+        )}
+        <div style={{ display: 'flex', gap: 10 }}>
         {step > 0 && (
           <button onClick={() => setStep(s => s - 1)}
             style={{ background: '#F3F4F6', color: '#374151', border: 'none', borderRadius: 14, padding: '14px 18px', fontSize: 14, fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -426,7 +455,7 @@ export default function InscriptionPage() {
           </button>
         )}
         <button
-          onClick={() => step < STEPS.length - 1 ? setStep(s => s + 1) : handleSubmit()}
+          onClick={() => { if (!validerEtape()) return; step < STEPS.length - 1 ? setStep(s => s + 1) : handleSubmit() }}
           disabled={sending}
           style={{ flex: 1, background: step === STEPS.length - 1 ? OR : VERT, color: '#fff', border: 'none', borderRadius: 14, padding: '14px', fontSize: 14, fontWeight: 600, cursor: 'pointer', opacity: sending ? 0.7 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
           {sending ? 'Envoi en cours...' : step < STEPS.length - 1
@@ -434,6 +463,7 @@ export default function InscriptionPage() {
             : <><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg><span>Valider mon inscription</span></>
           }
         </button>
+        </div>
       </div>
     </div>
   )
