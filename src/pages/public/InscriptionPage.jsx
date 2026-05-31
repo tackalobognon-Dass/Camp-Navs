@@ -113,7 +113,7 @@ export default function InscriptionPage() {
       if (!genre) { setErreur('Veuillez sélectionner votre genre.'); return false }
       if (!statut) { setErreur('Veuillez sélectionner votre catégorie.'); return false }
       if (isEnfant && !ageExact) { setErreur("Veuillez entrer l'âge exact."); return false }
-      if (!isEnfant && !trancheAge) { setErreur('Veuillez sélectionner votre tranche d'âge.'); return false }
+      if (!isEnfant && !trancheAge) { setErreur("Veuillez sélectionner votre tranche d'âge."); return false }
     }
     if (step === 1) {
       if (!telephone) { setErreur('Veuillez entrer votre numéro de téléphone.'); return false }
