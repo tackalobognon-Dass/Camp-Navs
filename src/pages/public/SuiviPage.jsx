@@ -34,10 +34,12 @@ export default function SuiviPage() {
     setVersementsMap({})
     setRechercheFaite(false)
     const tel = telephone.replace(/\s/g, '')
+    // Générer aussi le format avec espaces : 0708484879 → 07 08 48 48 79
+    const telAvecEspaces = tel.replace(/(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})/, '$1 $2 $3 $4 $5')
     const { data } = await supabase
       .from('inscriptions')
       .select('*')
-      .ilike('telephone', `%${tel}%`)
+      .or(`telephone.ilike.%${tel}%,telephone.ilike.%${telAvecEspaces}%`)
       .order('created_at', { ascending: false })
 
     const inscrits = data || []
