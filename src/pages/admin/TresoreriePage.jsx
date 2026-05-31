@@ -2,12 +2,15 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import AdminLayout from '../../components/admin/AdminLayout'
 
+const VERT = '#1B3B2B'
+const VERT_CLAIR = '#E8F5E8'
+
 const TYPES_RECETTE = [
-  { key: 'frais_participation', label: 'Frais de participation', color: '#085041', bg: '#E1F5EE' },
-  { key: 'don_financier', label: 'Don financier', color: '#185FA5', bg: '#E6F1FB' },
-  { key: 'don_nature', label: 'Don en nature', color: '#534AB7', bg: '#EEEDFE' },
-  { key: 'subvention', label: 'Subvention ministère', color: '#854F0B', bg: '#FAEEDA' },
-  { key: 'autre', label: 'Autre', color: '#5F5E5A', bg: '#F1EFE8' },
+  { key: 'frais_participation', label: 'Frais de participation', color: '#065F46', bg: '#ECFDF5' },
+  { key: 'don_financier', label: 'Don financier', color: '#1D4ED8', bg: '#EFF6FF' },
+  { key: 'don_nature', label: 'Don en nature', color: '#6D28D9', bg: '#F5F3FF' },
+  { key: 'subvention', label: 'Subvention', color: '#92400E', bg: '#FFFBEB' },
+  { key: 'autre', label: 'Autre', color: '#475569', bg: '#F8FAFC' },
 ]
 
 function getTypeRecette(key) {
@@ -19,42 +22,21 @@ function exportExcelTresorerie(recettes, commissions, depenses) {
   const totalRecettes = recettes.reduce((s, r) => s + (r.montant || r.valeur_estimee || 0), 0)
   const totalDepenses = depenses.reduce((s, d) => s + (d.montant || 0), 0)
   const solde = totalRecettes - totalDepenses
-
+  const entetes = ['Type', 'Description', 'Donateur', 'Montant (FCFA)', 'Date']
   const lignes = [
-    ['RAPPORT FINANCIER — CAMP-NAVS 2026'],
-    [`Exporté le ${now}`], [],
-    ['=== RECETTES ==='],
-    ['Type', 'Description', 'Donateur', 'Montant (FCFA)', 'Date'],
-    ...recettes.map(r => [
-      getTypeRecette(r.type).label, r.description || '', r.donateur || '',
-      r.montant || r.valeur_estimee || 0,
-      new Date(r.date_reception).toLocaleDateString('fr-FR'),
-    ]),
+    ['RAPPORT FINANCIER — CAMP-NAVS 2026'], [`Exporté le ${now}`], [],
+    ['=== RECETTES ==='], entetes,
+    ...recettes.map(r => [getTypeRecette(r.type).label, r.description || '', r.donateur || '', r.montant || r.valeur_estimee || 0, new Date(r.date_reception).toLocaleDateString('fr-FR')]),
     [], ['Total recettes', '', '', totalRecettes], [],
-    ['=== COMMISSIONS & DÉPENSES ==='],
-    ['Commission', 'Budget prévu', 'Montant alloué', 'Total dépensé', 'Solde restant'],
-    ...commissions.map(c => {
-      const totalDep = depenses.filter(d => d.commission_id === c.id).reduce((s, d) => s + d.montant, 0)
-      return [c.nom_commission, c.budget_previsionnel || 0, c.montant_alloue || 0, totalDep, (c.montant_alloue || 0) - totalDep]
-    }),
-    [], [],
-    ['=== DÉTAIL DES DÉPENSES ==='],
-    ['Commission', 'Description', 'Montant (FCFA)', 'Date'],
-    ...depenses.map(d => [d.nom_commission, d.description, d.montant, new Date(d.date_depense).toLocaleDateString('fr-FR')]),
-    [], [],
-    ['=== RÉSUMÉ ==='],
-    ['Total recettes', `${totalRecettes.toLocaleString()} FCFA`],
-    ['Total dépenses', `${totalDepenses.toLocaleString()} FCFA`],
-    ['Solde disponible', `${solde.toLocaleString()} FCFA`],
+    ['=== COMMISSIONS ==='], ['Commission', 'Budget prévu', 'Alloué', 'Dépensé', 'Solde'],
+    ...commissions.map(c => { const d = depenses.filter(x => x.commission_id === c.id).reduce((s, x) => s + x.montant, 0); return [c.nom_commission, c.budget_previsionnel || 0, c.montant_alloue || 0, d, (c.montant_alloue || 0) - d] }),
+    [], ['=== RÉSUMÉ ==='], ['Total recettes', `${totalRecettes.toLocaleString()} FCFA`], ['Total dépenses', `${totalDepenses.toLocaleString()} FCFA`], ['Solde', `${solde.toLocaleString()} FCFA`],
   ]
-
   const csv = '\uFEFF' + lignes.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(';')).join('\n')
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
-  a.href = url
-  a.download = `Tresorerie_CampNavs2026_${now.replace(/\//g, '-')}.csv`
-  a.click()
+  a.href = url; a.download = `Tresorerie_CampNavs2026_${now.replace(/\//g, '-')}.csv`; a.click()
   URL.revokeObjectURL(url)
 }
 
@@ -63,58 +45,27 @@ function exportPDFTresorerie(recettes, commissions, depenses) {
   const totalRecettes = recettes.reduce((s, r) => s + (r.montant || r.valeur_estimee || 0), 0)
   const totalDepenses = depenses.reduce((s, d) => s + (d.montant || 0), 0)
   const solde = totalRecettes - totalDepenses
-
-  const html = `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">
-<title>Rapport Trésorerie — Camp-Navs 2026</title>
-<style>
-  body{font-family:Arial,sans-serif;font-size:12px;color:#1a1a1a;margin:30px}
-  h1{font-size:20px;color:#085041;margin-bottom:4px}
-  h2{font-size:14px;color:#085041;margin:24px 0 10px;border-bottom:2px solid #085041;padding-bottom:4px}
-  .subtitle{font-size:12px;color:#666;margin-bottom:20px}
-  .resume{display:flex;gap:16px;margin-bottom:20px;flex-wrap:wrap}
-  .stat{background:#E1F5EE;border-radius:8px;padding:10px 14px;min-width:130px}
-  .stat .num{font-size:18px;font-weight:bold;color:#085041}
-  .stat .lbl{font-size:10px;color:#0F6E56}
-  .stat.danger{background:#FCEBEB} .stat.danger .num{color:#A32D2D} .stat.danger .lbl{color:#993C1D}
-  .stat.blue{background:#E6F1FB} .stat.blue .num{color:#185FA5} .stat.blue .lbl{color:#185FA5}
-  .stat.warn{background:#FAEEDA} .stat.warn .num{color:#854F0B} .stat.warn .lbl{color:#854F0B}
-  table{width:100%;border-collapse:collapse;margin-bottom:16px}
-  th{background:#085041;color:#fff;padding:7px 10px;text-align:left;font-size:11px}
-  td{padding:6px 10px;border-bottom:0.5px solid #e5e5e0;font-size:11px}
-  tr:nth-child(even) td{background:#f8f8f6}
-  .footer{margin-top:30px;font-size:10px;color:#888;text-align:center;border-top:0.5px solid #e5e5e0;padding-top:10px}
-</style></head><body>
-<h1>Rapport Trésorerie — Camp-Navs 2026</h1>
-<p class="subtitle">La Sablière · Bingerville · 23–29 août 2026 · Généré le ${now}</p>
-<div class="resume">
-  <div class="stat blue"><div class="num">${totalRecettes.toLocaleString()} FCFA</div><div class="lbl">Total recettes</div></div>
-  <div class="stat danger"><div class="num">${totalDepenses.toLocaleString()} FCFA</div><div class="lbl">Total dépenses</div></div>
-  <div class="stat ${solde >= 0 ? '' : 'danger'}"><div class="num">${solde.toLocaleString()} FCFA</div><div class="lbl">Solde disponible</div></div>
-</div>
-<h2>Recettes</h2>
-<table><tr><th>Type</th><th>Description</th><th>Donateur</th><th>Montant (FCFA)</th><th>Date</th></tr>
-${recettes.map(r => `<tr><td>${getTypeRecette(r.type).label}</td><td>${r.description || '-'}</td><td>${r.donateur || '-'}</td><td><strong>${(r.montant || r.valeur_estimee || 0).toLocaleString()}</strong></td><td>${new Date(r.date_reception).toLocaleDateString('fr-FR')}</td></tr>`).join('')}
-<tr><td colspan="3"><strong>TOTAL</strong></td><td><strong>${totalRecettes.toLocaleString()} FCFA</strong></td><td></td></tr></table>
-<h2>Commissions & Affectations</h2>
-<table><tr><th>Commission</th><th>Budget prévu</th><th>Montant alloué</th><th>Dépensé</th><th>Solde</th></tr>
-${commissions.map(c => {
-  const totalDep = depenses.filter(d => d.commission_id === c.id).reduce((s, d) => s + d.montant, 0)
-  const soldeC = (c.montant_alloue || 0) - totalDep
-  return `<tr><td><strong>${c.nom_commission}</strong></td><td>${(c.budget_previsionnel || 0).toLocaleString()}</td><td>${(c.montant_alloue || 0).toLocaleString()}</td><td>${totalDep.toLocaleString()}</td><td style="color:${soldeC < 0 ? '#A32D2D' : '#085041'}">${soldeC.toLocaleString()}</td></tr>`
-}).join('')}</table>
-<h2>Détail des dépenses</h2>
-<table><tr><th>Commission</th><th>Description</th><th>Montant (FCFA)</th><th>Date</th></tr>
-${depenses.map(d => `<tr><td>${d.nom_commission}</td><td>${d.description}</td><td>${d.montant.toLocaleString()}</td><td>${new Date(d.date_depense).toLocaleDateString('fr-FR')}</td></tr>`).join('')}
-<tr><td colspan="2"><strong>TOTAL</strong></td><td><strong>${totalDepenses.toLocaleString()} FCFA</strong></td><td></td></tr></table>
-<div class="footer">Camp-Navs 2026 · Mission Évangélique des Navigateurs — Côte d'Ivoire · ${now}</div>
+  const html = `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Rapport Trésorerie</title>
+<style>body{font-family:Arial,sans-serif;font-size:12px;color:#1a1a1a;margin:30px}h1{font-size:20px;color:#1B3B2B}h2{font-size:14px;color:#1B3B2B;border-bottom:2px solid #1B3B2B;padding-bottom:4px;margin:20px 0 10px}table{width:100%;border-collapse:collapse;margin-bottom:16px}th{background:#1B3B2B;color:#fff;padding:7px 10px;text-align:left;font-size:11px}td{padding:6px 10px;border-bottom:0.5px solid #e5e5e0;font-size:11px}.footer{margin-top:30px;font-size:10px;color:#888;text-align:center}</style>
+</head><body>
+<h1>Rapport Trésorerie — Camp-Navs 2026</h1><p style="color:#666;font-size:11px">Généré le ${now}</p>
+<h2>Recettes</h2><table><tr><th>Type</th><th>Description</th><th>Donateur</th><th>Montant (FCFA)</th><th>Date</th></tr>
+${recettes.map(r => `<tr><td>${getTypeRecette(r.type).label}</td><td>${r.description || '-'}</td><td>${r.donateur || '-'}</td><td><b>${(r.montant || r.valeur_estimee || 0).toLocaleString()}</b></td><td>${new Date(r.date_reception).toLocaleDateString('fr-FR')}</td></tr>`).join('')}
+<tr><td colspan="3"><b>TOTAL</b></td><td><b>${totalRecettes.toLocaleString()} FCFA</b></td><td></td></tr></table>
+<h2>Commissions</h2><table><tr><th>Commission</th><th>Budget prévu</th><th>Alloué</th><th>Dépensé</th><th>Solde</th></tr>
+${commissions.map(c => { const d = depenses.filter(x => x.commission_id === c.id).reduce((s, x) => s + x.montant, 0); const sol = (c.montant_alloue || 0) - d; return `<tr><td><b>${c.nom_commission}</b></td><td>${(c.budget_previsionnel || 0).toLocaleString()}</td><td>${(c.montant_alloue || 0).toLocaleString()}</td><td>${d.toLocaleString()}</td><td style="color:${sol < 0 ? '#DC2626' : '#065F46'}">${sol.toLocaleString()}</td></tr>` }).join('')}</table>
+<h2>Résumé</h2><p>Total recettes : <b>${totalRecettes.toLocaleString()} FCFA</b></p><p>Total dépenses : <b>${totalDepenses.toLocaleString()} FCFA</b></p><p>Solde : <b>${solde.toLocaleString()} FCFA</b></p>
+<div class="footer">Camp-Navs 2026 · Mission Évangélique des Navigateurs — CI · ${now}</div>
 </body></html>`
-
   const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
   const url = URL.createObjectURL(blob)
   const win = window.open(url, '_blank')
   if (win) setTimeout(() => win.print(), 800)
   URL.revokeObjectURL(url)
 }
+
+const inputStyle = "w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-white outline-none focus:border-emerald-400"
+const labelStyle = "block text-xs text-gray-500 mb-1"
 
 export default function TresoreriePage() {
   const [onglet, setOnglet] = useState('tableau_bord')
@@ -126,13 +77,10 @@ export default function TresoreriePage() {
   const [editBudget, setEditBudget] = useState(false)
   const [budgetForm, setBudgetForm] = useState('')
   const [loading, setLoading] = useState(true)
-
-  // Forms
   const [showRecette, setShowRecette] = useState(false)
   const [showCommission, setShowCommission] = useState(false)
   const [showDepense, setShowDepense] = useState(false)
   const [showAllouer, setShowAllouer] = useState(null)
-
   const [recetteForm, setRecetteForm] = useState({ type: 'don_financier', description: '', montant: '', valeur_estimee: '', donateur: '', date_reception: new Date().toISOString().split('T')[0] })
   const [commissionForm, setCommissionForm] = useState({ nom_commission: '', budget_previsionnel: '' })
   const [depenseForm, setDepenseForm] = useState({ commission_id: '', description: '', montant: '', date_depense: new Date().toISOString().split('T')[0], justificatif: '' })
@@ -151,39 +99,22 @@ export default function TresoreriePage() {
     setRecettes(r || [])
     setCommissions(c || [])
     setDepenses(d || [])
-    if (bg && bg.length > 0) {
-      setBudgetGlobal(bg[0].montant || 0)
-      setBudgetGlobalId(bg[0].id)
-      setBudgetForm(bg[0].montant || 0)
-    }
+    if (bg && bg.length > 0) { setBudgetGlobal(bg[0].montant || 0); setBudgetGlobalId(bg[0].id); setBudgetForm(bg[0].montant || 0) }
     setLoading(false)
   }
 
   async function saveBudgetGlobal() {
     setSaving(true)
-    if (budgetGlobalId) {
-      await supabase.from('budget_global').update({ montant: parseInt(budgetForm) || 0, updated_at: new Date().toISOString() }).eq('id', budgetGlobalId)
-    } else {
-      await supabase.from('budget_global').insert([{ montant: parseInt(budgetForm) || 0 }])
-    }
-    setSaving(false)
-    setEditBudget(false)
-    fetchData()
+    if (budgetGlobalId) await supabase.from('budget_global').update({ montant: parseInt(budgetForm) || 0 }).eq('id', budgetGlobalId)
+    else await supabase.from('budget_global').insert([{ montant: parseInt(budgetForm) || 0 }])
+    setSaving(false); setEditBudget(false); fetchData()
   }
 
   async function saveRecette() {
     if (!recetteForm.montant && !recetteForm.valeur_estimee) return
     setSaving(true)
-    await supabase.from('recettes').insert([{
-      type: recetteForm.type,
-      description: recetteForm.description,
-      montant: parseInt(recetteForm.montant) || 0,
-      valeur_estimee: parseInt(recetteForm.valeur_estimee) || 0,
-      donateur: recetteForm.donateur,
-      date_reception: recetteForm.date_reception,
-    }])
-    setSaving(false)
-    setShowRecette(false)
+    await supabase.from('recettes').insert([{ type: recetteForm.type, description: recetteForm.description, montant: parseInt(recetteForm.montant) || 0, valeur_estimee: parseInt(recetteForm.valeur_estimee) || 0, donateur: recetteForm.donateur, date_reception: recetteForm.date_reception }])
+    setSaving(false); setShowRecette(false)
     setRecetteForm({ type: 'don_financier', description: '', montant: '', valeur_estimee: '', donateur: '', date_reception: new Date().toISOString().split('T')[0] })
     fetchData()
   }
@@ -191,31 +122,16 @@ export default function TresoreriePage() {
   async function saveCommission() {
     if (!commissionForm.nom_commission) return
     setSaving(true)
-    await supabase.from('budget_commissions').insert([{
-      nom_commission: commissionForm.nom_commission,
-      budget_previsionnel: parseInt(commissionForm.budget_previsionnel) || 0,
-      montant_alloue: 0,
-    }])
-    setSaving(false)
-    setShowCommission(false)
-    setCommissionForm({ nom_commission: '', budget_previsionnel: '' })
-    fetchData()
+    await supabase.from('budget_commissions').insert([{ nom_commission: commissionForm.nom_commission, budget_previsionnel: parseInt(commissionForm.budget_previsionnel) || 0, montant_alloue: 0 }])
+    setSaving(false); setShowCommission(false); setCommissionForm({ nom_commission: '', budget_previsionnel: '' }); fetchData()
   }
 
   async function saveDepense() {
     if (!depenseForm.commission_id || !depenseForm.description || !depenseForm.montant) return
     setSaving(true)
     const comm = commissions.find(c => c.id === depenseForm.commission_id)
-    await supabase.from('depenses').insert([{
-      commission_id: depenseForm.commission_id,
-      nom_commission: comm?.nom_commission || '',
-      description: depenseForm.description,
-      montant: parseInt(depenseForm.montant) || 0,
-      date_depense: depenseForm.date_depense,
-      justificatif: depenseForm.justificatif,
-    }])
-    setSaving(false)
-    setShowDepense(false)
+    await supabase.from('depenses').insert([{ commission_id: depenseForm.commission_id, nom_commission: comm?.nom_commission || '', description: depenseForm.description, montant: parseInt(depenseForm.montant) || 0, date_depense: depenseForm.date_depense, justificatif: depenseForm.justificatif }])
+    setSaving(false); setShowDepense(false)
     setDepenseForm({ commission_id: '', description: '', montant: '', date_depense: new Date().toISOString().split('T')[0], justificatif: '' })
     fetchData()
   }
@@ -224,293 +140,208 @@ export default function TresoreriePage() {
     if (!allouerMontant) return
     setSaving(true)
     await supabase.from('budget_commissions').update({ montant_alloue: parseInt(allouerMontant) }).eq('id', commissionId)
-    setSaving(false)
-    setShowAllouer(null)
-    setAllouerMontant('')
-    fetchData()
+    setSaving(false); setShowAllouer(null); setAllouerMontant(''); fetchData()
   }
 
-  async function supprimerRecette(id) {
-    if (!window.confirm('Supprimer cette recette ?')) return
-    await supabase.from('recettes').delete().eq('id', id)
-    fetchData()
-  }
+  async function supprimerRecette(id) { if (!window.confirm('Supprimer ?')) return; await supabase.from('recettes').delete().eq('id', id); fetchData() }
+  async function supprimerDepense(id) { if (!window.confirm('Supprimer ?')) return; await supabase.from('depenses').delete().eq('id', id); fetchData() }
+  async function supprimerCommission(id) { if (!window.confirm('Supprimer ?')) return; await supabase.from('budget_commissions').delete().eq('id', id); fetchData() }
 
-  async function supprimerDepense(id) {
-    if (!window.confirm('Supprimer cette dépense ?')) return
-    await supabase.from('depenses').delete().eq('id', id)
-    fetchData()
-  }
-
-  async function supprimerCommission(id) {
-    if (!window.confirm('Supprimer cette commission ?')) return
-    await supabase.from('budget_commissions').delete().eq('id', id)
-    fetchData()
-  }
-
-  // Stats globales
   const totalRecettes = recettes.reduce((s, r) => s + (r.montant || r.valeur_estimee || 0), 0)
   const totalDepenses = depenses.reduce((s, d) => s + (d.montant || 0), 0)
   const soldeGlobal = totalRecettes - totalDepenses
   const totalAlloue = commissions.reduce((s, c) => s + (c.montant_alloue || 0), 0)
   const soldeNonAlloue = totalRecettes - totalAlloue
+  const pctCollecte = budgetGlobal > 0 ? Math.round((totalRecettes / budgetGlobal) * 100) : 0
 
-  const inputStyle = "w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-white outline-none focus:border-emerald-400"
-  const labelStyle = "block text-xs text-gray-500 mb-1"
+  const chipStyle = (active) => ({
+    flexShrink: 0, padding: '5px 12px', borderRadius: 20, fontSize: 12, fontWeight: 500,
+    cursor: 'pointer', border: `1px solid ${active ? VERT : '#E2E8F0'}`,
+    background: active ? VERT : '#fff', color: active ? '#fff' : '#64748B',
+  })
 
   return (
     <AdminLayout>
-      <div className="mb-5 flex items-center justify-between flex-wrap gap-2">
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
         <div>
-          <h1 className="text-xl font-medium text-gray-800">Trésorerie</h1>
-          <p className="text-sm text-gray-400 mt-0.5">Camp-Navs 2026</p>
+          <h1 style={{ fontSize: 20, fontWeight: 700, color: '#1E293B', margin: 0 }}>Trésorerie</h1>
+          <p style={{ fontSize: 11, color: '#94A3B8', margin: '2px 0 0' }}>Camp-Navs 2026</p>
         </div>
-        <div className="flex gap-2">
-          <button onClick={() => exportPDFTresorerie(recettes, commissions, depenses)}
-            style={{ background: 'transparent', color: '#6B7280', border: '0.5px solid #D1D5DB', borderRadius: 8, padding: '7px 12px', fontSize: 11, fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5 }}>
-            <svg style={{ width: 13, height: 13 }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+        <div style={{ display: 'flex', gap: 6 }}>
+          <button type="button" onClick={() => exportPDFTresorerie(recettes, commissions, depenses)}
+            style={{ background: 'transparent', color: '#64748B', border: '1px solid #E2E8F0', borderRadius: 8, padding: '6px 12px', fontSize: 12, fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
+            <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
             PDF
           </button>
-          <button onClick={() => exportExcelTresorerie(recettes, commissions, depenses)}
-            style={{ background: 'transparent', color: '#6B7280', border: '0.5px solid #D1D5DB', borderRadius: 8, padding: '7px 12px', fontSize: 11, fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5 }}>
-            <svg style={{ width: 13, height: 13 }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+          <button type="button" onClick={() => exportExcelTresorerie(recettes, commissions, depenses)}
+            style={{ background: 'transparent', color: '#64748B', border: '1px solid #E2E8F0', borderRadius: 8, padding: '6px 12px', fontSize: 12, fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
+            <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
             Excel
           </button>
         </div>
       </div>
 
       {/* Onglets */}
-      <div className="flex gap-2 mb-5 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
-        {[
-          { key: 'tableau_bord', label: 'Tableau de bord' },
-          { key: 'recettes', label: 'Recettes' },
-          { key: 'commissions', label: 'Commissions' },
-          { key: 'depenses', label: 'Dépenses' },
-        ].map(o => (
-          <button key={o.key} onClick={() => setOnglet(o.key)}
-            className="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium"
-            style={{ border: `0.5px solid ${onglet === o.key ? '#085041' : '#e5e5e0'}`, background: onglet === o.key ? '#085041' : '#fff', color: onglet === o.key ? '#fff' : '#666' }}>
-            {o.label}
-          </button>
+      <div style={{ display: 'flex', gap: 6, marginBottom: 14, overflowX: 'auto', scrollbarWidth: 'none' }}>
+        {[{ key: 'tableau_bord', label: 'Tableau de bord' }, { key: 'recettes', label: 'Recettes' }, { key: 'commissions', label: 'Commissions' }, { key: 'depenses', label: 'Dépenses' }].map(o => (
+          <button key={o.key} type="button" onClick={() => setOnglet(o.key)} style={chipStyle(onglet === o.key)}>{o.label}</button>
         ))}
       </div>
 
-      {/* TABLEAU DE BORD */}
+      {/* ── TABLEAU DE BORD compact ── */}
       {onglet === 'tableau_bord' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
 
-          {/* Budget global */}
-          <div style={{ background: '#fff', borderRadius: 12, border: '0.5px solid #F3F4F6', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', padding: '16px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-              <p style={{ fontSize: 11, fontWeight: 600, color: '#9CA3AF', letterSpacing: '0.06em', margin: 0 }}>BUDGET GLOBAL</p>
-              <button onClick={() => { setEditBudget(!editBudget); setBudgetForm(budgetGlobal) }}
-                style={{ fontSize: 11, color: '#054035', background: 'transparent', border: '0.5px solid #054035', borderRadius: 6, padding: '3px 10px', cursor: 'pointer' }}>
+          {/* Budget global — ligne compacte */}
+          <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #F1F5F9', padding: '10px 14px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: editBudget ? 8 : 4 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ fontSize: 10, fontWeight: 700, color: '#94A3B8', letterSpacing: '0.08em' }}>BUDGET GLOBAL</span>
+                <span style={{ fontSize: 14, fontWeight: 700, color: '#1E293B' }}>
+                  {budgetGlobal > 0 ? `${budgetGlobal.toLocaleString()} FCFA` : '—'}
+                </span>
+              </div>
+              <button type="button" onClick={() => { setEditBudget(!editBudget); setBudgetForm(budgetGlobal) }}
+                style={{ fontSize: 11, color: VERT, background: 'transparent', border: `1px solid ${VERT}`, borderRadius: 6, padding: '3px 10px', cursor: 'pointer' }}>
                 {editBudget ? 'Annuler' : 'Modifier'}
               </button>
             </div>
-            {editBudget ? (
-              <div style={{ display: 'flex', gap: 8 }}>
-                <input type="number" value={budgetForm} onChange={e => setBudgetForm(e.target.value)}
-                  placeholder="Montant FCFA"
-                  style={{ flex: 1, border: '0.5px solid #D1D5DB', borderRadius: 8, padding: '8px 12px', fontSize: 14, outline: 'none' }} />
-                <button onClick={saveBudgetGlobal} disabled={saving}
-                  style={{ background: '#054035', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 14px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+            {editBudget && (
+              <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+                <input type="number" value={budgetForm} onChange={e => setBudgetForm(e.target.value)} placeholder="Montant FCFA"
+                  style={{ flex: 1, border: '1px solid #E2E8F0', borderRadius: 8, padding: '7px 12px', fontSize: 13, outline: 'none', color: '#1E293B' }} />
+                <button type="button" onClick={saveBudgetGlobal} disabled={saving}
+                  style={{ background: VERT, color: '#fff', border: 'none', borderRadius: 8, padding: '7px 14px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
                   {saving ? '...' : 'OK'}
                 </button>
               </div>
-            ) : (
-              <>
-                <p style={{ fontSize: 24, fontWeight: 700, color: '#111827', margin: '0 0 4px' }}>
-                  {budgetGlobal > 0 ? `${budgetGlobal.toLocaleString()} FCFA` : <span style={{ fontSize: 14, color: '#9CA3AF', fontWeight: 400 }}>Non défini</span>}
-                </p>
-                {budgetGlobal > 0 && (
-                  <>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                      <span style={{ fontSize: 11, color: totalRecettes >= budgetGlobal ? '#059669' : '#D97706' }}>
-                        {Math.round((totalRecettes / budgetGlobal) * 100)}% collecté
-                      </span>
-                      <span style={{ fontSize: 11, color: '#6B7280' }}>
-                        Reste : {Math.max(budgetGlobal - totalRecettes, 0).toLocaleString()} FCFA
-                      </span>
-                    </div>
-                    <div style={{ background: '#F3F4F6', borderRadius: 8, height: 8 }}>
-                      <div style={{
-                        height: 8, borderRadius: 8,
-                        width: `${Math.min((totalRecettes / budgetGlobal) * 100, 100)}%`,
-                        background: totalRecettes >= budgetGlobal ? '#059669' : totalRecettes / budgetGlobal >= 0.6 ? '#0EA5E9' : '#F59E0B',
-                        transition: 'width .4s ease',
-                      }} />
-                    </div>
-                  </>
-                )}
-              </>
+            )}
+            {budgetGlobal > 0 && !editBudget && (
+              <div>
+                <div style={{ background: '#F1F5F9', borderRadius: 4, height: 4, marginBottom: 4 }}>
+                  <div style={{ background: VERT, borderRadius: 4, height: 4, width: `${Math.min(pctCollecte, 100)}%`, transition: 'width .4s' }} />
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: 10, color: '#64748B' }}>{pctCollecte}% collecté</span>
+                  <span style={{ fontSize: 10, color: '#94A3B8' }}>Reste : {Math.max(budgetGlobal - totalRecettes, 0).toLocaleString()} FCFA</span>
+                </div>
+              </div>
             )}
           </div>
 
-          {/* KPI Cards */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          {/* 4 mini-KPI */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
             {[
-              {
-                label: 'Recettes totales', val: totalRecettes,
-                icon: <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>,
-                iconBg: '#ECFDF5', iconColor: '#059669', valColor: '#059669',
-              },
-              {
-                label: 'Dépenses totales', val: totalDepenses,
-                icon: <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M13 17H5m0 0v-8m0 8l8-8 4 4 6-6" /></svg>,
-                iconBg: '#FEF2F2', iconColor: '#DC2626', valColor: '#DC2626',
-              },
-              {
-                label: 'Solde disponible', val: soldeGlobal,
-                icon: <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>,
-                iconBg: soldeGlobal >= 0 ? '#EFF6FF' : '#FEF2F2',
-                iconColor: soldeGlobal >= 0 ? '#2563EB' : '#DC2626',
-                valColor: soldeGlobal >= 0 ? '#2563EB' : '#DC2626',
-              },
-              {
-                label: 'Non alloué', val: soldeNonAlloue,
-                icon: <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
-                iconBg: '#FFFBEB', iconColor: '#D97706', valColor: '#D97706',
-              },
+              { label: 'Recettes totales', val: totalRecettes, color: '#065F46', bg: '#ECFDF5', border: '#6EE7B7', prefix: '+' },
+              { label: 'Dépenses totales', val: totalDepenses, color: '#DC2626', bg: '#FEF2F2', border: '#FCA5A5', prefix: '-' },
+              { label: 'Solde disponible', val: soldeGlobal, color: soldeGlobal >= 0 ? '#1D4ED8' : '#DC2626', bg: soldeGlobal >= 0 ? '#EFF6FF' : '#FEF2F2', border: soldeGlobal >= 0 ? '#93C5FD' : '#FCA5A5', prefix: '' },
+              { label: 'Non alloué', val: soldeNonAlloue, color: '#92400E', bg: '#FFFBEB', border: '#FCD34D', prefix: '' },
             ].map(k => (
-              <div key={k.label} style={{ background: '#fff', borderRadius: 12, border: '0.5px solid #F3F4F6', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', padding: '14px' }}>
-                <div style={{ width: 30, height: 30, borderRadius: 8, background: k.iconBg, color: k.iconColor, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
-                  {k.icon}
-                </div>
-                <p style={{ fontSize: 11, color: '#6B7280', margin: '0 0 4px', textAlign: 'left' }}>{k.label}</p>
-                <p style={{ fontSize: 18, fontWeight: 700, color: k.valColor, margin: 0, textAlign: 'left' }}>{k.val.toLocaleString()}</p>
-                <p style={{ fontSize: 9, color: '#9CA3AF', margin: '2px 0 0' }}>FCFA</p>
+              <div key={k.label} style={{ background: '#fff', borderRadius: 10, border: `1px solid ${k.border}`, padding: '10px 12px', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+                <p style={{ fontSize: 10, color: '#94A3B8', margin: '0 0 4px', fontWeight: 500 }}>{k.label}</p>
+                <p style={{ fontSize: 15, fontWeight: 700, color: k.color, margin: 0 }}>{k.prefix}{k.val.toLocaleString()}</p>
+                <p style={{ fontSize: 9, color: '#CBD5E1', margin: '1px 0 0' }}>FCFA</p>
               </div>
             ))}
           </div>
 
           {/* Recettes par source */}
-          {recettes.length > 0 && (
-            <div style={{ background: '#fff', borderRadius: 12, border: '0.5px solid #F3F4F6', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', padding: '14px 16px' }}>
-              <p style={{ fontSize: 11, fontWeight: 600, color: '#9CA3AF', letterSpacing: '0.06em', marginBottom: 12 }}>RECETTES PAR SOURCE</p>
-              {TYPES_RECETTE.map(t => {
-                const montant = recettes.filter(r => r.type === t.key).reduce((s, r) => s + (r.montant || r.valeur_estimee || 0), 0)
-                const pct = totalRecettes > 0 ? (montant / totalRecettes) * 100 : 0
-                if (montant === 0) return null
-                return (
-                  <div key={t.key} style={{ marginBottom: 10 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
-                      <span style={{ fontSize: 12, color: '#374151' }}>{t.label}</span>
-                      <span style={{ fontSize: 12, fontWeight: 600, color: '#111827' }}>{montant.toLocaleString()} FCFA</span>
-                    </div>
-                    <div style={{ background: '#F3F4F6', borderRadius: 8, height: 5 }}>
-                      <div style={{ background: '#054035', borderRadius: 8, height: 5, width: `${pct}%` }} />
-                    </div>
+          <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #F1F5F9', padding: '10px 14px', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+            <p style={{ fontSize: 9, fontWeight: 700, color: '#94A3B8', letterSpacing: '0.1em', margin: '0 0 8px', textTransform: 'uppercase' }}>Recettes par source</p>
+            {TYPES_RECETTE.map(t => {
+              const montant = recettes.filter(r => r.type === t.key).reduce((s, r) => s + (r.montant || r.valeur_estimee || 0), 0)
+              if (montant === 0) return null
+              return (
+                <div key={t.key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '5px 0', borderBottom: '1px solid #F8FAFC' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <div style={{ width: 6, height: 6, borderRadius: '50%', background: VERT, flexShrink: 0 }} />
+                    <span style={{ fontSize: 12, color: '#1E293B' }}>{t.label}</span>
                   </div>
-                )
-              })}
-            </div>
-          )}
+                  <span style={{ fontSize: 12, fontWeight: 700, color: '#065F46' }}>{montant.toLocaleString()} FCFA</span>
+                </div>
+              )
+            })}
+            {totalRecettes === 0 && <p style={{ fontSize: 12, color: '#94A3B8', margin: 0 }}>Aucune recette enregistrée.</p>}
+          </div>
 
-          {/* Commissions avec jauges modernes */}
+          {/* Commissions */}
           {commissions.length > 0 && (
-            <div style={{ background: '#fff', borderRadius: 12, border: '0.5px solid #F3F4F6', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', padding: '14px 16px' }}>
-              <p style={{ fontSize: 11, fontWeight: 600, color: '#9CA3AF', letterSpacing: '0.06em', marginBottom: 12 }}>COMMISSIONS</p>
+            <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #F1F5F9', padding: '10px 14px', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+              <p style={{ fontSize: 9, fontWeight: 700, color: '#94A3B8', letterSpacing: '0.1em', margin: '0 0 8px', textTransform: 'uppercase' }}>Commissions</p>
               {commissions.map((c, i) => {
                 const totalDep = depenses.filter(d => d.commission_id === c.id).reduce((s, d) => s + d.montant, 0)
                 const alloue = c.montant_alloue || 0
                 const solde = alloue - totalDep
-                const pct = alloue > 0 ? Math.min((totalDep / alloue) * 100, 100) : 0
-                const enAlerte = solde < 0
-                const couleurJauge = enAlerte ? '#EF4444' : pct > 80 ? '#F59E0B' : '#0EA5E9'
                 return (
-                  <div key={c.id} style={{ marginBottom: i < commissions.length - 1 ? 14 : 0, paddingBottom: i < commissions.length - 1 ? 14 : 0, borderBottom: i < commissions.length - 1 ? '0.5px solid #F9FAFB' : 'none' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 4 }}>
-                      <span style={{ fontSize: 13, fontWeight: 500, color: '#111827' }}>{c.nom_commission}</span>
-                      <span style={{ fontSize: 12, fontWeight: 700, color: enAlerte ? '#DC2626' : '#059669' }}>
-                        {enAlerte ? '−' : '+'}{Math.abs(solde).toLocaleString()} FCFA
+                  <div key={c.id} style={{ padding: '7px 0', borderBottom: i < commissions.length - 1 ? '1px solid #F1F5F9' : 'none' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: '#1E293B' }}>{c.nom_commission}</span>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: solde >= 0 ? '#065F46' : '#DC2626' }}>
+                        {solde >= 0 ? '+' : ''}{solde.toLocaleString()} FCFA
                       </span>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                      <span style={{ fontSize: 10, color: '#9CA3AF' }}>Alloué : {alloue.toLocaleString()}</span>
-                      <span style={{ fontSize: 10, color: enAlerte ? '#DC2626' : '#6B7280' }}>Dépensé : {totalDep.toLocaleString()}</span>
-                    </div>
-                    <div style={{ background: '#F3F4F6', borderRadius: 8, height: 6 }}>
-                      <div style={{ background: couleurJauge, borderRadius: 8, height: 6, width: `${pct}%`, transition: 'width .3s' }} />
-                    </div>
+                    <p style={{ fontSize: 10, color: '#94A3B8', margin: '2px 0 0' }}>
+                      Alloué : {alloue.toLocaleString()} | Dépensé : {totalDep.toLocaleString()}
+                    </p>
                   </div>
                 )
               })}
             </div>
           )}
-
         </div>
       )}
 
-            {/* RECETTES */}
+      {/* ── RECETTES ── */}
       {onglet === 'recettes' && (
         <>
-          <button onClick={() => setShowRecette(!showRecette)}
+          <button type="button" onClick={() => setShowRecette(!showRecette)}
             className="w-full mb-4 bg-emerald-700 text-white text-sm font-medium py-3 rounded-xl flex items-center justify-center gap-2">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={showRecette ? "M6 18L18 6M6 6l12 12" : "M12 4v16m8-8H4"} /></svg>
-            {showRecette ? 'Fermer' : 'Ajouter une recette'}
+            {showRecette ? 'Fermer' : '+ Ajouter une recette'}
           </button>
-
           {showRecette && (
-            <div className="bg-white border border-gray-100 rounded-2xl p-4 mb-5">
-              <h2 className="text-sm font-medium text-gray-700 mb-4">Nouvelle recette</h2>
-              <div className="mb-3">
-                <label className={labelStyle}>Type de recette</label>
+            <div className="bg-white border border-gray-100 rounded-2xl p-4 mb-4">
+              <div className="mb-3"><label className={labelStyle}>Type de recette</label>
                 <select value={recetteForm.type} onChange={e => setRecetteForm(f => ({ ...f, type: e.target.value }))} className={inputStyle}>
                   {TYPES_RECETTE.map(t => <option key={t.key} value={t.key}>{t.label}</option>)}
                 </select>
               </div>
-              <div className="mb-3">
-                <label className={labelStyle}>Description</label>
-                <input type="text" value={recetteForm.description} onChange={e => setRecetteForm(f => ({ ...f, description: e.target.value }))}
-                  placeholder="Ex : Don de l'église XYZ" className={inputStyle} />
+              <div className="mb-3"><label className={labelStyle}>Description</label>
+                <input type="text" value={recetteForm.description} onChange={e => setRecetteForm(f => ({ ...f, description: e.target.value }))} placeholder="Ex : Don de l'église XYZ" className={inputStyle} />
               </div>
               <div className="grid grid-cols-2 gap-3 mb-3">
-                {recetteForm.type === 'don_nature' ? (
-                  <div>
-                    <label className={labelStyle}>Valeur estimée (FCFA)</label>
-                    <input type="number" value={recetteForm.valeur_estimee} onChange={e => setRecetteForm(f => ({ ...f, valeur_estimee: e.target.value }))} className={inputStyle} />
-                  </div>
-                ) : (
-                  <div>
-                    <label className={labelStyle}>Montant (FCFA)</label>
-                    <input type="number" value={recetteForm.montant} onChange={e => setRecetteForm(f => ({ ...f, montant: e.target.value }))} className={inputStyle} />
-                  </div>
-                )}
-                <div>
-                  <label className={labelStyle}>Date</label>
+                <div><label className={labelStyle}>{recetteForm.type === 'don_nature' ? 'Valeur estimée (FCFA)' : 'Montant (FCFA)'}</label>
+                  <input type="number" value={recetteForm.type === 'don_nature' ? recetteForm.valeur_estimee : recetteForm.montant}
+                    onChange={e => setRecetteForm(f => recetteForm.type === 'don_nature' ? { ...f, valeur_estimee: e.target.value } : { ...f, montant: e.target.value })} className={inputStyle} />
+                </div>
+                <div><label className={labelStyle}>Date</label>
                   <input type="date" value={recetteForm.date_reception} onChange={e => setRecetteForm(f => ({ ...f, date_reception: e.target.value }))} className={inputStyle} />
                 </div>
               </div>
-              <div className="mb-4">
-                <label className={labelStyle}>Donateur / Source</label>
-                <input type="text" value={recetteForm.donateur} onChange={e => setRecetteForm(f => ({ ...f, donateur: e.target.value }))}
-                  placeholder="Ex : M. KOUASSI, Église Bethel..." className={inputStyle} />
+              <div className="mb-4"><label className={labelStyle}>Donateur / Source</label>
+                <input type="text" value={recetteForm.donateur} onChange={e => setRecetteForm(f => ({ ...f, donateur: e.target.value }))} placeholder="Ex : M. KOUASSI" className={inputStyle} />
               </div>
               <div className="flex gap-3">
-                <button onClick={() => setShowRecette(false)} className="flex-1 bg-gray-100 text-gray-600 text-sm font-medium py-3 rounded-xl">Annuler</button>
-                <button onClick={saveRecette} disabled={saving} className="flex-1 bg-emerald-700 text-white text-sm font-medium py-3 rounded-xl disabled:opacity-60">
-                  {saving ? 'Enregistrement...' : 'Ajouter'}
-                </button>
+                <button type="button" onClick={() => setShowRecette(false)} className="flex-1 bg-gray-100 text-gray-600 text-sm font-medium py-3 rounded-xl">Annuler</button>
+                <button type="button" onClick={saveRecette} disabled={saving} className="flex-1 bg-emerald-700 text-white text-sm font-medium py-3 rounded-xl disabled:opacity-60">{saving ? '...' : 'Ajouter'}</button>
               </div>
             </div>
           )}
-
           <div className="space-y-2">
             {recettes.map(r => {
               const t = getTypeRecette(r.type)
               return (
-                <div key={r.id} style={{ background: '#fff', borderRadius: 14, border: '0.5px solid #e5e5e0', padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div key={r.id} style={{ background: '#fff', borderRadius: 12, border: '1px solid #F1F5F9', padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10 }}>
                   <div style={{ width: 36, height: 36, borderRadius: 10, background: t.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <svg style={{ width: 18, height: 18, color: t.color }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    <svg style={{ width: 16, height: 16, color: t.color }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p style={{ fontSize: 12, fontWeight: 500, color: '#1a1a1a' }}>{r.description || t.label}</p>
-                    <p style={{ fontSize: 10, color: '#888' }}>{r.donateur ? `${r.donateur} · ` : ''}{new Date(r.date_reception).toLocaleDateString('fr-FR')}</p>
-                    <p style={{ fontSize: 12, fontWeight: 600, color: t.color }}>{(r.montant || r.valeur_estimee || 0).toLocaleString()} FCFA</p>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontSize: 13, fontWeight: 500, color: '#1E293B', margin: '0 0 2px' }}>{r.description || t.label}</p>
+                    <p style={{ fontSize: 11, color: '#94A3B8', margin: '0 0 2px' }}>{r.donateur ? `${r.donateur} · ` : ''}{new Date(r.date_reception).toLocaleDateString('fr-FR')}</p>
+                    <p style={{ fontSize: 13, fontWeight: 700, color: t.color, margin: 0 }}>{(r.montant || r.valeur_estimee || 0).toLocaleString()} FCFA</p>
                   </div>
-                  <button onClick={() => supprimerRecette(r.id)} style={{ width: 30, height: 30, borderRadius: 8, background: '#FCEBEB', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <svg style={{ width: 13, height: 13, color: '#A32D2D' }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                  <button type="button" onClick={() => supprimerRecette(r.id)} style={{ width: 30, height: 30, borderRadius: 8, background: '#FEF2F2', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <svg style={{ width: 13, height: 13, color: '#DC2626' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                   </button>
                 </div>
               )
@@ -519,77 +350,58 @@ export default function TresoreriePage() {
         </>
       )}
 
-      {/* COMMISSIONS */}
+      {/* ── COMMISSIONS ── */}
       {onglet === 'commissions' && (
         <>
-          <button onClick={() => setShowCommission(!showCommission)}
+          <button type="button" onClick={() => setShowCommission(!showCommission)}
             className="w-full mb-4 bg-emerald-700 text-white text-sm font-medium py-3 rounded-xl flex items-center justify-center gap-2">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={showCommission ? "M6 18L18 6M6 6l12 12" : "M12 4v16m8-8H4"} /></svg>
-            {showCommission ? 'Fermer' : 'Ajouter une commission'}
+            {showCommission ? 'Fermer' : '+ Ajouter une commission'}
           </button>
-
           {showCommission && (
-            <div className="bg-white border border-gray-100 rounded-2xl p-4 mb-5">
-              <h2 className="text-sm font-medium text-gray-700 mb-4">Nouvelle commission</h2>
-              <div className="mb-3">
-                <label className={labelStyle}>Nom de la commission *</label>
-                <input type="text" value={commissionForm.nom_commission} onChange={e => setCommissionForm(f => ({ ...f, nom_commission: e.target.value }))}
-                  placeholder="Ex : Logistique, Restauration, Santé..." className={inputStyle} />
+            <div className="bg-white border border-gray-100 rounded-2xl p-4 mb-4">
+              <div className="mb-3"><label className={labelStyle}>Nom de la commission *</label>
+                <input type="text" value={commissionForm.nom_commission} onChange={e => setCommissionForm(f => ({ ...f, nom_commission: e.target.value }))} placeholder="Ex : Logistique, Restauration..." className={inputStyle} />
               </div>
-              <div className="mb-4">
-                <label className={labelStyle}>Budget prévisionnel (FCFA)</label>
+              <div className="mb-4"><label className={labelStyle}>Budget prévisionnel (FCFA)</label>
                 <input type="number" value={commissionForm.budget_previsionnel} onChange={e => setCommissionForm(f => ({ ...f, budget_previsionnel: e.target.value }))} className={inputStyle} />
               </div>
               <div className="flex gap-3">
-                <button onClick={() => setShowCommission(false)} className="flex-1 bg-gray-100 text-gray-600 text-sm font-medium py-3 rounded-xl">Annuler</button>
-                <button onClick={saveCommission} disabled={saving} className="flex-1 bg-emerald-700 text-white text-sm font-medium py-3 rounded-xl disabled:opacity-60">
-                  {saving ? 'Enregistrement...' : 'Ajouter'}
-                </button>
+                <button type="button" onClick={() => setShowCommission(false)} className="flex-1 bg-gray-100 text-gray-600 text-sm font-medium py-3 rounded-xl">Annuler</button>
+                <button type="button" onClick={saveCommission} disabled={saving} className="flex-1 bg-emerald-700 text-white text-sm font-medium py-3 rounded-xl disabled:opacity-60">{saving ? '...' : 'Ajouter'}</button>
               </div>
             </div>
           )}
-
           <div className="space-y-2">
             {commissions.map(c => {
               const totalDep = depenses.filter(d => d.commission_id === c.id).reduce((s, d) => s + d.montant, 0)
               const alloue = c.montant_alloue || 0
               const solde = alloue - totalDep
               return (
-                <div key={c.id} style={{ background: '#fff', borderRadius: 14, border: '0.5px solid #e5e5e0', padding: '12px 14px' }}>
-                  <div className="flex items-start justify-between gap-2 mb-3">
-                    <p style={{ fontSize: 13, fontWeight: 500, color: '#1a1a1a' }}>{c.nom_commission}</p>
-                    <button onClick={() => supprimerCommission(c.id)} style={{ width: 28, height: 28, borderRadius: 7, background: '#FCEBEB', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <svg style={{ width: 12, height: 12, color: '#A32D2D' }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                <div key={c.id} style={{ background: '#fff', borderRadius: 12, border: '1px solid #F1F5F9', padding: '12px 14px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
+                    <p style={{ fontSize: 13, fontWeight: 600, color: '#1E293B', margin: 0 }}>{c.nom_commission}</p>
+                    <button type="button" onClick={() => supprimerCommission(c.id)} style={{ width: 28, height: 28, borderRadius: 7, background: '#FEF2F2', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <svg style={{ width: 12, height: 12, color: '#DC2626' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                     </button>
                   </div>
-                  <div className="grid grid-cols-3 gap-2 mb-3">
-                    <div style={{ textAlign: 'center', background: '#f8f8f6', borderRadius: 8, padding: '6px' }}>
-                      <p style={{ fontSize: 11, fontWeight: 600, color: '#333' }}>{(c.budget_previsionnel || 0).toLocaleString()}</p>
-                      <p style={{ fontSize: 9, color: '#888' }}>Prévu</p>
-                    </div>
-                    <div style={{ textAlign: 'center', background: '#E1F5EE', borderRadius: 8, padding: '6px' }}>
-                      <p style={{ fontSize: 11, fontWeight: 600, color: '#085041' }}>{alloue.toLocaleString()}</p>
-                      <p style={{ fontSize: 9, color: '#085041' }}>Alloué</p>
-                    </div>
-                    <div style={{ textAlign: 'center', background: solde < 0 ? '#FCEBEB' : '#E6F1FB', borderRadius: 8, padding: '6px' }}>
-                      <p style={{ fontSize: 11, fontWeight: 600, color: solde < 0 ? '#A32D2D' : '#185FA5' }}>{solde.toLocaleString()}</p>
-                      <p style={{ fontSize: 9, color: solde < 0 ? '#993C1D' : '#185FA5' }}>Solde</p>
-                    </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6, marginBottom: 10 }}>
+                    {[{ l: 'Prévu', v: c.budget_previsionnel || 0, bg: '#F8FAFC', c: '#475569' }, { l: 'Alloué', v: alloue, bg: VERT_CLAIR, c: VERT }, { l: 'Solde', v: solde, bg: solde < 0 ? '#FEF2F2' : '#EFF6FF', c: solde < 0 ? '#DC2626' : '#1D4ED8' }].map(s => (
+                      <div key={s.l} style={{ textAlign: 'center', background: s.bg, borderRadius: 8, padding: '6px' }}>
+                        <p style={{ fontSize: 12, fontWeight: 700, color: s.c, margin: 0 }}>{s.v.toLocaleString()}</p>
+                        <p style={{ fontSize: 9, color: s.c, margin: '1px 0 0', opacity: 0.7 }}>{s.l}</p>
+                      </div>
+                    ))}
                   </div>
-
                   {showAllouer === c.id ? (
-                    <div className="flex gap-2">
-                      <input type="number" value={allouerMontant} onChange={e => setAllouerMontant(e.target.value)}
-                        placeholder="Montant à allouer (FCFA)"
-                        style={{ flex: 1, border: '0.5px solid #e5e5e0', borderRadius: 10, padding: '7px 10px', fontSize: 12, outline: 'none' }} />
-                      <button onClick={() => saveAllouer(c.id)}
-                        style={{ background: '#085041', color: '#fff', border: 'none', borderRadius: 10, padding: '7px 12px', fontSize: 12, cursor: 'pointer' }}>OK</button>
-                      <button onClick={() => setShowAllouer(null)}
-                        style={{ background: '#f5f5f3', color: '#666', border: 'none', borderRadius: 10, padding: '7px 12px', fontSize: 12, cursor: 'pointer' }}>✕</button>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <input type="number" value={allouerMontant} onChange={e => setAllouerMontant(e.target.value)} placeholder="Montant à allouer"
+                        style={{ flex: 1, border: '1px solid #E2E8F0', borderRadius: 8, padding: '7px 10px', fontSize: 12, outline: 'none', color: '#1E293B' }} />
+                      <button type="button" onClick={() => saveAllouer(c.id)} style={{ background: VERT, color: '#fff', border: 'none', borderRadius: 8, padding: '7px 12px', fontSize: 12, cursor: 'pointer' }}>OK</button>
+                      <button type="button" onClick={() => setShowAllouer(null)} style={{ background: '#F1F5F9', color: '#64748B', border: 'none', borderRadius: 8, padding: '7px 12px', fontSize: 12, cursor: 'pointer' }}>✕</button>
                     </div>
                   ) : (
-                    <button onClick={() => { setShowAllouer(c.id); setAllouerMontant(alloue || '') }}
-                      style={{ width: '100%', background: '#E1F5EE', color: '#085041', border: 'none', borderRadius: 10, padding: '8px', fontSize: 12, fontWeight: 500, cursor: 'pointer' }}>
+                    <button type="button" onClick={() => { setShowAllouer(c.id); setAllouerMontant(alloue || '') }}
+                      style={{ width: '100%', background: VERT_CLAIR, color: VERT, border: 'none', borderRadius: 8, padding: '8px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
                       Modifier le montant alloué
                     </button>
                   )}
@@ -600,67 +412,54 @@ export default function TresoreriePage() {
         </>
       )}
 
-      {/* DÉPENSES */}
+      {/* ── DÉPENSES ── */}
       {onglet === 'depenses' && (
         <>
-          <button onClick={() => setShowDepense(!showDepense)}
+          <button type="button" onClick={() => setShowDepense(!showDepense)}
             className="w-full mb-4 bg-emerald-700 text-white text-sm font-medium py-3 rounded-xl flex items-center justify-center gap-2">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={showDepense ? "M6 18L18 6M6 6l12 12" : "M12 4v16m8-8H4"} /></svg>
-            {showDepense ? 'Fermer' : 'Ajouter une dépense'}
+            {showDepense ? 'Fermer' : '+ Ajouter une dépense'}
           </button>
-
           {showDepense && (
-            <div className="bg-white border border-gray-100 rounded-2xl p-4 mb-5">
-              <h2 className="text-sm font-medium text-gray-700 mb-4">Nouvelle dépense</h2>
-              <div className="mb-3">
-                <label className={labelStyle}>Commission *</label>
+            <div className="bg-white border border-gray-100 rounded-2xl p-4 mb-4">
+              <div className="mb-3"><label className={labelStyle}>Commission *</label>
                 <select value={depenseForm.commission_id} onChange={e => setDepenseForm(f => ({ ...f, commission_id: e.target.value }))} className={inputStyle}>
-                  <option value="">Sélectionner une commission</option>
+                  <option value="">Sélectionner</option>
                   {commissions.map(c => <option key={c.id} value={c.id}>{c.nom_commission}</option>)}
                 </select>
               </div>
-              <div className="mb-3">
-                <label className={labelStyle}>Description *</label>
-                <input type="text" value={depenseForm.description} onChange={e => setDepenseForm(f => ({ ...f, description: e.target.value }))}
-                  placeholder="Ex : Achat vivres marché" className={inputStyle} />
+              <div className="mb-3"><label className={labelStyle}>Description *</label>
+                <input type="text" value={depenseForm.description} onChange={e => setDepenseForm(f => ({ ...f, description: e.target.value }))} placeholder="Ex : Achat vivres" className={inputStyle} />
               </div>
               <div className="grid grid-cols-2 gap-3 mb-3">
-                <div>
-                  <label className={labelStyle}>Montant (FCFA) *</label>
+                <div><label className={labelStyle}>Montant (FCFA) *</label>
                   <input type="number" value={depenseForm.montant} onChange={e => setDepenseForm(f => ({ ...f, montant: e.target.value }))} className={inputStyle} />
                 </div>
-                <div>
-                  <label className={labelStyle}>Date</label>
+                <div><label className={labelStyle}>Date</label>
                   <input type="date" value={depenseForm.date_depense} onChange={e => setDepenseForm(f => ({ ...f, date_depense: e.target.value }))} className={inputStyle} />
                 </div>
               </div>
-              <div className="mb-4">
-                <label className={labelStyle}>Justificatif / Référence</label>
-                <input type="text" value={depenseForm.justificatif} onChange={e => setDepenseForm(f => ({ ...f, justificatif: e.target.value }))}
-                  placeholder="Ex : Reçu n°001, facture marché..." className={inputStyle} />
+              <div className="mb-4"><label className={labelStyle}>Justificatif</label>
+                <input type="text" value={depenseForm.justificatif} onChange={e => setDepenseForm(f => ({ ...f, justificatif: e.target.value }))} placeholder="Ex : Reçu n°001" className={inputStyle} />
               </div>
               <div className="flex gap-3">
-                <button onClick={() => setShowDepense(false)} className="flex-1 bg-gray-100 text-gray-600 text-sm font-medium py-3 rounded-xl">Annuler</button>
-                <button onClick={saveDepense} disabled={saving} className="flex-1 bg-emerald-700 text-white text-sm font-medium py-3 rounded-xl disabled:opacity-60">
-                  {saving ? 'Enregistrement...' : 'Ajouter'}
-                </button>
+                <button type="button" onClick={() => setShowDepense(false)} className="flex-1 bg-gray-100 text-gray-600 text-sm font-medium py-3 rounded-xl">Annuler</button>
+                <button type="button" onClick={saveDepense} disabled={saving} className="flex-1 bg-emerald-700 text-white text-sm font-medium py-3 rounded-xl disabled:opacity-60">{saving ? '...' : 'Ajouter'}</button>
               </div>
             </div>
           )}
-
           <div className="space-y-2">
             {depenses.map(d => (
-              <div key={d.id} style={{ background: '#fff', borderRadius: 14, border: '0.5px solid #e5e5e0', padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div style={{ width: 36, height: 36, borderRadius: 10, background: '#FCEBEB', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <svg style={{ width: 18, height: 18, color: '#A32D2D' }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+              <div key={d.id} style={{ background: '#fff', borderRadius: 12, border: '1px solid #F1F5F9', padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ width: 36, height: 36, borderRadius: 10, background: '#FEF2F2', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <svg style={{ width: 16, height: 16, color: '#DC2626' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p style={{ fontSize: 12, fontWeight: 500, color: '#1a1a1a' }}>{d.description}</p>
-                  <p style={{ fontSize: 10, color: '#888' }}>{d.nom_commission} · {new Date(d.date_depense).toLocaleDateString('fr-FR')}</p>
-                  <p style={{ fontSize: 12, fontWeight: 600, color: '#A32D2D' }}>{d.montant.toLocaleString()} FCFA</p>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontSize: 13, fontWeight: 500, color: '#1E293B', margin: '0 0 2px' }}>{d.description}</p>
+                  <p style={{ fontSize: 11, color: '#94A3B8', margin: '0 0 2px' }}>{d.nom_commission} · {new Date(d.date_depense).toLocaleDateString('fr-FR')}</p>
+                  <p style={{ fontSize: 13, fontWeight: 700, color: '#DC2626', margin: 0 }}>{d.montant.toLocaleString()} FCFA</p>
                 </div>
-                <button onClick={() => supprimerDepense(d.id)} style={{ width: 30, height: 30, borderRadius: 8, background: '#FCEBEB', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <svg style={{ width: 13, height: 13, color: '#A32D2D' }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                <button type="button" onClick={() => supprimerDepense(d.id)} style={{ width: 30, height: 30, borderRadius: 8, background: '#FEF2F2', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <svg style={{ width: 13, height: 13, color: '#DC2626' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                 </button>
               </div>
             ))}
