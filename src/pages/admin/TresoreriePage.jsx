@@ -295,54 +295,72 @@ export default function TresoreriePage() {
       {/* ── RECETTES ── */}
       {onglet === 'recettes' && (
         <>
-          <button type="button" onClick={() => setShowRecette(!showRecette)}
-            className="w-full mb-4 bg-emerald-700 text-white text-sm font-medium py-3 rounded-xl flex items-center justify-center gap-2">
-            {showRecette ? 'Fermer' : '+ Ajouter une recette'}
-          </button>
+          {/* Titre + bouton + */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+            <p style={{ fontSize: 11, fontWeight: 700, color: '#94A3B8', letterSpacing: '0.1em', margin: 0 }}>ENCAISSEMENTS ({recettes.length})</p>
+            <button type="button" onClick={() => setShowRecette(!showRecette)}
+              style={{ width: 30, height: 30, borderRadius: '50%', background: showRecette ? '#FEF2F2' : VERT, color: '#fff', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 300 }}>
+              {showRecette ? '×' : '+'}
+            </button>
+          </div>
+
+          {/* Formulaire */}
           {showRecette && (
-            <div className="bg-white border border-gray-100 rounded-2xl p-4 mb-4">
-              <div className="mb-3"><label className={labelStyle}>Type de recette</label>
+            <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 14, padding: '14px', marginBottom: 12 }}>
+              <div style={{ marginBottom: 10 }}>
+                <label className={labelStyle}>Type</label>
                 <select value={recetteForm.type} onChange={e => setRecetteForm(f => ({ ...f, type: e.target.value }))} className={inputStyle}>
                   {TYPES_RECETTE.map(t => <option key={t.key} value={t.key}>{t.label}</option>)}
                 </select>
               </div>
-              <div className="mb-3"><label className={labelStyle}>Description</label>
+              <div style={{ marginBottom: 10 }}>
+                <label className={labelStyle}>Description</label>
                 <input type="text" value={recetteForm.description} onChange={e => setRecetteForm(f => ({ ...f, description: e.target.value }))} placeholder="Ex : Don de l'église XYZ" className={inputStyle} />
               </div>
-              <div className="grid grid-cols-2 gap-3 mb-3">
-                <div><label className={labelStyle}>{recetteForm.type === 'don_nature' ? 'Valeur estimée (FCFA)' : 'Montant (FCFA)'}</label>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 10 }}>
+                <div>
+                  <label className={labelStyle}>{recetteForm.type === 'don_nature' ? 'Valeur estimée' : 'Montant (FCFA)'}</label>
                   <input type="number" value={recetteForm.type === 'don_nature' ? recetteForm.valeur_estimee : recetteForm.montant}
                     onChange={e => setRecetteForm(f => recetteForm.type === 'don_nature' ? { ...f, valeur_estimee: e.target.value } : { ...f, montant: e.target.value })} className={inputStyle} />
                 </div>
-                <div><label className={labelStyle}>Date</label>
+                <div>
+                  <label className={labelStyle}>Date</label>
                   <input type="date" value={recetteForm.date_reception} onChange={e => setRecetteForm(f => ({ ...f, date_reception: e.target.value }))} className={inputStyle} />
                 </div>
               </div>
-              <div className="mb-4"><label className={labelStyle}>Donateur / Source</label>
+              <div style={{ marginBottom: 12 }}>
+                <label className={labelStyle}>Donateur / Source</label>
                 <input type="text" value={recetteForm.donateur} onChange={e => setRecetteForm(f => ({ ...f, donateur: e.target.value }))} placeholder="Ex : M. KOUASSI" className={inputStyle} />
               </div>
-              <div className="flex gap-3">
-                <button type="button" onClick={() => setShowRecette(false)} className="flex-1 bg-gray-100 text-gray-600 text-sm font-medium py-3 rounded-xl">Annuler</button>
-                <button type="button" onClick={saveRecette} disabled={saving} className="flex-1 bg-emerald-700 text-white text-sm font-medium py-3 rounded-xl disabled:opacity-60">{saving ? '...' : 'Ajouter'}</button>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button type="button" onClick={() => setShowRecette(false)} style={{ flex: 1, background: '#F1F5F9', color: '#475569', border: 'none', borderRadius: 10, padding: '10px', fontSize: 13, cursor: 'pointer' }}>Annuler</button>
+                <button type="button" onClick={saveRecette} disabled={saving} style={{ flex: 1, background: VERT, color: '#fff', border: 'none', borderRadius: 10, padding: '10px', fontSize: 13, fontWeight: 600, cursor: 'pointer', opacity: saving ? 0.7 : 1 }}>{saving ? '...' : 'Ajouter'}</button>
               </div>
             </div>
           )}
-          <div className="space-y-2">
-            {recettes.map(r => {
+
+          {/* Liste transactions */}
+          <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #E2E8F0', overflow: 'hidden' }}>
+            {recettes.length === 0 && (
+              <p style={{ fontSize: 13, color: '#94A3B8', textAlign: 'center', padding: '20px', margin: 0 }}>Aucune recette enregistrée.</p>
+            )}
+            {recettes.map((r, i) => {
               const t = getTypeRecette(r.type)
               return (
-                <div key={r.id} style={{ background: '#fff', borderRadius: 12, border: '1px solid #F1F5F9', padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{ width: 36, height: 36, borderRadius: 10, background: t.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <svg style={{ width: 16, height: 16, color: t.color }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderBottom: i < recettes.length - 1 ? '1px solid #F1F5F9' : 'none' }}>
+                  <div style={{ width: 34, height: 34, borderRadius: '50%', background: '#ECFDF5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="#065F46" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V7m0 1v8m0 0v1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontSize: 13, fontWeight: 500, color: '#1E293B', margin: '0 0 2px' }}>{r.description || t.label}</p>
-                    <p style={{ fontSize: 11, color: '#94A3B8', margin: '0 0 2px' }}>{r.donateur ? `${r.donateur} · ` : ''}{new Date(r.date_reception).toLocaleDateString('fr-FR')}</p>
-                    <p style={{ fontSize: 13, fontWeight: 700, color: t.color, margin: 0 }}>{(r.montant || r.valeur_estimee || 0).toLocaleString()} FCFA</p>
+                    <p style={{ fontSize: 13, fontWeight: 500, color: '#1E293B', margin: '0 0 2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.description || t.label}</p>
+                    <p style={{ fontSize: 11, color: '#94A3B8', margin: 0 }}>{new Date(r.date_reception).toLocaleDateString('fr-FR')}</p>
                   </div>
-                  <button type="button" onClick={() => supprimerRecette(r.id)} style={{ width: 30, height: 30, borderRadius: 8, background: '#FEF2F2', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <svg style={{ width: 13, height: 13, color: '#DC2626' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                  </button>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                    <p style={{ fontSize: 14, fontWeight: 700, color: '#065F46', margin: 0 }}>{(r.montant || r.valeur_estimee || 0).toLocaleString()}</p>
+                    <button type="button" onClick={() => supprimerRecette(r.id)} style={{ width: 26, height: 26, borderRadius: 8, background: '#FEF2F2', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="#DC2626" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    </button>
+                  </div>
                 </div>
               )
             })}
@@ -353,61 +371,69 @@ export default function TresoreriePage() {
       {/* ── COMMISSIONS ── */}
       {onglet === 'commissions' && (
         <>
-          <button type="button" onClick={() => setShowCommission(!showCommission)}
-            className="w-full mb-4 bg-emerald-700 text-white text-sm font-medium py-3 rounded-xl flex items-center justify-center gap-2">
-            {showCommission ? 'Fermer' : '+ Ajouter une commission'}
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+            <p style={{ fontSize: 11, fontWeight: 700, color: '#94A3B8', letterSpacing: '0.1em', margin: 0 }}>PÔLES ({commissions.length})</p>
+            <button type="button" onClick={() => setShowCommission(!showCommission)}
+              style={{ width: 30, height: 30, borderRadius: '50%', background: showCommission ? '#FEF2F2' : VERT, color: '#fff', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 300 }}>
+              {showCommission ? '×' : '+'}
+            </button>
+          </div>
+
           {showCommission && (
-            <div className="bg-white border border-gray-100 rounded-2xl p-4 mb-4">
-              <div className="mb-3"><label className={labelStyle}>Nom de la commission *</label>
+            <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 14, padding: '14px', marginBottom: 12 }}>
+              <div style={{ marginBottom: 10 }}>
+                <label className={labelStyle}>Nom de la commission *</label>
                 <input type="text" value={commissionForm.nom_commission} onChange={e => setCommissionForm(f => ({ ...f, nom_commission: e.target.value }))} placeholder="Ex : Logistique, Restauration..." className={inputStyle} />
               </div>
-              <div className="mb-4"><label className={labelStyle}>Budget prévisionnel (FCFA)</label>
+              <div style={{ marginBottom: 12 }}>
+                <label className={labelStyle}>Budget prévisionnel (FCFA)</label>
                 <input type="number" value={commissionForm.budget_previsionnel} onChange={e => setCommissionForm(f => ({ ...f, budget_previsionnel: e.target.value }))} className={inputStyle} />
               </div>
-              <div className="flex gap-3">
-                <button type="button" onClick={() => setShowCommission(false)} className="flex-1 bg-gray-100 text-gray-600 text-sm font-medium py-3 rounded-xl">Annuler</button>
-                <button type="button" onClick={saveCommission} disabled={saving} className="flex-1 bg-emerald-700 text-white text-sm font-medium py-3 rounded-xl disabled:opacity-60">{saving ? '...' : 'Ajouter'}</button>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button type="button" onClick={() => setShowCommission(false)} style={{ flex: 1, background: '#F1F5F9', color: '#475569', border: 'none', borderRadius: 10, padding: '10px', fontSize: 13, cursor: 'pointer' }}>Annuler</button>
+                <button type="button" onClick={saveCommission} disabled={saving} style={{ flex: 1, background: VERT, color: '#fff', border: 'none', borderRadius: 10, padding: '10px', fontSize: 13, fontWeight: 600, cursor: 'pointer', opacity: saving ? 0.7 : 1 }}>{saving ? '...' : 'Ajouter'}</button>
               </div>
             </div>
           )}
-          <div className="space-y-2">
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {commissions.map(c => {
               const totalDep = depenses.filter(d => d.commission_id === c.id).reduce((s, d) => s + d.montant, 0)
               const alloue = c.montant_alloue || 0
               const solde = alloue - totalDep
               return (
-                <div key={c.id} style={{ background: '#fff', borderRadius: 12, border: '1px solid #F1F5F9', padding: '12px 14px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
-                    <p style={{ fontSize: 13, fontWeight: 600, color: '#1E293B', margin: 0 }}>{c.nom_commission}</p>
-                    <button type="button" onClick={() => supprimerCommission(c.id)} style={{ width: 28, height: 28, borderRadius: 7, background: '#FEF2F2', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <svg style={{ width: 12, height: 12, color: '#DC2626' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                <div key={c.id} style={{ background: '#fff', borderRadius: 12, border: '1px solid #E2E8F0', padding: '10px 14px' }}>
+                  {/* Nom + supprimer */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                    <p style={{ fontSize: 13, fontWeight: 700, color: '#1E293B', margin: 0 }}>{c.nom_commission}</p>
+                    <button type="button" onClick={() => supprimerCommission(c.id)} style={{ width: 24, height: 24, borderRadius: 6, background: '#FEF2F2', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="#DC2626" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                     </button>
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6, marginBottom: 10 }}>
-                    {[{ l: 'Prévu', v: c.budget_previsionnel || 0, bg: '#F8FAFC', c: '#475569' }, { l: 'Alloué', v: alloue, bg: VERT_CLAIR, c: VERT }, { l: 'Solde', v: solde, bg: solde < 0 ? '#FEF2F2' : '#EFF6FF', c: solde < 0 ? '#DC2626' : '#1D4ED8' }].map(s => (
-                      <div key={s.l} style={{ textAlign: 'center', background: s.bg, borderRadius: 8, padding: '6px' }}>
-                        <p style={{ fontSize: 12, fontWeight: 700, color: s.c, margin: 0 }}>{s.v.toLocaleString()}</p>
-                        <p style={{ fontSize: 9, color: s.c, margin: '1px 0 0', opacity: 0.7 }}>{s.l}</p>
-                      </div>
-                    ))}
+                  {/* 3 indicateurs texte */}
+                  <div style={{ display: 'flex', gap: 16, marginBottom: 8 }}>
+                    <span style={{ fontSize: 11, color: '#94A3B8' }}>Prévu : <strong style={{ color: '#475569' }}>{(c.budget_previsionnel || 0).toLocaleString()}</strong></span>
+                    <span style={{ fontSize: 11, color: '#94A3B8' }}>Alloué : <strong style={{ color: VERT }}>{alloue.toLocaleString()}</strong></span>
+                    <span style={{ fontSize: 11, color: '#94A3B8' }}>Solde : <strong style={{ color: solde < 0 ? '#DC2626' : '#1D4ED8' }}>{solde.toLocaleString()}</strong></span>
                   </div>
+                  {/* Allocation */}
                   {showAllouer === c.id ? (
-                    <div style={{ display: 'flex', gap: 8 }}>
+                    <div style={{ display: 'flex', gap: 6 }}>
                       <input type="number" value={allouerMontant} onChange={e => setAllouerMontant(e.target.value)} placeholder="Montant à allouer"
-                        style={{ flex: 1, border: '1px solid #E2E8F0', borderRadius: 8, padding: '7px 10px', fontSize: 12, outline: 'none', color: '#1E293B' }} />
-                      <button type="button" onClick={() => saveAllouer(c.id)} style={{ background: VERT, color: '#fff', border: 'none', borderRadius: 8, padding: '7px 12px', fontSize: 12, cursor: 'pointer' }}>OK</button>
-                      <button type="button" onClick={() => setShowAllouer(null)} style={{ background: '#F1F5F9', color: '#64748B', border: 'none', borderRadius: 8, padding: '7px 12px', fontSize: 12, cursor: 'pointer' }}>✕</button>
+                        style={{ flex: 1, border: '1px solid #E2E8F0', borderRadius: 8, padding: '6px 10px', fontSize: 12, outline: 'none', color: '#1E293B' }} />
+                      <button type="button" onClick={() => saveAllouer(c.id)} style={{ background: VERT, color: '#fff', border: 'none', borderRadius: 8, padding: '6px 12px', fontSize: 12, cursor: 'pointer' }}>OK</button>
+                      <button type="button" onClick={() => setShowAllouer(null)} style={{ background: '#F1F5F9', color: '#64748B', border: 'none', borderRadius: 8, padding: '6px 10px', fontSize: 12, cursor: 'pointer' }}>✕</button>
                     </div>
                   ) : (
                     <button type="button" onClick={() => { setShowAllouer(c.id); setAllouerMontant(alloue || '') }}
-                      style={{ width: '100%', background: VERT_CLAIR, color: VERT, border: 'none', borderRadius: 8, padding: '8px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
-                      Modifier le montant alloué
+                      style={{ background: 'transparent', color: VERT, border: `1px solid ${VERT}`, borderRadius: 8, padding: '5px 12px', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
+                      Modifier l'allocation
                     </button>
                   )}
                 </div>
               )
             })}
+            {commissions.length === 0 && <p style={{ fontSize: 13, color: '#94A3B8', textAlign: 'center', padding: '20px', margin: 0 }}>Aucune commission créée.</p>}
           </div>
         </>
       )}
@@ -415,52 +441,67 @@ export default function TresoreriePage() {
       {/* ── DÉPENSES ── */}
       {onglet === 'depenses' && (
         <>
-          <button type="button" onClick={() => setShowDepense(!showDepense)}
-            className="w-full mb-4 bg-emerald-700 text-white text-sm font-medium py-3 rounded-xl flex items-center justify-center gap-2">
-            {showDepense ? 'Fermer' : '+ Ajouter une dépense'}
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+            <p style={{ fontSize: 11, fontWeight: 700, color: '#94A3B8', letterSpacing: '0.1em', margin: 0 }}>DÉCAISSEMENTS ({depenses.length})</p>
+            <button type="button" onClick={() => setShowDepense(!showDepense)}
+              style={{ width: 30, height: 30, borderRadius: '50%', background: showDepense ? '#FEF2F2' : VERT, color: '#fff', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 300 }}>
+              {showDepense ? '×' : '+'}
+            </button>
+          </div>
+
           {showDepense && (
-            <div className="bg-white border border-gray-100 rounded-2xl p-4 mb-4">
-              <div className="mb-3"><label className={labelStyle}>Commission *</label>
+            <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 14, padding: '14px', marginBottom: 12 }}>
+              <div style={{ marginBottom: 10 }}>
+                <label className={labelStyle}>Commission *</label>
                 <select value={depenseForm.commission_id} onChange={e => setDepenseForm(f => ({ ...f, commission_id: e.target.value }))} className={inputStyle}>
                   <option value="">Sélectionner</option>
                   {commissions.map(c => <option key={c.id} value={c.id}>{c.nom_commission}</option>)}
                 </select>
               </div>
-              <div className="mb-3"><label className={labelStyle}>Description *</label>
+              <div style={{ marginBottom: 10 }}>
+                <label className={labelStyle}>Description *</label>
                 <input type="text" value={depenseForm.description} onChange={e => setDepenseForm(f => ({ ...f, description: e.target.value }))} placeholder="Ex : Achat vivres" className={inputStyle} />
               </div>
-              <div className="grid grid-cols-2 gap-3 mb-3">
-                <div><label className={labelStyle}>Montant (FCFA) *</label>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 10 }}>
+                <div>
+                  <label className={labelStyle}>Montant (FCFA) *</label>
                   <input type="number" value={depenseForm.montant} onChange={e => setDepenseForm(f => ({ ...f, montant: e.target.value }))} className={inputStyle} />
                 </div>
-                <div><label className={labelStyle}>Date</label>
+                <div>
+                  <label className={labelStyle}>Date</label>
                   <input type="date" value={depenseForm.date_depense} onChange={e => setDepenseForm(f => ({ ...f, date_depense: e.target.value }))} className={inputStyle} />
                 </div>
               </div>
-              <div className="mb-4"><label className={labelStyle}>Justificatif</label>
+              <div style={{ marginBottom: 12 }}>
+                <label className={labelStyle}>Justificatif</label>
                 <input type="text" value={depenseForm.justificatif} onChange={e => setDepenseForm(f => ({ ...f, justificatif: e.target.value }))} placeholder="Ex : Reçu n°001" className={inputStyle} />
               </div>
-              <div className="flex gap-3">
-                <button type="button" onClick={() => setShowDepense(false)} className="flex-1 bg-gray-100 text-gray-600 text-sm font-medium py-3 rounded-xl">Annuler</button>
-                <button type="button" onClick={saveDepense} disabled={saving} className="flex-1 bg-emerald-700 text-white text-sm font-medium py-3 rounded-xl disabled:opacity-60">{saving ? '...' : 'Ajouter'}</button>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button type="button" onClick={() => setShowDepense(false)} style={{ flex: 1, background: '#F1F5F9', color: '#475569', border: 'none', borderRadius: 10, padding: '10px', fontSize: 13, cursor: 'pointer' }}>Annuler</button>
+                <button type="button" onClick={saveDepense} disabled={saving} style={{ flex: 1, background: VERT, color: '#fff', border: 'none', borderRadius: 10, padding: '10px', fontSize: 13, fontWeight: 600, cursor: 'pointer', opacity: saving ? 0.7 : 1 }}>{saving ? '...' : 'Ajouter'}</button>
               </div>
             </div>
           )}
-          <div className="space-y-2">
-            {depenses.map(d => (
-              <div key={d.id} style={{ background: '#fff', borderRadius: 12, border: '1px solid #F1F5F9', padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div style={{ width: 36, height: 36, borderRadius: 10, background: '#FEF2F2', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <svg style={{ width: 16, height: 16, color: '#DC2626' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+
+          <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #E2E8F0', overflow: 'hidden' }}>
+            {depenses.length === 0 && (
+              <p style={{ fontSize: 13, color: '#94A3B8', textAlign: 'center', padding: '20px', margin: 0 }}>Aucune dépense enregistrée.</p>
+            )}
+            {depenses.map((d, i) => (
+              <div key={d.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderBottom: i < depenses.length - 1 ? '1px solid #F1F5F9' : 'none' }}>
+                <div style={{ width: 34, height: 34, borderRadius: '50%', background: '#FEF2F2', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="#DC2626" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontSize: 13, fontWeight: 500, color: '#1E293B', margin: '0 0 2px' }}>{d.description}</p>
-                  <p style={{ fontSize: 11, color: '#94A3B8', margin: '0 0 2px' }}>{d.nom_commission} · {new Date(d.date_depense).toLocaleDateString('fr-FR')}</p>
-                  <p style={{ fontSize: 13, fontWeight: 700, color: '#DC2626', margin: 0 }}>{d.montant.toLocaleString()} FCFA</p>
+                  <p style={{ fontSize: 13, fontWeight: 500, color: '#1E293B', margin: '0 0 2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.description}</p>
+                  <p style={{ fontSize: 11, color: '#94A3B8', margin: 0 }}>{d.nom_commission} · {new Date(d.date_depense).toLocaleDateString('fr-FR')}</p>
                 </div>
-                <button type="button" onClick={() => supprimerDepense(d.id)} style={{ width: 30, height: 30, borderRadius: 8, background: '#FEF2F2', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <svg style={{ width: 13, height: 13, color: '#DC2626' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                  <p style={{ fontSize: 14, fontWeight: 700, color: '#DC2626', margin: 0 }}>{d.montant.toLocaleString()}</p>
+                  <button type="button" onClick={() => supprimerDepense(d.id)} style={{ width: 26, height: 26, borderRadius: 8, background: '#FEF2F2', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="#DC2626" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                  </button>
+                </div>
               </div>
             ))}
           </div>
