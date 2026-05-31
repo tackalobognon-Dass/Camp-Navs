@@ -102,6 +102,7 @@ export default function CampeursPage() {
   async function ajouterVersement() {
     if (!versementForm.montant || !ficheOuverte) return
     setSaving(true)
+    try {
     const montant = parseInt(versementForm.montant)
     await supabase.from('versements').insert([{ inscription_id: ficheOuverte.id, montant, date_versement: versementForm.date_versement, note: versementForm.note }])
     const { data: allV } = await supabase.from('versements').select('*').eq('inscription_id', ficheOuverte.id)
@@ -114,10 +115,14 @@ export default function CampeursPage() {
     else { await supabase.from('recettes').insert([{ type: 'frais_participation', description: `Inscription — ${ficheOuverte.nom_complet}`, montant: totalVerse, donateur: ficheOuverte.nom_complet, date_reception: versementForm.date_versement }]) }
     setVersementForm({ montant: '', date_versement: new Date().toISOString().split('T')[0], note: '' })
     setShowAddVersement(false)
-    setSaving(false)
     const { data: newV } = await supabase.from('versements').select('*').eq('inscription_id', ficheOuverte.id).order('date_versement', { ascending: true })
     setVersements(newV || [])
     fetchCampeurs()
+    } catch (err) {
+      console.error('Erreur versement:', err)
+    } finally {
+      setSaving(false)
+    }
   }
 
   async function supprimerVersement(id) {
@@ -319,7 +324,7 @@ export default function CampeursPage() {
             <div style={{ border: '1px solid #F1F5F9', borderRadius: 12, overflow: 'hidden', marginBottom: 14 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', borderBottom: '1px solid #F1F5F9', background: '#FAFAFA' }}>
                 <p style={{ fontSize: 13, fontWeight: 600, color: '#1E293B', margin: 0 }}>Historique des versements</p>
-                <button onClick={() => setShowAddVersement(!showAddVersement)}
+                <button type="button" onClick={() => setShowAddVersement(!showAddVersement)}
                   style={{ background: VERT, color: '#fff', border: 'none', borderRadius: 8, padding: '5px 12px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
                   + Ajouter
                 </button>
@@ -351,11 +356,11 @@ export default function CampeursPage() {
                       style={{ width: '100%', border: '1px solid #E2E8F0', borderRadius: 8, padding: '9px 12px', fontSize: 13, outline: 'none', background: '#fff', color: '#1E293B' }} />
                   </div>
                   <div style={{ display: 'flex', gap: 10 }}>
-                    <button onClick={() => setShowAddVersement(false)}
+                    <button type="button" onClick={() => setShowAddVersement(false)}
                       style={{ flex: 1, background: '#F1F5F9', color: '#475569', border: 'none', borderRadius: 8, padding: '10px', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}>
                       Annuler
                     </button>
-                    <button onClick={ajouterVersement} disabled={saving || !versementForm.montant}
+                    <button type="button" onClick={ajouterVersement} disabled={saving || !versementForm.montant}
                       style={{ flex: 1, background: VERT, color: '#fff', border: 'none', borderRadius: 8, padding: '10px', fontSize: 13, fontWeight: 600, cursor: 'pointer', opacity: saving ? 0.7 : 1 }}>
                       {saving ? 'Enregistrement...' : 'Enregistrer'}
                     </button>
@@ -372,7 +377,7 @@ export default function CampeursPage() {
                       <p style={{ fontSize: 14, fontWeight: 600, color: '#166534', margin: '0 0 2px' }}>{v.montant.toLocaleString()} FCFA</p>
                       <p style={{ fontSize: 11, color: '#64748B', margin: 0 }}>{new Date(v.date_versement).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}{v.note ? ` · ${v.note}` : ''}</p>
                     </div>
-                    <button onClick={() => supprimerVersement(v.id)}
+                    <button type="button" onClick={() => supprimerVersement(v.id)}
                       style={{ width: 28, height: 28, borderRadius: 8, background: '#FEF2F2', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       <svg style={{ width: 13, height: 13, color: '#DC2626' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                     </button>
@@ -389,7 +394,7 @@ export default function CampeursPage() {
                   onChange={e => setEditMontantPerso(e.target.value)}
                   placeholder={`Standard : ${ficheOuverte.tranche_age === 'Enfants & Adolescents' ? '25 000' : '30 000'} FCFA`}
                   style={{ flex: 1, border: '1px solid #E2E8F0', borderRadius: 8, padding: '9px 12px', fontSize: 13, outline: 'none', background: '#fff', color: '#1E293B' }} />
-                <button onClick={saveReduction} disabled={saving}
+                <button type="button" onClick={saveReduction} disabled={saving}
                   style={{ background: VERT, color: '#fff', border: 'none', borderRadius: 8, padding: '9px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
                   OK
                 </button>
@@ -398,16 +403,16 @@ export default function CampeursPage() {
 
             {/* 3 boutons actions */}
             <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={() => supprimerCampeur(ficheOuverte.id)}
+              <button type="button" onClick={() => supprimerCampeur(ficheOuverte.id)}
                 style={{ background: '#FEF2F2', color: '#DC2626', border: '1px solid #FCA5A5', borderRadius: 10, padding: '12px 14px', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}>
                 Supprimer
               </button>
-              <button onClick={() => envoyerWhatsApp(ficheOuverte, versements)}
+              <button type="button" onClick={() => envoyerWhatsApp(ficheOuverte, versements)}
                 style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, background: '#25D366', color: '#fff', border: 'none', borderRadius: 10, padding: '12px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
                 <svg style={{ width: 16, height: 16 }} fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.533 5.859L.057 23.625a.5.5 0 00.612.612l5.766-1.476A11.95 11.95 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.9 0-3.7-.514-5.253-1.408l-.375-.223-3.886.995 1.013-3.786-.244-.388A9.955 9.955 0 012 12c0-5.514 4.486-10 10-10s10 4.486 10 10-4.486 10-10 10z"/></svg>
                 WhatsApp
               </button>
-              <button onClick={() => setFicheOuverte(null)}
+              <button type="button" onClick={() => setFicheOuverte(null)}
                 style={{ background: '#F1F5F9', color: '#475569', border: 'none', borderRadius: 10, padding: '12px 14px', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}>
                 Fermer
               </button>
