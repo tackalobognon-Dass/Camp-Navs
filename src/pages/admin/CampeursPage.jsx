@@ -79,6 +79,7 @@ export default function CampeursPage() {
   const [versements, setVersements] = useState([])
   const [editMontantPerso, setEditMontantPerso] = useState('')
   const [saving, setSaving] = useState(false)
+  const [savingReduction, setSavingReduction] = useState(false)
   const [showAddVersement, setShowAddVersement] = useState(false)
   const [versementForm, setVersementForm] = useState({ montant: '', date_versement: new Date().toISOString().split('T')[0], note: '' })
 
@@ -110,14 +111,18 @@ export default function CampeursPage() {
     const du = editMontantPerso !== '' ? parseInt(editMontantPerso) : getMontantDu(ficheOuverte)
     const statut = totalVerse >= du ? 'payé' : 'partiel'
     await supabase.from('inscriptions').update({ montant_paye: totalVerse, statut_paiement: statut, montant_personnalise: editMontantPerso !== '' ? parseInt(editMontantPerso) : null }).eq('id', ficheOuverte.id)
-    const { data: existante } = await supabase.from('recettes').select('id').eq('description', `Inscription — ${ficheOuverte.nom_complet}`).single().catch(() => ({ data: null }))
-    if (existante) { await supabase.from('recettes').update({ montant: totalVerse }).eq('id', existante.id) }
-    else { await supabase.from('recettes').insert([{ type: 'frais_participation', description: `Inscription — ${ficheOuverte.nom_complet}`, montant: totalVerse, donateur: ficheOuverte.nom_complet, date_reception: versementForm.date_versement }]) }
-    setVersementForm({ montant: '', date_versement: new Date().toISOString().split('T')[0], note: '' })
-    setShowAddVersement(false)
-    const { data: newV } = await supabase.from('versements').select('*').eq('inscription_id', ficheOuverte.id).order('date_versement', { ascending: true })
-    setVersements(newV || [])
-    fetchCampeurs()
+      // Fermer immédiatement
+      setVersementForm({ montant: '', date_versement: new Date().toISOString().split('T')[0], note: '' })
+      setShowAddVersement(false)
+      const { data: newV } = await supabase.from('versements').select('*').eq('inscription_id', ficheOuverte.id).order('date_versement', { ascending: true })
+      setVersements(newV || [])
+      fetchCampeurs()
+      // Recettes en arrière-plan
+      try {
+        const { data: existante } = await supabase.from('recettes').select('id').eq('description', `Inscription — ${ficheOuverte.nom_complet}`).single()
+        if (existante) { await supabase.from('recettes').update({ montant: totalVerse }).eq('id', existante.id) }
+        else { await supabase.from('recettes').insert([{ type: 'frais_participation', description: `Inscription — ${ficheOuverte.nom_complet}`, montant: totalVerse, donateur: ficheOuverte.nom_complet, date_reception: versementForm.date_versement }]) }
+      } catch (_) {}
     } catch (err) {
       console.error('Erreur versement:', err)
     } finally {
@@ -138,9 +143,9 @@ export default function CampeursPage() {
 
   async function saveReduction() {
     if (!ficheOuverte) return
-    setSaving(true)
+    setSavingReduction(true)
     await supabase.from('inscriptions').update({ montant_personnalise: editMontantPerso !== '' ? parseInt(editMontantPerso) : null }).eq('id', ficheOuverte.id)
-    setSaving(false)
+    setSavingReduction(false)
     fetchCampeurs()
   }
 
@@ -394,7 +399,7 @@ export default function CampeursPage() {
                   onChange={e => setEditMontantPerso(e.target.value)}
                   placeholder={`Standard : ${ficheOuverte.tranche_age === 'Enfants & Adolescents' ? '25 000' : '30 000'} FCFA`}
                   style={{ flex: 1, border: '1px solid #E2E8F0', borderRadius: 8, padding: '9px 12px', fontSize: 13, outline: 'none', background: '#fff', color: '#1E293B' }} />
-                <button type="button" onClick={saveReduction} disabled={saving}
+                <button type="button" onClick={saveReduction} disabled={savingReduction}
                   style={{ background: VERT, color: '#fff', border: 'none', borderRadius: 8, padding: '9px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
                   OK
                 </button>
