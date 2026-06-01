@@ -87,11 +87,11 @@ export default function DashboardPage() {
     <AdminLayout>
 
       {/* Verset du jour */}
-      <div style={{ background: '#fff', borderRadius: 10, borderLeft: `3px solid ${VERT}`, padding: '8px 12px', marginBottom: 12 }}>
-        <p style={{ fontSize: 13, fontStyle: 'italic', color: '#1E293B', margin: '0 0 2px', lineHeight: 1.5 }}>
+      <div style={{ textAlign: 'center', padding: '8px 12px 14px' }}>
+        <p style={{ fontFamily: 'Georgia, "Times New Roman", serif', fontSize: 15, fontStyle: 'italic', color: '#374151', lineHeight: 1.6, margin: '0 0 6px' }}>
           « {verset.texte} »
         </p>
-        <span style={{ fontSize: 10, color: '#94A3B8' }}>{verset.ref}</span>
+        <span style={{ fontSize: 11, color: '#94A3B8', fontStyle: 'normal', letterSpacing: '0.03em' }}>— {verset.ref}</span>
       </div>
 
       {loading && <p style={{ fontSize: 13, color: '#94A3B8', textAlign: 'center', padding: '20px 0' }}>Chargement...</p>}
