@@ -189,7 +189,7 @@ export default function MembresPage() {
       {loading && <p style={{ fontSize: 13, color: '#94A3B8', textAlign: 'center', padding: '20px 0' }}>Chargement...</p>}
 
       {/* Liste */}
-      <div ref={menuRef} style={{ background: '#fff', borderRadius: 12, border: '1px solid #E2E8F0', overflow: 'hidden' }}>
+      <div ref={menuRef} style={{ background: '#fff', borderRadius: 12, border: '1px solid #E2E8F0' }}>
         {filtres.length === 0 && !loading && (
           <div style={{ padding: '28px', textAlign: 'center' }}>
             <p style={{ fontSize: 13, color: '#94A3B8', margin: '0 0 10px' }}>Aucun membre enregistré.</p>
@@ -216,7 +216,7 @@ export default function MembresPage() {
                 <button type="button" onClick={() => setMenuOuvert(menuOuvert === m.id ? null : m.id)}
                   style={{ width: 26, height: 26, borderRadius: 7, background: '#F8FAFC', border: '1px solid #E2E8F0', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, color: '#94A3B8' }}>···</button>
                 {menuOuvert === m.id && (
-                  <div style={{ position: 'absolute', right: 0, top: 30, background: '#fff', borderRadius: 10, border: '1px solid #E2E8F0', boxShadow: '0 4px 16px rgba(0,0,0,0.08)', zIndex: 20, minWidth: 150, overflow: 'hidden' }}>
+                  <div style={{ position: 'absolute', right: 0, top: 30, background: '#fff', borderRadius: 10, border: '1px solid #E2E8F0', boxShadow: '0 4px 20px rgba(0,0,0,0.12)', zIndex: 100, minWidth: 150, overflow: 'hidden' }}>
                     {[
                       { label: 'Modifier', action: () => openEdit(m), color: '#1E293B' },
                       { label: 'Monter', action: () => monterOrdre(index), color: '#1E293B' },
