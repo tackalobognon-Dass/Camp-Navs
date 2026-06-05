@@ -85,101 +85,112 @@ export default function DashboardPage() {
 
   return (
     <AdminLayout>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
 
-      {!loading && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-
-          {/* INSCRIPTIONS — 4 badges horizontaux */}
+        {/* ── HEADER ── */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
-            <p style={{ fontSize: 10, fontWeight: 700, color: '#94A3B8', letterSpacing: '0.1em', margin: '0 0 6px', textTransform: 'uppercase' }}>Inscriptions</p>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }}>
+            <p style={{ fontSize: 11, color: '#94A3B8', margin: '0 0 1px', letterSpacing: '0.06em', textTransform: 'uppercase', fontWeight: 600 }}>Camp-Navs 2026</p>
+            <p style={{ fontSize: 18, fontWeight: 700, color: '#1E293B', margin: 0 }}>Tableau de bord</p>
+          </div>
+          <div style={{ textAlign: 'right' }}>
+            <p style={{ fontSize: 11, color: '#94A3B8', margin: 0 }}>
+              {new Date().toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })}
+            </p>
+          </div>
+        </div>
+
+        {loading ? (
+          <p style={{ fontSize: 13, color: '#94A3B8', textAlign: 'center', padding: '40px 0' }}>Chargement...</p>
+        ) : (
+          <>
+            {/* ── 4 KPI ── */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 8 }}>
               {[
-                { label: 'Total', val: stats.totalInscrits, color: '#1D4ED8', border: '#BFDBFE' },
-                { label: 'Payés', val: stats.payes, color: '#065F46', border: '#6EE7B7' },
-                { label: 'Attente', val: stats.enAttente, color: '#92400E', border: '#FCD34D' },
-                { label: 'Partiel', val: stats.partiels, color: '#6D28D9', border: '#DDD6FE' },
+                { label: 'Inscrits', val: stats.totalInscrits, color: '#1E293B' },
+                { label: 'Payés', val: stats.payes, color: '#065F46' },
+                { label: 'Attente', val: stats.enAttente, color: '#92400E' },
+                { label: 'Partiel', val: stats.partiels, color: '#6D28D9' },
               ].map(k => (
-                <div key={k.label} style={{ background: '#fff', borderRadius: 10, border: `1px solid ${k.border}`, padding: '7px 5px', textAlign: 'center' }}>
-                  <p style={{ fontSize: 20, fontWeight: 700, color: k.color, margin: '0 0 1px', lineHeight: 1 }}>{k.val}</p>
-                  <p style={{ fontSize: 9, color: '#94A3B8', margin: 0 }}>{k.label}</p>
+                <div key={k.label} style={{ background: '#fff', borderRadius: 12, padding: '10px 8px', textAlign: 'center', border: '1px solid #F1F5F9' }}>
+                  <p style={{ fontSize: 22, fontWeight: 800, color: k.color, margin: '0 0 2px', lineHeight: 1 }}>{k.val}</p>
+                  <p style={{ fontSize: 9, color: '#94A3B8', margin: 0, letterSpacing: '0.04em' }}>{k.label}</p>
                 </div>
               ))}
             </div>
-          </div>
 
-          {/* FINANCES */}
-          <div>
-            <p style={{ fontSize: 10, fontWeight: 700, color: '#94A3B8', letterSpacing: '0.1em', margin: '0 0 6px', textTransform: 'uppercase' }}>Finances</p>
-            <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #F1F5F9', padding: '10px 12px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 8 }}>
-                <div>
-                  <p style={{ fontSize: 9, color: '#94A3B8', margin: '0 0 2px' }}>Montant collecté</p>
-                  <p style={{ fontSize: 20, fontWeight: 700, color: '#065F46', margin: 0, lineHeight: 1 }}>
-                    {stats.montantCollecte.toLocaleString()}
-                    <span style={{ fontSize: 10, fontWeight: 400, color: '#94A3B8', marginLeft: 3 }}>FCFA</span>
-                  </p>
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                  <p style={{ fontSize: 9, color: '#94A3B8', margin: '0 0 2px' }}>Solde disponible</p>
-                  <p style={{ fontSize: 14, fontWeight: 700, color: stats.solde >= 0 ? '#1D4ED8' : '#DC2626', margin: 0 }}>
-                    {stats.solde.toLocaleString()} FCFA
-                  </p>
-                </div>
-              </div>
+            {/* ── HERO FINANCES ── */}
+            <div style={{ background: VERT, borderRadius: 16, padding: '20px 18px', position: 'relative', overflow: 'hidden' }}>
+              {/* Cercle décoratif */}
+              <div style={{ position: 'absolute', width: 140, height: 140, borderRadius: '50%', background: 'rgba(255,255,255,0.05)', top: -40, right: -30, pointerEvents: 'none' }} />
+              <div style={{ position: 'absolute', width: 80, height: 80, borderRadius: '50%', background: 'rgba(255,255,255,0.04)', bottom: -20, right: 60, pointerEvents: 'none' }} />
+
+              <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', margin: '0 0 6px', letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 600 }}>Montant collecté</p>
+              <p style={{ fontSize: 30, fontWeight: 800, color: '#fff', margin: '0 0 3px', lineHeight: 1, letterSpacing: '-0.5px' }}>
+                {stats.montantCollecte.toLocaleString()}
+                <span style={{ fontSize: 14, fontWeight: 400, color: 'rgba(255,255,255,0.5)', marginLeft: 5 }}>FCFA</span>
+              </p>
+
+              {/* Solde */}
+              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', margin: '0 0 14px' }}>
+                Solde disponible :
+                <span style={{ fontWeight: 700, color: '#fff', marginLeft: 5 }}>
+                  {stats.solde.toLocaleString()} FCFA
+                </span>
+              </p>
+
+              {/* Jauge */}
               {stats.budgetGlobal > 0 && (
                 <>
-                  <div style={{ background: '#F1F5F9', borderRadius: 4, height: 3, marginBottom: 4 }}>
-                    <div style={{ background: VERT, borderRadius: 4, height: 3, width: `${Math.min(pctBudget, 100)}%`, transition: 'width .4s' }} />
+                  <div style={{ background: 'rgba(255,255,255,0.15)', borderRadius: 4, height: 3, marginBottom: 6 }}>
+                    <div style={{ background: '#fff', borderRadius: 4, height: 3, width: `${Math.min(pctBudget, 100)}%`, transition: 'width .4s' }} />
                   </div>
-                  <p style={{ fontSize: 9, color: '#94A3B8', margin: 0 }}>
-                    {Math.round(pctBudget)}% atteint · {stats.totalRecettes.toLocaleString()} collectés · Objectif : {stats.budgetGlobal.toLocaleString()} FCFA
+                  <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.45)', margin: 0 }}>
+                    {Math.round(pctBudget)}% de l'objectif · {stats.budgetGlobal.toLocaleString()} FCFA
                   </p>
                 </>
               )}
             </div>
-          </div>
 
-          {/* DERNIÈRES INSCRIPTIONS — max 3 */}
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-              <p style={{ fontSize: 10, fontWeight: 700, color: '#94A3B8', letterSpacing: '0.1em', margin: 0, textTransform: 'uppercase' }}>Dernières inscriptions</p>
-              <button type="button" onClick={() => navigate('/admin/campeurs')}
-                style={{ fontSize: 12, fontWeight: 700, color: VERT, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-                Voir tout →
-              </button>
-            </div>
-            <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #F1F5F9', overflow: 'hidden' }}>
-              {dernieres.length === 0 ? (
-                <p style={{ fontSize: 13, color: '#94A3B8', textAlign: 'center', padding: '14px', margin: 0 }}>Aucune inscription.</p>
-              ) : (
-                dernieres.slice(0, 3).map((ins, i) => {
-                  const sb = statutBadge[ins.statut_paiement] || { bg: '#F3F4F6', color: '#374151', label: ins.statut_paiement }
-                  return (
-                    <div key={ins.id} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 12px', borderBottom: i < Math.min(dernieres.length, 3) - 1 ? '1px solid #F1F5F9' : 'none' }}>
-                      <div style={{ width: 30, height: 30, borderRadius: '50%', background: '#E8F5E8', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        <span style={{ fontSize: 11, fontWeight: 700, color: VERT }}>{ins.nom_complet?.charAt(0)}</span>
+            {/* ── DERNIÈRES INSCRIPTIONS ── */}
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                <p style={{ fontSize: 10, fontWeight: 700, color: '#94A3B8', letterSpacing: '0.1em', margin: 0, textTransform: 'uppercase' }}>Dernières inscriptions</p>
+                <button type="button" onClick={() => navigate('/admin/campeurs')}
+                  style={{ fontSize: 12, fontWeight: 700, color: VERT, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+                  Voir tout →
+                </button>
+              </div>
+
+              <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #F1F5F9', overflow: 'hidden' }}>
+                {dernieres.length === 0 ? (
+                  <p style={{ fontSize: 13, color: '#94A3B8', textAlign: 'center', padding: '16px', margin: 0 }}>Aucune inscription.</p>
+                ) : (
+                  dernieres.slice(0, 3).map((ins, i) => {
+                    const sb = statutBadge[ins.statut_paiement] || { bg: '#F3F4F6', color: '#374151', label: ins.statut_paiement }
+                    return (
+                      <div key={ins.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderBottom: i < 2 ? '1px solid #F8FAFC' : 'none' }}>
+                        <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <span style={{ fontSize: 12, fontWeight: 700, color: '#475569' }}>{ins.nom_complet?.charAt(0)}</span>
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <p style={{ fontSize: 13, fontWeight: 600, color: '#1E293B', margin: '0 0 1px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ins.nom_complet}</p>
+                          <p style={{ fontSize: 10, color: '#94A3B8', margin: 0 }}>
+                            {ins.tranche_age === 'Jeunes & Adultes' ? 'Jeune/Adulte' : 'Enfant/Ado'} · {new Date(ins.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                          </p>
+                        </div>
+                        <span style={{ fontSize: 10, fontWeight: 600, background: sb.bg, color: sb.color, borderRadius: 20, padding: '3px 10px', flexShrink: 0 }}>
+                          {sb.label}
+                        </span>
                       </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ fontSize: 12, fontWeight: 600, color: '#1E293B', margin: '0 0 1px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ins.nom_complet}</p>
-                        <p style={{ fontSize: 10, color: '#94A3B8', margin: 0 }}>
-                          {ins.tranche_age === 'Jeunes & Adultes' ? 'Jeune/Adulte' : 'Enfant/Ado'} · {new Date(ins.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
-                        </p>
-                      </div>
-                      <span style={{ fontSize: 10, fontWeight: 600, background: sb.bg, color: sb.color, borderRadius: 20, padding: '2px 8px', flexShrink: 0 }}>
-                        {sb.label}
-                      </span>
-                    </div>
-                  )
-                })
-              )}
+                    )
+                  })
+                )}
+              </div>
             </div>
-          </div>
-
-        </div>
-      )}
-
-      {loading && <p style={{ fontSize: 13, color: '#94A3B8', textAlign: 'center', padding: '20px 0' }}>Chargement...</p>}
-
+          </>
+        )}
+      </div>
     </AdminLayout>
   )
 }
