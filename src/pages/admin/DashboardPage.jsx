@@ -122,29 +122,37 @@ export default function DashboardPage() {
             </div>
 
             {/* ── FINANCES compact ── */}
-            <div style={{ background: VERT, borderRadius: 16, padding: '14px 18px', position: 'relative', overflow: 'hidden' }}>
-              <div style={{ position: 'absolute', width: 100, height: 100, borderRadius: '50%', background: 'rgba(255,255,255,0.06)', top: -30, right: -20, pointerEvents: 'none' }} />
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ background: `linear-gradient(135deg, ${VERT} 0%, #2E6B4F 100%)`, borderRadius: 18, padding: '18px 20px', position: 'relative', overflow: 'hidden', boxShadow: '0 8px 24px rgba(27,59,43,0.25)' }}>
+              {/* Cercles décoratifs */}
+              <div style={{ position: 'absolute', width: 120, height: 120, borderRadius: '50%', background: 'rgba(255,255,255,0.06)', top: -35, right: -25, pointerEvents: 'none' }} />
+              <div style={{ position: 'absolute', width: 70, height: 70, borderRadius: '50%', background: 'rgba(255,255,255,0.04)', bottom: -20, right: 60, pointerEvents: 'none' }} />
+
+              {/* Ligne supérieure */}
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 14 }}>
                 <div>
-                  <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.5)', margin: '0 0 4px', letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 600 }}>Montant collecté</p>
-                  <p style={{ fontSize: 26, fontWeight: 800, color: '#fff', margin: 0, lineHeight: 1, letterSpacing: '-0.5px' }}>
+                  <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.5)', margin: '0 0 5px', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 700 }}>Montant collecté</p>
+                  <p style={{ fontSize: 30, fontWeight: 800, color: '#fff', margin: 0, lineHeight: 1, letterSpacing: '-1px' }}>
                     {stats.montantCollecte.toLocaleString()}
-                    <span style={{ fontSize: 12, fontWeight: 400, color: 'rgba(255,255,255,0.5)', marginLeft: 4 }}>FCFA</span>
+                    <span style={{ fontSize: 13, fontWeight: 400, color: 'rgba(255,255,255,0.5)', marginLeft: 5 }}>FCFA</span>
                   </p>
                 </div>
-                <div style={{ textAlign: 'right' }}>
-                  <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.5)', margin: '0 0 4px' }}>Solde disponible</p>
-                  <p style={{ fontSize: 16, fontWeight: 700, color: '#fff', margin: 0 }}>{stats.solde.toLocaleString()} <span style={{ fontSize: 10, opacity: 0.6 }}>FCFA</span></p>
+                {/* Badge solde */}
+                <div style={{ background: 'rgba(255,255,255,0.12)', borderRadius: 10, padding: '8px 12px', border: '1px solid rgba(255,255,255,0.1)', textAlign: 'right' }}>
+                  <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.5)', margin: '0 0 3px', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>Solde</p>
+                  <p style={{ fontSize: 14, fontWeight: 700, color: '#fff', margin: 0 }}>{stats.solde.toLocaleString()} <span style={{ fontSize: 9, opacity: 0.6 }}>FCFA</span></p>
                 </div>
               </div>
+
+              {/* Jauge */}
               {stats.budgetGlobal > 0 && (
-                <div style={{ marginTop: 10 }}>
-                  <div style={{ background: 'rgba(255,255,255,0.15)', borderRadius: 4, height: 3, marginBottom: 4 }}>
-                    <div style={{ background: '#fff', borderRadius: 4, height: 3, width: `${Math.min(pctBudget, 100)}%` }} />
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
+                    <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.45)', fontWeight: 500 }}>Progression objectif</span>
+                    <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.6)', fontWeight: 700 }}>{Math.round(pctBudget)}%</span>
                   </div>
-                  <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)', margin: 0 }}>
-                    {Math.round(pctBudget)}% de l'objectif · {stats.budgetGlobal.toLocaleString()} FCFA
-                  </p>
+                  <div style={{ background: 'rgba(255,255,255,0.12)', borderRadius: 4, height: 4 }}>
+                    <div style={{ background: 'rgba(255,255,255,0.85)', borderRadius: 4, height: 4, width: `${Math.min(pctBudget, 100)}%`, transition: 'width .4s' }} />
+                  </div>
                 </div>
               )}
             </div>
@@ -163,7 +171,7 @@ export default function DashboardPage() {
                 {dernieres.length === 0 ? (
                   <p style={{ fontSize: 13, color: '#94A3B8', textAlign: 'center', padding: '20px', margin: 0 }}>Aucune inscription.</p>
                 ) : (
-                  dernieres.slice(0, 5).map((ins, i, arr) => {
+                  dernieres.slice(0, 4).map((ins, i, arr) => {
                     const sb = statutBadge[ins.statut_paiement] || { bg: '#F3F4F6', color: '#374151', label: ins.statut_paiement }
                     return (
                       <div key={ins.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderBottom: i < arr.length - 1 ? '1px solid #F8FAFC' : 'none' }}>
