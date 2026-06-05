@@ -85,7 +85,7 @@ export default function DashboardPage() {
 
   return (
     <AdminLayout>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
         {/* ── HEADER ── */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -93,11 +93,9 @@ export default function DashboardPage() {
             <p style={{ fontSize: 11, color: '#94A3B8', margin: '0 0 1px', letterSpacing: '0.06em', textTransform: 'uppercase', fontWeight: 600 }}>Camp-Navs 2026</p>
             <p style={{ fontSize: 18, fontWeight: 700, color: '#1E293B', margin: 0 }}>Tableau de bord</p>
           </div>
-          <div style={{ textAlign: 'right' }}>
-            <p style={{ fontSize: 11, color: '#94A3B8', margin: 0 }}>
-              {new Date().toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })}
-            </p>
-          </div>
+          <p style={{ fontSize: 11, color: '#94A3B8', margin: 0 }}>
+            {new Date().toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })}
+          </p>
         </div>
 
         {loading ? (
@@ -107,39 +105,33 @@ export default function DashboardPage() {
             {/* ── 4 KPI ── */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 8 }}>
               {[
-                { label: 'Inscrits', val: stats.totalInscrits, color: '#1E293B' },
-                { label: 'Payés', val: stats.payes, color: '#065F46' },
-                { label: 'Attente', val: stats.enAttente, color: '#92400E' },
-                { label: 'Partiel', val: stats.partiels, color: '#6D28D9' },
+                { label: 'Inscrits', val: stats.totalInscrits, color: '#1E293B', bg: '#F8FAFC', border: '#E2E8F0' },
+                { label: 'Payés', val: stats.payes, color: '#065F46', bg: '#ECFDF5', border: '#6EE7B7' },
+                { label: 'Attente', val: stats.enAttente, color: '#92400E', bg: '#FFFBEB', border: '#FCD34D' },
+                { label: 'Partiel', val: stats.partiels, color: '#6D28D9', bg: '#F5F3FF', border: '#DDD6FE' },
               ].map(k => (
-                <div key={k.label} style={{ background: '#fff', borderRadius: 12, padding: '10px 8px', textAlign: 'center', border: '1px solid #F1F5F9' }}>
-                  <p style={{ fontSize: 22, fontWeight: 800, color: k.color, margin: '0 0 2px', lineHeight: 1 }}>{k.val}</p>
-                  <p style={{ fontSize: 9, color: '#94A3B8', margin: 0, letterSpacing: '0.04em' }}>{k.label}</p>
+                <div key={k.label} style={{ background: k.bg, borderRadius: 14, padding: '14px 8px', textAlign: 'center', border: `1px solid ${k.border}` }}>
+                  <p style={{ fontSize: 26, fontWeight: 800, color: k.color, margin: '0 0 4px', lineHeight: 1 }}>{k.val}</p>
+                  <p style={{ fontSize: 9, color: k.color, margin: 0, opacity: 0.7, letterSpacing: '0.04em', fontWeight: 600 }}>{k.label}</p>
                 </div>
               ))}
             </div>
 
             {/* ── HERO FINANCES ── */}
-            <div style={{ background: VERT, borderRadius: 16, padding: '20px 18px', position: 'relative', overflow: 'hidden' }}>
-              {/* Cercle décoratif */}
-              <div style={{ position: 'absolute', width: 140, height: 140, borderRadius: '50%', background: 'rgba(255,255,255,0.05)', top: -40, right: -30, pointerEvents: 'none' }} />
-              <div style={{ position: 'absolute', width: 80, height: 80, borderRadius: '50%', background: 'rgba(255,255,255,0.04)', bottom: -20, right: 60, pointerEvents: 'none' }} />
+            <div style={{ background: VERT, borderRadius: 18, padding: '22px 20px', position: 'relative', overflow: 'hidden' }}>
+              <div style={{ position: 'absolute', width: 160, height: 160, borderRadius: '50%', background: 'rgba(255,255,255,0.05)', top: -50, right: -40, pointerEvents: 'none' }} />
+              <div style={{ position: 'absolute', width: 90, height: 90, borderRadius: '50%', background: 'rgba(255,255,255,0.04)', bottom: -20, right: 70, pointerEvents: 'none' }} />
 
               <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', margin: '0 0 6px', letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 600 }}>Montant collecté</p>
-              <p style={{ fontSize: 30, fontWeight: 800, color: '#fff', margin: '0 0 3px', lineHeight: 1, letterSpacing: '-0.5px' }}>
+              <p style={{ fontSize: 34, fontWeight: 800, color: '#fff', margin: '0 0 4px', lineHeight: 1, letterSpacing: '-0.5px' }}>
                 {stats.montantCollecte.toLocaleString()}
                 <span style={{ fontSize: 14, fontWeight: 400, color: 'rgba(255,255,255,0.5)', marginLeft: 5 }}>FCFA</span>
               </p>
-
-              {/* Solde */}
-              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', margin: '0 0 14px' }}>
+              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', margin: '0 0 16px' }}>
                 Solde disponible :
-                <span style={{ fontWeight: 700, color: '#fff', marginLeft: 5 }}>
-                  {stats.solde.toLocaleString()} FCFA
-                </span>
+                <span style={{ fontWeight: 700, color: '#fff', marginLeft: 5 }}>{stats.solde.toLocaleString()} FCFA</span>
               </p>
 
-              {/* Jauge */}
               {stats.budgetGlobal > 0 && (
                 <>
                   <div style={{ background: 'rgba(255,255,255,0.15)', borderRadius: 4, height: 3, marginBottom: 6 }}>
@@ -162,15 +154,15 @@ export default function DashboardPage() {
                 </button>
               </div>
 
-              <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #F1F5F9', overflow: 'hidden' }}>
+              <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #F1F5F9', overflow: 'hidden' }}>
                 {dernieres.length === 0 ? (
                   <p style={{ fontSize: 13, color: '#94A3B8', textAlign: 'center', padding: '16px', margin: 0 }}>Aucune inscription.</p>
                 ) : (
-                  dernieres.slice(0, 3).map((ins, i) => {
+                  dernieres.slice(0, 5).map((ins, i, arr) => {
                     const sb = statutBadge[ins.statut_paiement] || { bg: '#F3F4F6', color: '#374151', label: ins.statut_paiement }
                     return (
-                      <div key={ins.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderBottom: i < 2 ? '1px solid #F8FAFC' : 'none' }}>
-                        <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <div key={ins.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderBottom: i < arr.length - 1 ? '1px solid #F8FAFC' : 'none' }}>
+                        <div style={{ width: 34, height: 34, borderRadius: '50%', background: '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                           <span style={{ fontSize: 12, fontWeight: 700, color: '#475569' }}>{ins.nom_complet?.charAt(0)}</span>
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
