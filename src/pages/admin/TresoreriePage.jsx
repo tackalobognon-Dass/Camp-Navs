@@ -7,7 +7,6 @@ import autoTable from 'jspdf-autotable'
 const VERT = '#1B3B2B'
 const VERT_CLAIR = '#E8F5E8'
 
-// ── Formatage montants sans bug locale ──
 function fmt(n) {
   return String(Math.round(n || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
 }
@@ -21,6 +20,10 @@ const TYPES_RECETTE = [
   { key: 'solde_anterieur',     label: 'Solde camp antérieur' },
   { key: 'autre',               label: 'Autre revenu' },
 ]
+const STATUTS_SUBVENTION = ['demandée', 'accordée', 'reçue']
+const UNITES = ['kg', 'litres', 'cartons', 'sacs', 'boîtes', 'pièces', 'unités']
+const STATUTS_DON = ['promis', 'partiellement reçu', 'reçu']
+
 function getTypeRecette(key) { return TYPES_RECETTE.find(t => t.key === key) || TYPES_RECETTE[6] }
 
 function filtrerParDate(items, dateKey, filtre) {
@@ -31,214 +34,208 @@ function filtrerParDate(items, dateKey, filtre) {
   return items.filter(i => new Date(i[dateKey]) >= debut)
 }
 
-// ── Export PDF structuré ──
-function exportPDFTresorerie(recettes, commissions, depenses, budgetGlobal) {
+function estAujourdhui(dateStr) {
+  const d = new Date(dateStr)
+  const now = new Date()
+  return d.getDate() === now.getDate() && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
+}
+
+function exportPDFTresorerie(recettes, commissions, depenses, donsNature, budgetGlobal) {
   const doc = new jsPDF()
   const now = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
-  const totalR = recettes.reduce((s, r) => s + (r.montant || r.valeur_estimee || 0), 0)
+  const totalR = recettes.reduce((s, r) => s + (r.montant || 0), 0)
   const totalD = depenses.reduce((s, d) => s + (d.montant || 0), 0)
+  const totalDN = donsNature.filter(d => d.statut === 'reçu').reduce((s, d) => s + (d.valeur_estimee || 0), 0)
   const solde = totalR - totalD
   const taux = budgetGlobal > 0 ? Math.round((totalR / budgetGlobal) * 100) : 0
-  const pageW = doc.internal.pageSize.getWidth()
+  const pw = doc.internal.pageSize.getWidth()
 
-  // ── EN-TÊTE ──
-  doc.setFillColor(27, 59, 43)
-  doc.rect(0, 0, pageW, 32, 'F')
-  doc.setTextColor(255, 255, 255)
-  doc.setFontSize(15); doc.setFont('helvetica', 'bold')
+  doc.setFillColor(27, 59, 43); doc.rect(0, 0, pw, 32, 'F')
+  doc.setTextColor(255,255,255); doc.setFontSize(15); doc.setFont('helvetica','bold')
   doc.text('Rapport Financier — Camp-Navs 2026', 14, 13)
-  doc.setFontSize(8); doc.setFont('helvetica', 'normal')
-  doc.text('Mission Évangélique des Navigateurs — Côte d\'Ivoire', 14, 20)
+  doc.setFontSize(8); doc.setFont('helvetica','normal')
+  doc.text("Mission Évangélique des Navigateurs — Côte d'Ivoire", 14, 20)
   doc.text(`Généré le ${now}`, 14, 26)
 
   let y = 40
 
-  // ── SECTION 1 : RÉSUMÉ EXÉCUTIF ──
-  doc.setTextColor(27, 59, 43); doc.setFontSize(11); doc.setFont('helvetica', 'bold')
+  // Section 1 — Résumé
+  doc.setTextColor(27,59,43); doc.setFontSize(11); doc.setFont('helvetica','bold')
   doc.text('1. RÉSUMÉ EXÉCUTIF', 14, y); y += 4
   autoTable(doc, {
     startY: y,
-    head: [['Indicateur', 'Montant (FCFA)', 'Observation']],
+    head: [['Indicateur','Montant (FCFA)','Observation']],
     body: [
-      ['Budget global',         budgetGlobal > 0 ? `${fmt(budgetGlobal)} FCFA` : 'Non défini', ''],
-      ['Total recettes',        `${fmt(totalR)} FCFA`, `${taux}% du budget`],
-      ['Total dépenses',        `${fmt(totalD)} FCFA`, ''],
-      ['Solde disponible',      `${fmt(solde)} FCFA`, solde >= 0 ? 'Excédent' : 'Déficit'],
+      ['Budget global', budgetGlobal > 0 ? `${fmt(budgetGlobal)} FCFA` : 'Non défini',''],
+      ['Total recettes', `${fmt(totalR)} FCFA`, `${taux}% du budget`],
+      ['Total dépenses', `${fmt(totalD)} FCFA`,''],
+      ['Solde disponible', `${fmt(solde)} FCFA`, solde >= 0 ? 'Excédent':'Déficit'],
+      ['Dons en nature (reçus)', `${fmt(totalDN)} FCFA`, `${donsNature.filter(d=>d.statut==='reçu').length} don(s)`],
     ],
-    headStyles: { fillColor: [27, 59, 43], fontSize: 9, fontStyle: 'bold' },
-    bodyStyles: { fontSize: 9 },
-    columnStyles: { 1: { halign: 'right' }, 2: { textColor: [100, 100, 100] } },
-    alternateRowStyles: { fillColor: [248, 250, 252] },
-    margin: { left: 14, right: 14 },
+    headStyles:{fillColor:[27,59,43],fontSize:9,fontStyle:'bold'},
+    bodyStyles:{fontSize:9},
+    columnStyles:{1:{halign:'right'},2:{textColor:[100,100,100]}},
+    alternateRowStyles:{fillColor:[248,250,252]},
+    margin:{left:14,right:14},
   })
   y = doc.lastAutoTable.finalY + 10
 
-  // ── SECTION 2 : RECETTES PAR SOURCE ──
-  doc.setTextColor(27, 59, 43); doc.setFontSize(11); doc.setFont('helvetica', 'bold')
+  // Section 2 — Recettes
+  doc.setTextColor(27,59,43); doc.setFontSize(11); doc.setFont('helvetica','bold')
   doc.text('2. RECETTES PAR SOURCE', 14, y); y += 4
-  const recettesParSource = TYPES_RECETTE.map(t => {
+  const parSource = TYPES_RECETTE.map(t => {
     const items = recettes.filter(r => r.type === t.key)
-    const total = items.reduce((s, r) => s + (r.montant || r.valeur_estimee || 0), 0)
-    return { label: t.label, total, count: items.length }
+    return { label: t.label, total: items.reduce((s,r)=>s+(r.montant||0),0), count: items.length }
   }).filter(t => t.total > 0)
   autoTable(doc, {
     startY: y,
-    head: [['Source', 'Nb', 'Montant (FCFA)']],
+    head: [['Source','Nb','Montant (FCFA)']],
     body: [
-      ...recettesParSource.map(t => [t.label, String(t.count), `${fmt(t.total)} FCFA`]),
-      [{ content: 'TOTAL', styles: { fontStyle: 'bold' } }, { content: String(recettes.length), styles: { fontStyle: 'bold' } }, { content: `${fmt(totalR)} FCFA`, styles: { fontStyle: 'bold', textColor: [6, 95, 70] } }],
+      ...parSource.map(t=>[t.label,String(t.count),`${fmt(t.total)} FCFA`]),
+      [{content:'TOTAL',styles:{fontStyle:'bold'}},{content:String(recettes.length),styles:{fontStyle:'bold'}},{content:`${fmt(totalR)} FCFA`,styles:{fontStyle:'bold',textColor:[6,95,70]}}],
     ],
-    headStyles: { fillColor: [6, 95, 70], fontSize: 9 },
-    bodyStyles: { fontSize: 9 },
-    columnStyles: { 1: { halign: 'center' }, 2: { halign: 'right' } },
-    alternateRowStyles: { fillColor: [236, 253, 245] },
-    margin: { left: 14, right: 14 },
+    headStyles:{fillColor:[6,95,70],fontSize:9},
+    bodyStyles:{fontSize:9},
+    columnStyles:{1:{halign:'center'},2:{halign:'right'}},
+    alternateRowStyles:{fillColor:[236,253,245]},
+    margin:{left:14,right:14},
   })
   y = doc.lastAutoTable.finalY + 10
 
-  // ── SECTION 3 : DÉPENSES PAR COMMISSION ──
-  doc.setTextColor(27, 59, 43); doc.setFontSize(11); doc.setFont('helvetica', 'bold')
-  doc.text('3. DÉPENSES PAR COMMISSION', 14, y); y += 4
-
-  for (const c of commissions) {
-    const deps = depenses.filter(d => d.commission_id === c.id)
-    const totalDep = deps.reduce((s, d) => s + d.montant, 0)
-    const alloue = c.montant_alloue || 0
-    const soldeC = alloue - totalDep
-    const depasse = totalDep > alloue && alloue > 0
-
-    // En-tête commission
-    if (y > 240) { doc.addPage(); y = 20 }
-    doc.setFontSize(9); doc.setFont('helvetica', 'bold')
-    doc.setTextColor(depasse ? 192 : 27, depasse ? 38 : 59, depasse ? 38 : 43)
-    doc.text(`  ${c.nom_commission}${depasse ? '  ⚠ DÉPASSEMENT : +' + fmt(totalDep - alloue) + ' FCFA' : ''}`, 14, y)
-    y += 4
-
-    autoTable(doc, {
-      startY: y,
-      head: [['Budget prévu', 'Alloué', 'Dépensé', 'Solde']],
-      body: [[
-        `${fmt(c.budget_previsionnel || 0)} FCFA`,
-        `${fmt(alloue)} FCFA`,
-        `${fmt(totalDep)} FCFA`,
-        { content: `${soldeC >= 0 ? '+' : ''}${fmt(soldeC)} FCFA`, styles: { textColor: soldeC < 0 ? [220, 38, 38] : [6, 95, 70], fontStyle: 'bold' } },
-      ]],
-      headStyles: { fillColor: depasse ? [220, 38, 38] : [30, 78, 216], fontSize: 8 },
-      bodyStyles: { fontSize: 8 },
-      columnStyles: { 1: { halign: 'right' }, 2: { halign: 'right' }, 3: { halign: 'right' } },
-      margin: { left: 14, right: 14 },
-    })
-    y = doc.lastAutoTable.finalY + 3
-
-    if (deps.length > 0) {
-      autoTable(doc, {
-        startY: y,
-        head: [['Description', 'Montant (FCFA)', 'Date', 'Justificatif']],
-        body: deps.map(d => [
-          d.description || '-',
-          `${fmt(d.montant)} FCFA`,
-          new Date(d.date_depense).toLocaleDateString('fr-FR'),
-          d.justificatif || '-',
-        ]),
-        headStyles: { fillColor: [71, 85, 105], fontSize: 7 },
-        bodyStyles: { fontSize: 7 },
-        columnStyles: { 1: { halign: 'right' } },
-        alternateRowStyles: { fillColor: [248, 250, 252] },
-        margin: { left: 20, right: 14 },
-      })
-      y = doc.lastAutoTable.finalY + 8
-    } else {
-      doc.setFontSize(7); doc.setTextColor(148, 163, 184); doc.setFont('helvetica', 'italic')
-      doc.text('  Aucune dépense enregistrée.', 20, y); y += 8
-    }
-  }
-
-  // ── SECTION 4 : DÉPASSEMENTS ──
-  const depassements = commissions.filter(c => {
-    const dep = depenses.filter(d => d.commission_id === c.id).reduce((s, d) => s + d.montant, 0)
-    return dep > (c.montant_alloue || 0) && (c.montant_alloue || 0) > 0
-  })
-
-  if (depassements.length > 0) {
+  // Section 3 — Dons en nature
+  if (donsNature.length > 0) {
     if (y > 230) { doc.addPage(); y = 20 }
-    doc.setTextColor(220, 38, 38); doc.setFontSize(11); doc.setFont('helvetica', 'bold')
-    doc.text('4. DÉPASSEMENTS DE BUDGET', 14, y); y += 4
+    doc.setTextColor(27,59,43); doc.setFontSize(11); doc.setFont('helvetica','bold')
+    doc.text('3. DONS EN NATURE', 14, y); y += 4
     autoTable(doc, {
       startY: y,
-      head: [['Commission', 'Alloué (FCFA)', 'Dépensé (FCFA)', 'Dépassement (FCFA)']],
-      body: depassements.map(c => {
-        const dep = depenses.filter(d => d.commission_id === c.id).reduce((s, d) => s + d.montant, 0)
-        return [c.nom_commission, `${fmt(c.montant_alloue || 0)} FCFA`, `${fmt(dep)} FCFA`, `+${fmt(dep - (c.montant_alloue || 0))} FCFA`]
-      }),
-      headStyles: { fillColor: [220, 38, 38], fontSize: 9 },
-      bodyStyles: { fontSize: 9, textColor: [220, 38, 38] },
-      columnStyles: { 1: { halign: 'right' }, 2: { halign: 'right' }, 3: { halign: 'right', fontStyle: 'bold' } },
-      margin: { left: 14, right: 14 },
+      head: [['Désignation','Qté','Donateur','Valeur est.','Statut']],
+      body: donsNature.map(d=>[d.designation,`${d.quantite} ${d.unite||''}`,d.donateur||'-',`${fmt(d.valeur_estimee||0)} FCFA`,d.statut||'-']),
+      headStyles:{fillColor:[109,40,217],fontSize:8},
+      bodyStyles:{fontSize:8},
+      columnStyles:{3:{halign:'right'}},
+      alternateRowStyles:{fillColor:[245,243,255]},
+      margin:{left:14,right:14},
     })
     y = doc.lastAutoTable.finalY + 10
   }
 
-  // ── CADRE OFFICIEL ──
+  // Section 4 — Dépenses par commission
+  const sectionNum = donsNature.length > 0 ? '4' : '3'
+  if (y > 230) { doc.addPage(); y = 20 }
+  doc.setTextColor(27,59,43); doc.setFontSize(11); doc.setFont('helvetica','bold')
+  doc.text(`${sectionNum}. DÉPENSES PAR COMMISSION`, 14, y); y += 4
+
+  for (const c of commissions) {
+    const deps = depenses.filter(d => d.commission_id === c.id)
+    const totalDep = deps.reduce((s,d)=>s+d.montant,0)
+    const alloue = c.montant_alloue || 0
+    const sol = alloue - totalDep
+    const depasse = totalDep > alloue && alloue > 0
+    if (y > 240) { doc.addPage(); y = 20 }
+    doc.setFontSize(9); doc.setFont('helvetica','bold')
+    doc.setTextColor(depasse ? 192:27, depasse?38:59, depasse?38:43)
+    doc.text(`  ${c.nom_commission}${depasse ? '  ⚠ DÉPASSEMENT : +'+fmt(totalDep-alloue)+' FCFA':''}`, 14, y); y += 4
+    autoTable(doc, {
+      startY: y,
+      head: [['Budget prévu','Alloué','Dépensé','Solde']],
+      body: [[`${fmt(c.budget_previsionnel||0)} FCFA`,`${fmt(alloue)} FCFA`,`${fmt(totalDep)} FCFA`,{content:`${sol>=0?'+':''}${fmt(sol)} FCFA`,styles:{textColor:sol<0?[220,38,38]:[6,95,70],fontStyle:'bold'}}]],
+      headStyles:{fillColor:depasse?[220,38,38]:[30,78,216],fontSize:8},
+      bodyStyles:{fontSize:8},
+      columnStyles:{1:{halign:'right'},2:{halign:'right'},3:{halign:'right'}},
+      margin:{left:14,right:14},
+    })
+    y = doc.lastAutoTable.finalY + 3
+    if (deps.length > 0) {
+      autoTable(doc, {
+        startY: y,
+        head: [['Description','Montant','Date','Justificatif']],
+        body: deps.map(d=>[d.description||'-',`${fmt(d.montant)} FCFA`,new Date(d.date_depense).toLocaleDateString('fr-FR'),d.justificatif||'-']),
+        headStyles:{fillColor:[71,85,105],fontSize:7},
+        bodyStyles:{fontSize:7},
+        columnStyles:{1:{halign:'right'}},
+        alternateRowStyles:{fillColor:[248,250,252]},
+        margin:{left:20,right:14},
+      })
+      y = doc.lastAutoTable.finalY + 8
+    } else {
+      doc.setFontSize(7); doc.setTextColor(148,163,184); doc.setFont('helvetica','italic')
+      doc.text('  Aucune dépense.', 20, y); y += 8
+    }
+  }
+
+  // Section dépassements
+  const depassements = commissions.filter(c => { const d=depenses.filter(x=>x.commission_id===c.id).reduce((s,x)=>s+x.montant,0); return d>(c.montant_alloue||0)&&(c.montant_alloue||0)>0 })
+  if (depassements.length > 0) {
+    if (y > 230) { doc.addPage(); y = 20 }
+    doc.setTextColor(220,38,38); doc.setFontSize(11); doc.setFont('helvetica','bold')
+    doc.text(`${parseInt(sectionNum)+1}. DÉPASSEMENTS`, 14, y); y += 4
+    autoTable(doc, {
+      startY: y,
+      head: [['Commission','Alloué','Dépensé','Dépassement']],
+      body: depassements.map(c=>{const d=depenses.filter(x=>x.commission_id===c.id).reduce((s,x)=>s+x.montant,0);return[c.nom_commission,`${fmt(c.montant_alloue||0)} FCFA`,`${fmt(d)} FCFA`,`+${fmt(d-(c.montant_alloue||0))} FCFA`]}),
+      headStyles:{fillColor:[220,38,38],fontSize:9},
+      bodyStyles:{fontSize:9,textColor:[220,38,38]},
+      columnStyles:{1:{halign:'right'},2:{halign:'right'},3:{halign:'right',fontStyle:'bold'}},
+      margin:{left:14,right:14},
+    })
+  }
+
+  // Cadre officiel
   const pageCount = doc.internal.getNumberOfPages()
   doc.setPage(pageCount)
-  const pageH = doc.internal.pageSize.getHeight()
-  const cadreY = pageH - 55
-
-  doc.setDrawColor(27, 59, 43); doc.setLineWidth(0.5)
-  doc.rect(14, cadreY, pageW - 28, 40)
-  doc.setFillColor(27, 59, 43)
-  doc.rect(14, cadreY, pageW - 28, 7, 'F')
-  doc.setTextColor(255, 255, 255); doc.setFontSize(8); doc.setFont('helvetica', 'bold')
-  doc.text('CERTIFICATION DU TRÉSORIER', 16, cadreY + 5)
-
-  doc.setTextColor(27, 59, 43); doc.setFontSize(8); doc.setFont('helvetica', 'normal')
-  const col1 = 18, col2 = pageW / 2 + 5
-  doc.text('Établi par :', col1, cadreY + 13)
-  doc.text('Fonction : Trésorier', col2, cadreY + 13)
-  doc.line(col1 + 22, cadreY + 13, col2 - 5, cadreY + 13)
-
-  doc.text('Date :', col1, cadreY + 22)
-  doc.text(`Signature :`, col2, cadreY + 22)
-  doc.line(col1 + 14, cadreY + 22, col2 - 5, cadreY + 22)
-  doc.line(col2 + 22, cadreY + 22, pageW - 16, cadreY + 22)
-
-  doc.text(`Camp-Navs 2026 · Mission Évangélique des Navigateurs CI · ${now}`, pageW / 2, cadreY + 33, { align: 'center' })
-
-  doc.save(`Rapport_Tresorerie_CampNavs2026_${new Date().toLocaleDateString('fr-FR').replace(/\//g, '-')}.pdf`)
+  const pH = doc.internal.pageSize.getHeight()
+  const cy = pH - 55
+  doc.setDrawColor(27,59,43); doc.setLineWidth(0.5)
+  doc.rect(14, cy, pw-28, 40)
+  doc.setFillColor(27,59,43); doc.rect(14, cy, pw-28, 7, 'F')
+  doc.setTextColor(255,255,255); doc.setFontSize(8); doc.setFont('helvetica','bold')
+  doc.text('CERTIFICATION DU TRÉSORIER', 16, cy+5)
+  doc.setTextColor(27,59,43); doc.setFontSize(8); doc.setFont('helvetica','normal')
+  const c1=18, c2=pw/2+5
+  doc.text('Établi par :', c1, cy+13); doc.line(c1+22, cy+13, c2-5, cy+13)
+  doc.text('Fonction : Trésorier', c2, cy+13)
+  doc.text('Date :', c1, cy+22); doc.line(c1+14, cy+22, c2-5, cy+22)
+  doc.text('Signature :', c2, cy+22); doc.line(c2+22, cy+22, pw-16, cy+22)
+  doc.setFontSize(7); doc.setTextColor(100,116,139)
+  doc.text(`Camp-Navs 2026 · Mission Évangélique des Navigateurs CI · ${now}`, pw/2, cy+33, {align:'center'})
+  doc.save(`Rapport_Tresorerie_CampNavs2026_${new Date().toLocaleDateString('fr-FR').replace(/\//g,'-')}.pdf`)
 }
 
-function exportExcelTresorerie(recettes, commissions, depenses) {
+function exportExcel(recettes, commissions, depenses) {
   const now = new Date().toLocaleDateString('fr-FR')
-  const totalR = recettes.reduce((s, r) => s + (r.montant || r.valeur_estimee || 0), 0)
-  const totalD = depenses.reduce((s, d) => s + (d.montant || 0), 0)
+  const totalR = recettes.reduce((s,r)=>s+(r.montant||0),0)
+  const totalD = depenses.reduce((s,d)=>s+(d.montant||0),0)
   const lignes = [
-    ['RAPPORT FINANCIER — CAMP-NAVS 2026'], [`Exporté le ${now}`], [],
-    ['=== RECETTES ==='], ['Type', 'Description', 'Donateur', 'Montant', 'Date'],
-    ...recettes.map(r => [getTypeRecette(r.type).label, r.description || '', r.donateur || '', r.montant || r.valeur_estimee || 0, new Date(r.date_reception).toLocaleDateString('fr-FR')]),
-    [], ['Total recettes', '', '', totalR], [],
-    ['=== DÉPENSES ==='], ['Commission', 'Description', 'Montant', 'Date'],
-    ...depenses.map(d => [d.nom_commission || '', d.description || '', d.montant || 0, new Date(d.date_depense).toLocaleDateString('fr-FR')]),
-    [], ['=== RÉSUMÉ ==='],
-    ['Total recettes', `${fmt(totalR)} FCFA`],
-    ['Total dépenses', `${fmt(totalD)} FCFA`],
-    ['Solde', `${fmt(totalR - totalD)} FCFA`],
+    ['RAPPORT FINANCIER — CAMP-NAVS 2026'],[`Exporté le ${now}`],[],
+    ['=== RECETTES ==='],['Type','Description','Donateur','Montant','Date'],
+    ...recettes.map(r=>[getTypeRecette(r.type).label,r.description||'',r.donateur||'',r.montant||0,new Date(r.date_reception).toLocaleDateString('fr-FR')]),
+    [],[`Total recettes`,'','',totalR],[],
+    ['=== DÉPENSES ==='],['Commission','Description','Montant','Date'],
+    ...depenses.map(d=>[d.nom_commission||'',d.description||'',d.montant||0,new Date(d.date_depense).toLocaleDateString('fr-FR')]),
+    [],[`Total dépenses`,'','',totalD],[],
+    ['=== RÉSUMÉ ==='],['Total recettes',`${fmt(totalR)} FCFA`],['Total dépenses',`${fmt(totalD)} FCFA`],['Solde',`${fmt(totalR-totalD)} FCFA`],
   ]
-  const csv = '\uFEFF' + lignes.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(';')).join('\n')
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+  const csv = '\uFEFF'+lignes.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(';')).join('\n')
+  const blob = new Blob([csv],{type:'text/csv;charset=utf-8;'})
   const url = URL.createObjectURL(blob)
-  const a = document.createElement('a'); a.href = url; a.download = `Tresorerie_CampNavs2026_${now.replace(/\//g, '-')}.csv`; a.click()
+  const a = document.createElement('a'); a.href=url; a.download=`Tresorerie_CampNavs2026_${now.replace(/\//g,'-')}.csv`; a.click()
   URL.revokeObjectURL(url)
 }
 
-const inputStyle = "w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-white outline-none focus:border-emerald-400"
-const labelStyle = "block text-xs text-gray-500 mb-1"
+const iS = "w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-white outline-none focus:border-emerald-400"
+const lS = "block text-xs text-gray-500 mb-1"
 const LIMIT = 50
+const EMPTY_R = { type:'frais_participation', description:'', montant:'', donateur:'', date_reception:new Date().toISOString().split('T')[0], statut_recette:'', quantite:'', prix_unitaire:'' }
+const EMPTY_D = { commission_id:'', description:'', montant:'', date_depense:new Date().toISOString().split('T')[0], justificatif:'' }
+const EMPTY_DN = { designation:'', quantite:'', unite:'kg', valeur_estimee:'', donateur:'', type_donateur:'exterieur', commission_id:'', statut:'promis', date_reception:new Date().toISOString().split('T')[0] }
 
 export default function TresoreriePage() {
   const [onglet, setOnglet] = useState('tableau_bord')
   const [recettes, setRecettes] = useState([])
   const [commissions, setCommissions] = useState([])
   const [depenses, setDepenses] = useState([])
+  const [donsNature, setDonsNature] = useState([])
   const [budgetGlobal, setBudgetGlobal] = useState(0)
   const [budgetGlobalId, setBudgetGlobalId] = useState(null)
   const [editBudget, setEditBudget] = useState(false)
@@ -246,175 +243,359 @@ export default function TresoreriePage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
+  // Formulaires
   const [showRecette, setShowRecette] = useState(false)
   const [showCommission, setShowCommission] = useState(false)
   const [showDepense, setShowDepense] = useState(false)
+  const [showDonNature, setShowDonNature] = useState(false)
   const [showAllouer, setShowAllouer] = useState(null)
   const [ficheCommission, setFicheCommission] = useState(null)
 
-  const [recetteForm, setRecetteForm] = useState({ type: 'frais_participation', description: '', montant: '', valeur_estimee: '', donateur: '', date_reception: new Date().toISOString().split('T')[0] })
-  const [commissionForm, setCommissionForm] = useState({ nom_commission: '', budget_previsionnel: '' })
-  const [depenseForm, setDepenseForm] = useState({ commission_id: '', description: '', montant: '', date_depense: new Date().toISOString().split('T')[0], justificatif: '' })
+  // Forms data
+  const [recetteForm, setRecetteForm] = useState(EMPTY_R)
+  const [editRecetteId, setEditRecetteId] = useState(null)
+  const [commissionForm, setCommissionForm] = useState({ nom_commission:'', budget_previsionnel:'' })
+  const [depenseForm, setDepenseForm] = useState(EMPTY_D)
+  const [editDepenseId, setEditDepenseId] = useState(null)
+  const [donNatureForm, setDonNatureForm] = useState(EMPTY_DN)
+  const [editDonNatureId, setEditDonNatureId] = useState(null)
   const [allouerMontant, setAllouerMontant] = useState('')
 
-  const [pageRecettes, setPageRecettes] = useState(0)
-  const [pageDepenses, setPageDepenses] = useState(0)
-  const [hasMoreRecettes, setHasMoreRecettes] = useState(false)
-  const [hasMoreDepenses, setHasMoreDepenses] = useState(false)
+  // Pagination
+  const [pageR, setPageR] = useState(0)
+  const [pageD, setPageD] = useState(0)
+  const [hasMoreR, setHasMoreR] = useState(false)
+  const [hasMoreD, setHasMoreD] = useState(false)
   const [loadingMore, setLoadingMore] = useState(false)
-  const [filtreDateRecettes, setFiltreDateRecettes] = useState('tout')
-  const [filtreDateDepenses, setFiltreDateDepenses] = useState('tout')
 
+  // Filtres
+  const [filtreDateR, setFiltreDateR] = useState('tout')
+  const [filtreDateD, setFiltreDateD] = useState('tout')
+  const [vueDepenses, setVueDepenses] = useState('liste') // 'liste' | 'groupee'
+
+  // Toast
   const [toast, setToast] = useState('')
   const showToast = useCallback((msg) => { setToast(msg); setTimeout(() => setToast(''), 2500) }, [])
 
   useEffect(() => { fetchData() }, [])
 
   async function fetchData() {
-    const [{ data: r, count: rc }, { data: c }, { data: d, count: dc }, { data: bg }] = await Promise.all([
-      supabase.from('recettes').select('*', { count: 'exact' }).order('date_reception', { ascending: false }).range(0, LIMIT - 1),
+    const [{ data:r, count:rc }, { data:c }, { data:d, count:dc }, { data:dn }, { data:bg }] = await Promise.all([
+      supabase.from('recettes').select('*',{count:'exact'}).order('date_reception',{ascending:false}).range(0,LIMIT-1),
       supabase.from('budget_commissions').select('*').order('nom_commission').limit(LIMIT),
-      supabase.from('depenses').select('*', { count: 'exact' }).order('date_depense', { ascending: false }).range(0, LIMIT - 1),
+      supabase.from('depenses').select('*',{count:'exact'}).order('date_depense',{ascending:false}).range(0,LIMIT-1),
+      supabase.from('dons_nature').select('*').order('date_reception',{ascending:false}),
       supabase.from('budget_global').select('*').limit(1),
     ])
-    setRecettes(r || []); setCommissions(c || []); setDepenses(d || [])
-    setHasMoreRecettes((rc || 0) > LIMIT); setHasMoreDepenses((dc || 0) > LIMIT)
-    if (bg && bg.length > 0) { setBudgetGlobal(bg[0].montant || 0); setBudgetGlobalId(bg[0].id); setBudgetForm(bg[0].montant || 0) }
+    setRecettes(r||[]); setCommissions(c||[]); setDepenses(d||[]); setDonsNature(dn||[])
+    setHasMoreR((rc||0)>LIMIT); setHasMoreD((dc||0)>LIMIT)
+    if (bg&&bg.length>0) { setBudgetGlobal(bg[0].montant||0); setBudgetGlobalId(bg[0].id); setBudgetForm(bg[0].montant||0) }
     setLoading(false)
   }
 
-  async function chargerPlusRecettes() {
-    setLoadingMore(true)
-    const next = pageRecettes + 1
-    const { data } = await supabase.from('recettes').select('*').order('date_reception', { ascending: false }).range(next * LIMIT, next * LIMIT + LIMIT - 1)
-    setRecettes(prev => [...prev, ...(data || [])]); setPageRecettes(next); setHasMoreRecettes((data || []).length === LIMIT); setLoadingMore(false)
+  // ── useMemo ──
+  const totalRecettes  = useMemo(()=>recettes.reduce((s,r)=>s+(r.montant||0),0),[recettes])
+  const totalDepenses  = useMemo(()=>depenses.reduce((s,d)=>s+(d.montant||0),0),[depenses])
+  const soldeGlobal    = useMemo(()=>totalRecettes-totalDepenses,[totalRecettes,totalDepenses])
+  const totalAlloue    = useMemo(()=>commissions.reduce((s,c)=>s+(c.montant_alloue||0),0),[commissions])
+  const soldeNonAlloue = useMemo(()=>totalRecettes-totalAlloue,[totalRecettes,totalAlloue])
+  const pctCollecte    = useMemo(()=>budgetGlobal>0?Math.round((totalRecettes/budgetGlobal)*100):0,[totalRecettes,budgetGlobal])
+  const historique     = useMemo(()=>{
+    const r=recettes.map(r=>({...r,_type:'recette',_date:r.date_reception,_montant:r.montant||0,_label:r.description||getTypeRecette(r.type).label,_sub:r.donateur||''}))
+    const d=depenses.map(d=>({...d,_type:'depense',_date:d.date_depense,_montant:d.montant||0,_label:d.description,_sub:d.nom_commission||''}))
+    return [...r,...d].sort((a,b)=>new Date(b._date)-new Date(a._date))
+  },[recettes,depenses])
+  const caisseJour     = useMemo(()=>historique.filter(tx=>estAujourdhui(tx._date)),[historique])
+  const recettesFiltrees = useMemo(()=>filtrerParDate(recettes,'date_reception',filtreDateR),[recettes,filtreDateR])
+  const depensesFiltrees = useMemo(()=>filtrerParDate(depenses,'date_depense',filtreDateD),[depenses,filtreDateD])
+  const depassements     = useMemo(()=>commissions.filter(c=>{
+    const d=depenses.filter(x=>x.commission_id===c.id).reduce((s,x)=>s+x.montant,0)
+    return d>(c.montant_alloue||0)&&(c.montant_alloue||0)>0
+  }),[commissions,depenses])
+
+  function commStats(c) {
+    const dep=depenses.filter(d=>d.commission_id===c.id).reduce((s,d)=>s+d.montant,0)
+    const alloue=c.montant_alloue||0; const pct=alloue>0?Math.round((dep/alloue)*100):0
+    const depasse=dep>alloue&&alloue>0; const warning=pct>=80&&!depasse
+    return { dep, alloue, sol:alloue-dep, pct, depasse, warning, couleurBarre:depasse?'#DC2626':warning?'#D97706':'#065F46' }
   }
 
-  async function chargerPlusDepenses() {
-    setLoadingMore(true)
-    const next = pageDepenses + 1
-    const { data } = await supabase.from('depenses').select('*').order('date_depense', { ascending: false }).range(next * LIMIT, next * LIMIT + LIMIT - 1)
-    setDepenses(prev => [...prev, ...(data || [])]); setPageDepenses(next); setHasMoreDepenses((data || []).length === LIMIT); setLoadingMore(false)
+  // ── Charger plus ──
+  async function chargerPlusR() {
+    setLoadingMore(true); const next=pageR+1
+    const {data}=await supabase.from('recettes').select('*').order('date_reception',{ascending:false}).range(next*LIMIT,next*LIMIT+LIMIT-1)
+    setRecettes(prev=>[...prev,...(data||[])]); setPageR(next); setHasMoreR((data||[]).length===LIMIT); setLoadingMore(false)
+  }
+  async function chargerPlusD() {
+    setLoadingMore(true); const next=pageD+1
+    const {data}=await supabase.from('depenses').select('*').order('date_depense',{ascending:false}).range(next*LIMIT,next*LIMIT+LIMIT-1)
+    setDepenses(prev=>[...prev,...(data||[])]); setPageD(next); setHasMoreD((data||[]).length===LIMIT); setLoadingMore(false)
   }
 
-  const totalRecettes  = useMemo(() => recettes.reduce((s, r) => s + (r.montant || r.valeur_estimee || 0), 0), [recettes])
-  const totalDepenses  = useMemo(() => depenses.reduce((s, d) => s + (d.montant || 0), 0), [depenses])
-  const soldeGlobal    = useMemo(() => totalRecettes - totalDepenses, [totalRecettes, totalDepenses])
-  const totalAlloue    = useMemo(() => commissions.reduce((s, c) => s + (c.montant_alloue || 0), 0), [commissions])
-  const soldeNonAlloue = useMemo(() => totalRecettes - totalAlloue, [totalRecettes, totalAlloue])
-  const pctCollecte    = useMemo(() => budgetGlobal > 0 ? Math.round((totalRecettes / budgetGlobal) * 100) : 0, [totalRecettes, budgetGlobal])
-
-  const historique = useMemo(() => {
-    const r = recettes.map(r => ({ ...r, _type: 'recette', _date: r.date_reception, _montant: r.montant || r.valeur_estimee || 0, _label: r.description || getTypeRecette(r.type).label, _sub: r.donateur || getTypeRecette(r.type).label }))
-    const d = depenses.map(d => ({ ...d, _type: 'depense', _date: d.date_depense, _montant: d.montant || 0, _label: d.description, _sub: d.nom_commission || '' }))
-    return [...r, ...d].sort((a, b) => new Date(b._date) - new Date(a._date))
-  }, [recettes, depenses])
-
-  const recettesFiltrees = useMemo(() => filtrerParDate(recettes, 'date_reception', filtreDateRecettes), [recettes, filtreDateRecettes])
-  const depensesFiltrees = useMemo(() => filtrerParDate(depenses, 'date_depense', filtreDateDepenses), [depenses, filtreDateDepenses])
-
+  // ── CRUD ──
   async function saveBudgetGlobal() {
-    setSaving(true)
-    const montant = parseInt(budgetForm) || 0
-    if (budgetGlobalId) await supabase.from('budget_global').update({ montant }).eq('id', budgetGlobalId)
-    else { const { data } = await supabase.from('budget_global').insert([{ montant }]).select().single(); if (data) setBudgetGlobalId(data.id) }
+    setSaving(true); const montant=parseInt(budgetForm)||0
+    if (budgetGlobalId) await supabase.from('budget_global').update({montant}).eq('id',budgetGlobalId)
+    else { const {data}=await supabase.from('budget_global').insert([{montant}]).select().single(); if(data)setBudgetGlobalId(data.id) }
     setBudgetGlobal(montant); setSaving(false); setEditBudget(false); showToast('Budget mis à jour ✓')
   }
 
   async function saveRecette() {
-    if (!recetteForm.montant && !recetteForm.valeur_estimee) return
+    if (!recetteForm.montant) return
     setSaving(true)
-    const payload = { type: recetteForm.type, description: recetteForm.description, montant: parseInt(recetteForm.montant) || 0, valeur_estimee: parseInt(recetteForm.valeur_estimee) || 0, donateur: recetteForm.donateur, date_reception: recetteForm.date_reception }
-    const { data: newR } = await supabase.from('recettes').insert([payload]).select().single()
-    if (newR) setRecettes(prev => [newR, ...prev])
-    setSaving(false); setShowRecette(false)
-    setRecetteForm({ type: 'frais_participation', description: '', montant: '', valeur_estimee: '', donateur: '', date_reception: new Date().toISOString().split('T')[0] })
-    showToast('Recette ajoutée ✓')
+    const montant = recetteForm.type==='vente_tshirt' && recetteForm.quantite && recetteForm.prix_unitaire
+      ? parseInt(recetteForm.quantite)*parseInt(recetteForm.prix_unitaire)
+      : parseInt(recetteForm.montant)||0
+    const payload = { type:recetteForm.type, description:recetteForm.description, montant, donateur:recetteForm.donateur, date_reception:recetteForm.date_reception, statut_recette:recetteForm.statut_recette||null, quantite:recetteForm.quantite?parseInt(recetteForm.quantite):null, prix_unitaire:recetteForm.prix_unitaire?parseInt(recetteForm.prix_unitaire):null }
+    if (editRecetteId) {
+      const {data:upd}=await supabase.from('recettes').update(payload).eq('id',editRecetteId).select().single()
+      if(upd)setRecettes(prev=>prev.map(r=>r.id===editRecetteId?upd:r))
+      showToast('Recette modifiée ✓')
+    } else {
+      const {data:newR}=await supabase.from('recettes').insert([payload]).select().single()
+      if(newR)setRecettes(prev=>[newR,...prev])
+      showToast('Recette ajoutée ✓')
+    }
+    setSaving(false); setShowRecette(false); setEditRecetteId(null); setRecetteForm(EMPTY_R)
   }
 
-  async function saveCommission() {
-    if (!commissionForm.nom_commission) return
-    setSaving(true)
-    const { data: newC } = await supabase.from('budget_commissions').insert([{ nom_commission: commissionForm.nom_commission, budget_previsionnel: parseInt(commissionForm.budget_previsionnel) || 0, montant_alloue: 0 }]).select().single()
-    if (newC) setCommissions(prev => [...prev, newC].sort((a, b) => a.nom_commission.localeCompare(b.nom_commission)))
-    setSaving(false); setShowCommission(false); setCommissionForm({ nom_commission: '', budget_previsionnel: '' }); showToast('Commission créée ✓')
-  }
-
-  async function saveDepense() {
-    if (!depenseForm.commission_id || !depenseForm.description || !depenseForm.montant) return
-    setSaving(true)
-    const comm = commissions.find(c => c.id === depenseForm.commission_id)
-    const { data: newD } = await supabase.from('depenses').insert([{ commission_id: depenseForm.commission_id, nom_commission: comm?.nom_commission || '', description: depenseForm.description, montant: parseInt(depenseForm.montant) || 0, date_depense: depenseForm.date_depense, justificatif: depenseForm.justificatif }]).select().single()
-    if (newD) setDepenses(prev => [newD, ...prev])
-    setSaving(false); setShowDepense(false)
-    setDepenseForm({ commission_id: '', description: '', montant: '', date_depense: new Date().toISOString().split('T')[0], justificatif: '' })
-    showToast('Dépense enregistrée ✓')
-  }
-
-  async function saveAllouer(commissionId) {
-    if (!allouerMontant) return
-    setSaving(true)
-    const montant = parseInt(allouerMontant)
-    await supabase.from('budget_commissions').update({ montant_alloue: montant }).eq('id', commissionId)
-    setCommissions(prev => prev.map(c => c.id === commissionId ? { ...c, montant_alloue: montant } : c))
-    setSaving(false); setShowAllouer(null); setAllouerMontant(''); showToast('Allocation mise à jour ✓')
+  function openEditRecette(r) {
+    setRecetteForm({ type:r.type, description:r.description||'', montant:String(r.montant||''), donateur:r.donateur||'', date_reception:r.date_reception, statut_recette:r.statut_recette||'', quantite:String(r.quantite||''), prix_unitaire:String(r.prix_unitaire||'') })
+    setEditRecetteId(r.id); setShowRecette(true)
   }
 
   async function supprimerRecette(id) {
-    if (!window.confirm('Supprimer ?')) return
-    await supabase.from('recettes').delete().eq('id', id)
-    setRecettes(prev => prev.filter(r => r.id !== id)); showToast('Recette supprimée')
+    if(!window.confirm('Supprimer ?'))return
+    await supabase.from('recettes').delete().eq('id',id)
+    setRecettes(prev=>prev.filter(r=>r.id!==id)); showToast('Recette supprimée')
+  }
+
+  async function saveDepense() {
+    if(!depenseForm.commission_id||!depenseForm.description||!depenseForm.montant)return
+    setSaving(true)
+    const comm=commissions.find(c=>c.id===depenseForm.commission_id)
+    const payload={ commission_id:depenseForm.commission_id, nom_commission:comm?.nom_commission||'', description:depenseForm.description, montant:parseInt(depenseForm.montant)||0, date_depense:depenseForm.date_depense, justificatif:depenseForm.justificatif }
+    if (editDepenseId) {
+      const {data:upd}=await supabase.from('depenses').update(payload).eq('id',editDepenseId).select().single()
+      if(upd)setDepenses(prev=>prev.map(d=>d.id===editDepenseId?upd:d))
+      showToast('Dépense modifiée ✓')
+    } else {
+      const {data:newD}=await supabase.from('depenses').insert([payload]).select().single()
+      if(newD)setDepenses(prev=>[newD,...prev])
+      showToast('Dépense enregistrée ✓')
+    }
+    setSaving(false); setShowDepense(false); setEditDepenseId(null); setDepenseForm(EMPTY_D)
+  }
+
+  function openEditDepense(d) {
+    setDepenseForm({ commission_id:d.commission_id, description:d.description||'', montant:String(d.montant||''), date_depense:d.date_depense, justificatif:d.justificatif||'' })
+    setEditDepenseId(d.id); setShowDepense(true)
   }
 
   async function supprimerDepense(id) {
-    if (!window.confirm('Supprimer ?')) return
-    await supabase.from('depenses').delete().eq('id', id)
-    setDepenses(prev => prev.filter(d => d.id !== id)); showToast('Dépense supprimée')
+    if(!window.confirm('Supprimer ?'))return
+    await supabase.from('depenses').delete().eq('id',id)
+    setDepenses(prev=>prev.filter(d=>d.id!==id)); showToast('Dépense supprimée')
+  }
+
+  async function saveDonNature() {
+    if(!donNatureForm.designation||!donNatureForm.quantite)return
+    setSaving(true)
+    const payload={ designation:donNatureForm.designation, quantite:parseFloat(donNatureForm.quantite), unite:donNatureForm.unite, valeur_estimee:parseInt(donNatureForm.valeur_estimee)||0, donateur:donNatureForm.donateur, type_donateur:donNatureForm.type_donateur, commission_id:donNatureForm.commission_id||null, statut:donNatureForm.statut, date_reception:donNatureForm.date_reception }
+    if (editDonNatureId) {
+      const {data:upd}=await supabase.from('dons_nature').update(payload).eq('id',editDonNatureId).select().single()
+      if(upd)setDonsNature(prev=>prev.map(d=>d.id===editDonNatureId?upd:d))
+      showToast('Don modifié ✓')
+    } else {
+      const {data:newD}=await supabase.from('dons_nature').insert([payload]).select().single()
+      if(newD)setDonsNature(prev=>[newD,...prev])
+      showToast('Don enregistré ✓')
+    }
+    setSaving(false); setShowDonNature(false); setEditDonNatureId(null); setDonNatureForm(EMPTY_DN)
+  }
+
+  function openEditDonNature(d) {
+    setDonNatureForm({ designation:d.designation, quantite:String(d.quantite), unite:d.unite||'kg', valeur_estimee:String(d.valeur_estimee||''), donateur:d.donateur||'', type_donateur:d.type_donateur||'exterieur', commission_id:d.commission_id||'', statut:d.statut||'promis', date_reception:d.date_reception })
+    setEditDonNatureId(d.id); setShowDonNature(true)
+  }
+
+  async function supprimerDonNature(id) {
+    if(!window.confirm('Supprimer ?'))return
+    await supabase.from('dons_nature').delete().eq('id',id)
+    setDonsNature(prev=>prev.filter(d=>d.id!==id)); showToast('Don supprimé')
+  }
+
+  async function saveCommission() {
+    if(!commissionForm.nom_commission)return
+    setSaving(true)
+    const {data:newC}=await supabase.from('budget_commissions').insert([{nom_commission:commissionForm.nom_commission,budget_previsionnel:parseInt(commissionForm.budget_previsionnel)||0,montant_alloue:0}]).select().single()
+    if(newC)setCommissions(prev=>[...prev,newC].sort((a,b)=>a.nom_commission.localeCompare(b.nom_commission)))
+    setSaving(false); setShowCommission(false); setCommissionForm({nom_commission:'',budget_previsionnel:''}); showToast('Commission créée ✓')
+  }
+
+  async function saveAllouer(commissionId) {
+    if(!allouerMontant)return; setSaving(true)
+    const montant=parseInt(allouerMontant)
+    await supabase.from('budget_commissions').update({montant_alloue:montant}).eq('id',commissionId)
+    setCommissions(prev=>prev.map(c=>c.id===commissionId?{...c,montant_alloue:montant}:c))
+    setSaving(false); setShowAllouer(null); setAllouerMontant(''); showToast('Allocation mise à jour ✓')
   }
 
   async function supprimerCommission(id) {
-    if (!window.confirm('Supprimer ?')) return
-    await supabase.from('budget_commissions').delete().eq('id', id)
-    setCommissions(prev => prev.filter(c => c.id !== id)); showToast('Commission supprimée')
+    if(!window.confirm('Supprimer ?'))return
+    await supabase.from('budget_commissions').delete().eq('id',id)
+    setCommissions(prev=>prev.filter(c=>c.id!==id)); showToast('Commission supprimée')
   }
 
-  const chipStyle = (active) => ({ flexShrink: 0, padding: '5px 12px', borderRadius: 20, fontSize: 12, fontWeight: 500, cursor: 'pointer', border: `1px solid ${active ? VERT : '#E2E8F0'}`, background: active ? VERT : '#fff', color: active ? '#fff' : '#64748B' })
-  const dateChip  = (active) => ({ flexShrink: 0, padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 500, cursor: 'pointer', border: `1px solid ${active ? '#1D4ED8' : '#E2E8F0'}`, background: active ? '#EFF6FF' : '#fff', color: active ? '#1D4ED8' : '#64748B' })
+  const chipS = (a)=>({flexShrink:0,padding:'5px 12px',borderRadius:20,fontSize:12,fontWeight:500,cursor:'pointer',border:`1px solid ${a?VERT:'#E2E8F0'}`,background:a?VERT:'#fff',color:a?'#fff':'#64748B'})
+  const dateChipS = (a)=>({flexShrink:0,padding:'4px 10px',borderRadius:20,fontSize:11,fontWeight:500,cursor:'pointer',border:`1px solid ${a?'#1D4ED8':'#E2E8F0'}`,background:a?'#EFF6FF':'#fff',color:a?'#1D4ED8':'#64748B'})
 
-  // Calcul dépassement pour une commission
-  function commStats(c) {
-    const dep = depenses.filter(d => d.commission_id === c.id).reduce((s, d) => s + d.montant, 0)
-    const alloue = c.montant_alloue || 0
-    const pct = alloue > 0 ? Math.round((dep / alloue) * 100) : 0
-    const depasse = dep > alloue && alloue > 0
-    const warning = pct >= 80 && !depasse
-    const couleurBarre = depasse ? '#DC2626' : warning ? '#D97706' : '#065F46'
-    return { dep, alloue, sol: alloue - dep, pct, depasse, warning, couleurBarre }
-  }
+  const btnPrimary = {background:VERT,color:'#fff',border:'none',borderRadius:10,padding:'10px',fontSize:13,fontWeight:600,cursor:'pointer'}
+  const btnSecondary = {background:'#F1F5F9',color:'#475569',border:'none',borderRadius:10,padding:'10px',fontSize:13,cursor:'pointer'}
+
+  // ── Formulaire Recette ──
+  const FormulaireRecette = () => (
+    <div style={{background:'#fff',border:'1px solid #E2E8F0',borderRadius:14,padding:'14px',marginBottom:12}}>
+      <p style={{fontSize:13,fontWeight:600,color:'#1E293B',margin:'0 0 10px'}}>{editRecetteId?'Modifier la recette':'Nouvelle recette'}</p>
+      <div style={{marginBottom:8}}><label className={lS}>Source *</label>
+        <select value={recetteForm.type} onChange={e=>setRecetteForm(f=>({...f,type:e.target.value}))} className={iS}>
+          {TYPES_RECETTE.map(t=><option key={t.key} value={t.key}>{t.label}</option>)}
+        </select>
+      </div>
+      {/* Champs conditionnels selon type */}
+      {recetteForm.type==='vente_tshirt' ? (
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:8}}>
+          <div><label className={lS}>Quantité</label><input type="number" value={recetteForm.quantite} onChange={e=>setRecetteForm(f=>({...f,quantite:e.target.value,montant:String(parseInt(e.target.value||0)*parseInt(f.prix_unitaire||0))}))} className={iS}/></div>
+          <div><label className={lS}>Prix unitaire (FCFA)</label><input type="number" value={recetteForm.prix_unitaire} onChange={e=>setRecetteForm(f=>({...f,prix_unitaire:e.target.value,montant:String(parseInt(f.quantite||0)*parseInt(e.target.value||0))}))} className={iS}/></div>
+          <div><label className={lS}>Montant total (calculé)</label><input type="number" value={recetteForm.montant} readOnly className={iS} style={{background:'#F8FAFC'}}/></div>
+          <div><label className={lS}>Description</label><input type="text" value={recetteForm.description} onChange={e=>setRecetteForm(f=>({...f,description:e.target.value}))} placeholder="Ex: T-shirt S/M/L" className={iS}/></div>
+        </div>
+      ) : (
+        <div style={{marginBottom:8}}>
+          <label className={lS}>Montant (FCFA) *</label>
+          <input type="number" value={recetteForm.montant} onChange={e=>setRecetteForm(f=>({...f,montant:e.target.value}))} className={iS}/>
+        </div>
+      )}
+      {recetteForm.type==='subvention' && (
+        <div style={{marginBottom:8}}><label className={lS}>Statut de la subvention</label>
+          <select value={recetteForm.statut_recette} onChange={e=>setRecetteForm(f=>({...f,statut_recette:e.target.value}))} className={iS}>
+            <option value="">-- Sélectionner --</option>
+            {STATUTS_SUBVENTION.map(s=><option key={s}>{s}</option>)}
+          </select>
+        </div>
+      )}
+      <div style={{marginBottom:8}}><label className={lS}>Description</label>
+        <input type="text" value={recetteForm.description} onChange={e=>setRecetteForm(f=>({...f,description:e.target.value}))} placeholder="Ex: Don de l'église XYZ" className={iS}/>
+      </div>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:8}}>
+        <div><label className={lS}>Donateur / Source</label><input type="text" value={recetteForm.donateur} onChange={e=>setRecetteForm(f=>({...f,donateur:e.target.value}))} placeholder="Ex: M. KOUASSI" className={iS}/></div>
+        <div><label className={lS}>Date</label><input type="date" value={recetteForm.date_reception} onChange={e=>setRecetteForm(f=>({...f,date_reception:e.target.value}))} className={iS}/></div>
+      </div>
+      <div style={{display:'flex',gap:8}}>
+        <button type="button" onClick={()=>{setShowRecette(false);setEditRecetteId(null);setRecetteForm(EMPTY_R)}} style={{...btnSecondary,flex:1}}>Annuler</button>
+        <button type="button" onClick={saveRecette} disabled={saving} style={{...btnPrimary,flex:1,opacity:saving?0.7:1}}>{saving?'...':(editRecetteId?'Modifier':'Ajouter')}</button>
+      </div>
+    </div>
+  )
+
+  // ── Formulaire Dépense ──
+  const FormulaireDepense = () => (
+    <div style={{background:'#fff',border:'1px solid #E2E8F0',borderRadius:14,padding:'14px',marginBottom:12}}>
+      <p style={{fontSize:13,fontWeight:600,color:'#1E293B',margin:'0 0 10px'}}>{editDepenseId?'Modifier la dépense':'Nouvelle dépense'}</p>
+      <div style={{marginBottom:8}}><label className={lS}>Commission *</label>
+        <select value={depenseForm.commission_id} onChange={e=>setDepenseForm(f=>({...f,commission_id:e.target.value}))} className={iS}>
+          <option value="">Sélectionner</option>
+          {commissions.map(c=><option key={c.id} value={c.id}>{c.nom_commission}</option>)}
+        </select>
+      </div>
+      <div style={{marginBottom:8}}><label className={lS}>Description *</label>
+        <input type="text" value={depenseForm.description} onChange={e=>setDepenseForm(f=>({...f,description:e.target.value}))} placeholder="Ex: Achat vivres" className={iS}/>
+      </div>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:8}}>
+        <div><label className={lS}>Montant (FCFA) *</label><input type="number" value={depenseForm.montant} onChange={e=>setDepenseForm(f=>({...f,montant:e.target.value}))} className={iS}/></div>
+        <div><label className={lS}>Date</label><input type="date" value={depenseForm.date_depense} onChange={e=>setDepenseForm(f=>({...f,date_depense:e.target.value}))} className={iS}/></div>
+      </div>
+      <div style={{marginBottom:12}}><label className={lS}>Justificatif</label>
+        <input type="text" value={depenseForm.justificatif} onChange={e=>setDepenseForm(f=>({...f,justificatif:e.target.value}))} placeholder="Ex: Reçu n°001" className={iS}/>
+      </div>
+      <div style={{display:'flex',gap:8}}>
+        <button type="button" onClick={()=>{setShowDepense(false);setEditDepenseId(null);setDepenseForm(EMPTY_D)}} style={{...btnSecondary,flex:1}}>Annuler</button>
+        <button type="button" onClick={saveDepense} disabled={saving} style={{...btnPrimary,flex:1,opacity:saving?0.7:1}}>{saving?'...':(editDepenseId?'Modifier':'Ajouter')}</button>
+      </div>
+    </div>
+  )
+
+  // ── Ligne recette ──
+  const LigneRecette = ({r,i,total}) => (
+    <div style={{display:'flex',alignItems:'center',gap:10,padding:'9px 14px',borderBottom:i<total-1?'1px solid #F1F5F9':'none'}}>
+      <div style={{width:32,height:32,borderRadius:'50%',background:'#ECFDF5',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+        <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="#065F46" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V7m0 1v8m0 0v1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      </div>
+      <div style={{flex:1,minWidth:0}}>
+        <p style={{fontSize:12,fontWeight:500,color:'#1E293B',margin:'0 0 1px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{r.description||getTypeRecette(r.type).label}</p>
+        <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+          <span style={{fontSize:10,color:'#94A3B8'}}>{r.donateur&&`${r.donateur} · `}{new Date(r.date_reception).toLocaleDateString('fr-FR')}</span>
+          {r.statut_recette&&<span style={{fontSize:9,fontWeight:600,background:'#FFFBEB',color:'#92400E',borderRadius:20,padding:'1px 6px'}}>{r.statut_recette}</span>}
+          {r.quantite&&r.prix_unitaire&&<span style={{fontSize:9,color:'#94A3B8'}}>{r.quantite}×{fmt(r.prix_unitaire)} FCFA</span>}
+        </div>
+      </div>
+      <div style={{display:'flex',alignItems:'center',gap:6,flexShrink:0}}>
+        <p style={{fontSize:13,fontWeight:700,color:'#065F46',margin:0}}>{fmt(r.montant||0)}</p>
+        <button type="button" onClick={()=>openEditRecette(r)} style={{width:24,height:24,borderRadius:7,background:VERT_CLAIR,border:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>
+          <svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke={VERT} strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+        </button>
+        <button type="button" onClick={()=>supprimerRecette(r.id)} style={{width:24,height:24,borderRadius:7,background:'#FEF2F2',border:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>
+          <svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="#DC2626" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+        </button>
+      </div>
+    </div>
+  )
+
+  // ── Ligne dépense ──
+  const LigneDepense = ({d,i,total,showComm=true}) => (
+    <div style={{display:'flex',alignItems:'center',gap:10,padding:'9px 14px',borderBottom:i<total-1?'1px solid #F1F5F9':'none'}}>
+      <div style={{width:32,height:32,borderRadius:'50%',background:'#FEF2F2',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+        <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="#DC2626" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+      </div>
+      <div style={{flex:1,minWidth:0}}>
+        <p style={{fontSize:12,fontWeight:500,color:'#1E293B',margin:'0 0 1px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{d.description}</p>
+        <p style={{fontSize:10,color:'#94A3B8',margin:0}}>{showComm&&d.nom_commission&&`${d.nom_commission} · `}{new Date(d.date_depense).toLocaleDateString('fr-FR')}{d.justificatif&&` · ${d.justificatif}`}</p>
+      </div>
+      <div style={{display:'flex',alignItems:'center',gap:6,flexShrink:0}}>
+        <p style={{fontSize:13,fontWeight:700,color:'#DC2626',margin:0}}>{fmt(d.montant)}</p>
+        <button type="button" onClick={()=>openEditDepense(d)} style={{width:24,height:24,borderRadius:7,background:VERT_CLAIR,border:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>
+          <svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke={VERT} strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+        </button>
+        <button type="button" onClick={()=>supprimerDepense(d.id)} style={{width:24,height:24,borderRadius:7,background:'#FEF2F2',border:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>
+          <svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="#DC2626" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+        </button>
+      </div>
+    </div>
+  )
 
   return (
     <AdminLayout>
       {/* Toast */}
-      {toast !== '' && (
-        <div style={{ position: 'fixed', bottom: 84, left: '50%', transform: 'translateX(-50%)', background: VERT, color: '#fff', borderRadius: 12, padding: '10px 22px', fontSize: 13, fontWeight: 600, zIndex: 200, boxShadow: '0 4px 20px rgba(0,0,0,0.2)', whiteSpace: 'nowrap', pointerEvents: 'none' }}>
+      {toast!=='' && (
+        <div style={{position:'fixed',bottom:84,left:'50%',transform:'translateX(-50%)',background:VERT,color:'#fff',borderRadius:12,padding:'10px 22px',fontSize:13,fontWeight:600,zIndex:200,boxShadow:'0 4px 20px rgba(0,0,0,0.2)',whiteSpace:'nowrap',pointerEvents:'none'}}>
           {toast}
         </div>
       )}
 
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:14}}>
         <div>
-          <h1 style={{ fontSize: 20, fontWeight: 700, color: '#1E293B', margin: 0 }}>Trésorerie</h1>
-          <p style={{ fontSize: 11, color: '#94A3B8', margin: '2px 0 0' }}>Camp-Navs 2026</p>
+          <h1 style={{fontSize:20,fontWeight:700,color:'#1E293B',margin:0}}>Trésorerie</h1>
+          <p style={{fontSize:11,color:'#94A3B8',margin:'2px 0 0'}}>Camp-Navs 2026</p>
         </div>
-        <div style={{ display: 'flex', gap: 6 }}>
-          <button type="button" onClick={() => exportPDFTresorerie(recettes, commissions, depenses, budgetGlobal)}
-            style={{ background: '#FEF2F2', color: '#DC2626', border: '1px solid #FCA5A5', borderRadius: 8, padding: '6px 12px', fontSize: 12, fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
+        <div style={{display:'flex',gap:6}}>
+          <button type="button" onClick={()=>exportPDFTresorerie(recettes,commissions,depenses,donsNature,budgetGlobal)}
+            style={{background:'#FEF2F2',color:'#DC2626',border:'1px solid #FCA5A5',borderRadius:8,padding:'6px 12px',fontSize:12,fontWeight:500,cursor:'pointer',display:'flex',alignItems:'center',gap:4}}>
             <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
             PDF
           </button>
-          <button type="button" onClick={() => exportExcelTresorerie(recettes, commissions, depenses)}
-            style={{ background: VERT_CLAIR, color: VERT, border: `1px solid ${VERT}`, borderRadius: 8, padding: '6px 12px', fontSize: 12, fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
+          <button type="button" onClick={()=>exportExcel(recettes,commissions,depenses)}
+            style={{background:VERT_CLAIR,color:VERT,border:`1px solid ${VERT}`,borderRadius:8,padding:'6px 12px',fontSize:12,fontWeight:500,cursor:'pointer',display:'flex',alignItems:'center',gap:4}}>
             <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
             Excel
           </button>
@@ -422,103 +603,148 @@ export default function TresoreriePage() {
       </div>
 
       {/* Onglets */}
-      <div style={{ display: 'flex', gap: 6, marginBottom: 14, overflowX: 'auto', scrollbarWidth: 'none' }}>
+      <div style={{display:'flex',gap:6,marginBottom:14,overflowX:'auto',scrollbarWidth:'none'}}>
         {[
-          { key: 'tableau_bord', label: 'Tableau de bord' },
-          { key: 'recettes',     label: `Recettes (${recettes.length})` },
-          { key: 'commissions',  label: 'Commissions' },
-          { key: 'depenses',     label: `Dépenses (${depenses.length})` },
-          { key: 'historique',   label: 'Historique' },
-        ].map(o => (
-          <button key={o.key} type="button" onClick={() => setOnglet(o.key)} style={chipStyle(onglet === o.key)}>{o.label}</button>
+          {key:'tableau_bord',label:'Tableau de bord'},
+          {key:'recettes',label:`Recettes (${recettes.length})`},
+          {key:'dons_nature',label:`Dons nature (${donsNature.length})`},
+          {key:'commissions',label:'Commissions'},
+          {key:'depenses',label:`Dépenses (${depenses.length})`},
+          {key:'historique',label:'Historique'},
+        ].map(o=>(
+          <button key={o.key} type="button" onClick={()=>setOnglet(o.key)} style={chipS(onglet===o.key)}>{o.label}</button>
         ))}
       </div>
 
       {/* ── TABLEAU DE BORD ── */}
-      {onglet === 'tableau_bord' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #F1F5F9', padding: '10px 14px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: editBudget ? 8 : 4 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ fontSize: 10, fontWeight: 700, color: '#94A3B8', letterSpacing: '0.08em' }}>BUDGET GLOBAL</span>
-                <span style={{ fontSize: 14, fontWeight: 700, color: '#1E293B' }}>{budgetGlobal > 0 ? `${fmt(budgetGlobal)} FCFA` : '—'}</span>
+      {onglet==='tableau_bord' && (
+        <div style={{display:'flex',flexDirection:'column',gap:8}}>
+
+          {/* Alerte dépassements */}
+          {depassements.length>0 && (
+            <div style={{background:'#FEF2F2',border:'1px solid #FCA5A5',borderRadius:12,padding:'10px 14px'}}>
+              <p style={{fontSize:11,fontWeight:700,color:'#DC2626',margin:'0 0 6px'}}>⚠ {depassements.length} commission(s) en dépassement</p>
+              {depassements.map(c=>{
+                const dep=depenses.filter(d=>d.commission_id===c.id).reduce((s,d)=>s+d.montant,0)
+                return <p key={c.id} style={{fontSize:11,color:'#DC2626',margin:'2px 0'}}>{c.nom_commission} : dépensé {fmt(dep)} FCFA / alloué {fmt(c.montant_alloue||0)} FCFA (+{fmt(dep-(c.montant_alloue||0))} FCFA)</p>
+              })}
+            </div>
+          )}
+
+          {/* Budget global */}
+          <div style={{background:'#fff',borderRadius:12,border:'1px solid #F1F5F9',padding:'10px 14px'}}>
+            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:editBudget?8:4}}>
+              <div style={{display:'flex',alignItems:'center',gap:10}}>
+                <span style={{fontSize:10,fontWeight:700,color:'#94A3B8',letterSpacing:'0.08em'}}>BUDGET GLOBAL</span>
+                <span style={{fontSize:14,fontWeight:700,color:'#1E293B'}}>{budgetGlobal>0?`${fmt(budgetGlobal)} FCFA`:'—'}</span>
               </div>
-              <button type="button" onClick={() => { setEditBudget(!editBudget); setBudgetForm(budgetGlobal) }}
-                style={{ fontSize: 11, color: VERT, background: 'transparent', border: `1px solid ${VERT}`, borderRadius: 6, padding: '3px 10px', cursor: 'pointer' }}>
-                {editBudget ? 'Annuler' : 'Modifier'}
+              <button type="button" onClick={()=>{setEditBudget(!editBudget);setBudgetForm(budgetGlobal)}}
+                style={{fontSize:11,color:VERT,background:'transparent',border:`1px solid ${VERT}`,borderRadius:6,padding:'3px 10px',cursor:'pointer'}}>
+                {editBudget?'Annuler':'Modifier'}
               </button>
             </div>
             {editBudget && (
-              <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-                <input type="number" value={budgetForm} onChange={e => setBudgetForm(e.target.value)} placeholder="Montant FCFA"
-                  style={{ flex: 1, border: '1px solid #E2E8F0', borderRadius: 8, padding: '7px 12px', fontSize: 13, outline: 'none', color: '#1E293B' }} />
+              <div style={{display:'flex',gap:8,marginBottom:8}}>
+                <input type="number" value={budgetForm} onChange={e=>setBudgetForm(e.target.value)} placeholder="Montant FCFA"
+                  style={{flex:1,border:'1px solid #E2E8F0',borderRadius:8,padding:'7px 12px',fontSize:13,outline:'none',color:'#1E293B'}}/>
                 <button type="button" onClick={saveBudgetGlobal} disabled={saving}
-                  style={{ background: VERT, color: '#fff', border: 'none', borderRadius: 8, padding: '7px 14px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
-                  {saving ? '...' : 'OK'}
+                  style={{background:VERT,color:'#fff',border:'none',borderRadius:8,padding:'7px 14px',fontSize:12,fontWeight:600,cursor:'pointer'}}>
+                  {saving?'...':'OK'}
                 </button>
               </div>
             )}
-            {budgetGlobal > 0 && !editBudget && (
+            {budgetGlobal>0&&!editBudget&&(
               <>
-                <div style={{ background: '#F1F5F9', borderRadius: 4, height: 4, marginBottom: 4 }}>
-                  <div style={{ background: VERT, borderRadius: 4, height: 4, width: `${Math.min(pctCollecte, 100)}%`, transition: 'width .4s' }} />
+                <div style={{background:'#F1F5F9',borderRadius:4,height:4,marginBottom:4}}>
+                  <div style={{background:VERT,borderRadius:4,height:4,width:`${Math.min(pctCollecte,100)}%`,transition:'width .4s'}}/>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ fontSize: 10, color: '#64748B' }}>{pctCollecte}% collecté</span>
-                  <span style={{ fontSize: 10, color: '#94A3B8' }}>Reste : {fmt(Math.max(budgetGlobal - totalRecettes, 0))} FCFA</span>
+                <div style={{display:'flex',justifyContent:'space-between'}}>
+                  <span style={{fontSize:10,color:'#64748B'}}>{pctCollecte}% collecté</span>
+                  <span style={{fontSize:10,color:'#94A3B8'}}>Reste : {fmt(Math.max(budgetGlobal-totalRecettes,0))} FCFA</span>
                 </div>
               </>
             )}
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+          {/* 4 KPI */}
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
             {[
-              { label: 'Recettes totales', val: totalRecettes,  color: '#065F46', border: '#6EE7B7', prefix: '+' },
-              { label: 'Dépenses totales', val: totalDepenses,  color: '#DC2626', border: '#FCA5A5', prefix: '-' },
-              { label: 'Solde disponible', val: soldeGlobal,    color: soldeGlobal >= 0 ? '#1D4ED8' : '#DC2626', border: soldeGlobal >= 0 ? '#93C5FD' : '#FCA5A5', prefix: '' },
-              { label: 'Non alloué',       val: soldeNonAlloue, color: '#92400E', border: '#FCD34D', prefix: '' },
-            ].map(k => (
-              <div key={k.label} style={{ background: '#fff', borderRadius: 10, border: `1px solid ${k.border}`, padding: '10px 12px' }}>
-                <p style={{ fontSize: 10, color: '#94A3B8', margin: '0 0 4px', fontWeight: 500 }}>{k.label}</p>
-                <p style={{ fontSize: 15, fontWeight: 700, color: k.color, margin: 0 }}>{k.prefix}{fmt(k.val)}</p>
-                <p style={{ fontSize: 9, color: '#CBD5E1', margin: '1px 0 0' }}>FCFA</p>
+              {label:'Recettes totales',val:totalRecettes,color:'#065F46',border:'#6EE7B7',prefix:'+'},
+              {label:'Dépenses totales',val:totalDepenses,color:'#DC2626',border:'#FCA5A5',prefix:'-'},
+              {label:'Solde disponible',val:soldeGlobal,color:soldeGlobal>=0?'#1D4ED8':'#DC2626',border:soldeGlobal>=0?'#93C5FD':'#FCA5A5',prefix:''},
+              {label:'Non alloué',val:soldeNonAlloue,color:'#92400E',border:'#FCD34D',prefix:''},
+            ].map(k=>(
+              <div key={k.label} style={{background:'#fff',borderRadius:10,border:`1px solid ${k.border}`,padding:'10px 12px'}}>
+                <p style={{fontSize:10,color:'#94A3B8',margin:'0 0 4px',fontWeight:500}}>{k.label}</p>
+                <p style={{fontSize:15,fontWeight:700,color:k.color,margin:0}}>{k.prefix}{fmt(k.val)}</p>
+                <p style={{fontSize:9,color:'#CBD5E1',margin:'1px 0 0'}}>FCFA</p>
               </div>
             ))}
           </div>
 
-          <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #F1F5F9', padding: '10px 14px' }}>
-            <p style={{ fontSize: 9, fontWeight: 700, color: '#94A3B8', letterSpacing: '0.1em', margin: '0 0 8px', textTransform: 'uppercase' }}>Recettes par source</p>
-            {TYPES_RECETTE.map(t => {
-              const montant = recettes.filter(r => r.type === t.key).reduce((s, r) => s + (r.montant || r.valeur_estimee || 0), 0)
-              if (montant === 0) return null
-              return (
-                <div key={t.key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '5px 0', borderBottom: '1px solid #F8FAFC' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <div style={{ width: 6, height: 6, borderRadius: '50%', background: VERT }} />
-                    <span style={{ fontSize: 12, color: '#1E293B' }}>{t.label}</span>
+          {/* Caisse du jour */}
+          {caisseJour.length>0 && (
+            <div style={{background:'#fff',borderRadius:12,border:'1px solid #F1F5F9',padding:'10px 14px'}}>
+              <p style={{fontSize:9,fontWeight:700,color:'#94A3B8',letterSpacing:'0.1em',margin:'0 0 8px',textTransform:'uppercase'}}>Caisse du jour ({caisseJour.length} mouvement(s))</p>
+              {caisseJour.map((tx,i)=>{
+                const isR=tx._type==='recette'
+                return (
+                  <div key={`${tx._type}-${tx.id}`} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'5px 0',borderBottom:i<caisseJour.length-1?'1px solid #F8FAFC':'none'}}>
+                    <div style={{display:'flex',alignItems:'center',gap:6}}>
+                      <span style={{fontSize:12,fontWeight:700,color:isR?'#065F46':'#DC2626'}}>{isR?'+':'−'}</span>
+                      <span style={{fontSize:12,color:'#1E293B',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:180}}>{tx._label}</span>
+                    </div>
+                    <span style={{fontSize:12,fontWeight:700,color:isR?'#065F46':'#DC2626',flexShrink:0}}>{fmt(tx._montant)} FCFA</span>
                   </div>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: '#065F46' }}>{fmt(montant)} FCFA</span>
+                )
+              })}
+              <div style={{marginTop:8,paddingTop:8,borderTop:'1px solid #F1F5F9',display:'flex',justifyContent:'space-between'}}>
+                <span style={{fontSize:11,color:'#64748B',fontWeight:600}}>Bilan du jour</span>
+                {(()=>{
+                  const entree=caisseJour.filter(t=>t._type==='recette').reduce((s,t)=>s+t._montant,0)
+                  const sortie=caisseJour.filter(t=>t._type==='depense').reduce((s,t)=>s+t._montant,0)
+                  const bilan=entree-sortie
+                  return <span style={{fontSize:11,fontWeight:700,color:bilan>=0?'#065F46':'#DC2626'}}>{bilan>=0?'+':''}{fmt(bilan)} FCFA</span>
+                })()}
+              </div>
+            </div>
+          )}
+
+          {/* Recettes par source */}
+          <div style={{background:'#fff',borderRadius:12,border:'1px solid #F1F5F9',padding:'10px 14px'}}>
+            <p style={{fontSize:9,fontWeight:700,color:'#94A3B8',letterSpacing:'0.1em',margin:'0 0 8px',textTransform:'uppercase'}}>Recettes par source</p>
+            {TYPES_RECETTE.map(t=>{
+              const montant=recettes.filter(r=>r.type===t.key).reduce((s,r)=>s+(r.montant||0),0)
+              if(montant===0)return null
+              return (
+                <div key={t.key} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'5px 0',borderBottom:'1px solid #F8FAFC'}}>
+                  <div style={{display:'flex',alignItems:'center',gap:6}}>
+                    <div style={{width:6,height:6,borderRadius:'50%',background:VERT}}/>
+                    <span style={{fontSize:12,color:'#1E293B'}}>{t.label}</span>
+                  </div>
+                  <span style={{fontSize:12,fontWeight:700,color:'#065F46'}}>{fmt(montant)} FCFA</span>
                 </div>
               )
             })}
-            {totalRecettes === 0 && <p style={{ fontSize: 12, color: '#94A3B8', margin: 0 }}>Aucune recette enregistrée.</p>}
+            {totalRecettes===0&&<p style={{fontSize:12,color:'#94A3B8',margin:0}}>Aucune recette.</p>}
           </div>
 
-          {commissions.length > 0 && (
-            <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #F1F5F9', padding: '10px 14px' }}>
-              <p style={{ fontSize: 9, fontWeight: 700, color: '#94A3B8', letterSpacing: '0.1em', margin: '0 0 8px', textTransform: 'uppercase' }}>Commissions</p>
-              {commissions.map((c, i) => {
-                const { dep, alloue, sol, depasse } = commStats(c)
+          {/* Commissions résumé */}
+          {commissions.length>0&&(
+            <div style={{background:'#fff',borderRadius:12,border:'1px solid #F1F5F9',padding:'10px 14px'}}>
+              <p style={{fontSize:9,fontWeight:700,color:'#94A3B8',letterSpacing:'0.1em',margin:'0 0 8px',textTransform:'uppercase'}}>Commissions</p>
+              {commissions.map((c,i)=>{
+                const {dep,alloue,sol,depasse}=commStats(c)
                 return (
-                  <div key={c.id} style={{ padding: '7px 0', borderBottom: i < commissions.length - 1 ? '1px solid #F1F5F9' : 'none' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <span style={{ fontSize: 13, fontWeight: 600, color: '#1E293B' }}>{c.nom_commission}</span>
-                        {depasse && <span style={{ fontSize: 9, fontWeight: 700, background: '#FEF2F2', color: '#DC2626', borderRadius: 20, padding: '1px 6px' }}>DÉPASSEMENT</span>}
+                  <div key={c.id} style={{padding:'7px 0',borderBottom:i<commissions.length-1?'1px solid #F1F5F9':'none'}}>
+                    <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+                      <div style={{display:'flex',alignItems:'center',gap:6}}>
+                        <span style={{fontSize:13,fontWeight:600,color:'#1E293B'}}>{c.nom_commission}</span>
+                        {depasse&&<span style={{fontSize:9,fontWeight:700,background:'#FEF2F2',color:'#DC2626',borderRadius:20,padding:'1px 6px'}}>⚠</span>}
                       </div>
-                      <span style={{ fontSize: 13, fontWeight: 700, color: sol >= 0 ? '#065F46' : '#DC2626' }}>{sol >= 0 ? '+' : ''}{fmt(sol)} FCFA</span>
+                      <span style={{fontSize:13,fontWeight:700,color:sol>=0?'#065F46':'#DC2626'}}>{sol>=0?'+':''}{fmt(sol)} FCFA</span>
                     </div>
-                    <p style={{ fontSize: 10, color: '#94A3B8', margin: '2px 0 0' }}>Alloué : {fmt(alloue)} | Dépensé : {fmt(dep)}</p>
+                    <p style={{fontSize:10,color:'#94A3B8',margin:'2px 0 0'}}>Alloué : {fmt(alloue)} | Dépensé : {fmt(dep)}</p>
                   </div>
                 )
               })}
@@ -528,271 +754,314 @@ export default function TresoreriePage() {
       )}
 
       {/* ── RECETTES ── */}
-      {onglet === 'recettes' && (
+      {onglet==='recettes' && (
         <>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-            <div style={{ display: 'flex', gap: 6, overflowX: 'auto', scrollbarWidth: 'none' }}>
-              {[{ k: 'tout', l: 'Tout' }, { k: 'mois', l: 'Ce mois' }, { k: 'semaine', l: 'Cette semaine' }].map(f => (
-                <button key={f.k} type="button" onClick={() => setFiltreDateRecettes(f.k)} style={dateChip(filtreDateRecettes === f.k)}>{f.l}</button>
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:10}}>
+            <div style={{display:'flex',gap:6,overflowX:'auto',scrollbarWidth:'none'}}>
+              {[{k:'tout',l:'Tout'},{k:'mois',l:'Ce mois'},{k:'semaine',l:'Cette semaine'}].map(f=>(
+                <button key={f.k} type="button" onClick={()=>setFiltreDateR(f.k)} style={dateChipS(filtreDateR===f.k)}>{f.l}</button>
               ))}
             </div>
-            <button type="button" onClick={() => setShowRecette(!showRecette)}
-              style={{ width: 30, height: 30, borderRadius: '50%', background: showRecette ? '#FEF2F2' : VERT, color: '#fff', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 300, flexShrink: 0, marginLeft: 8 }}>
-              {showRecette ? '×' : '+'}
+            <button type="button" onClick={()=>{setShowRecette(!showRecette);setEditRecetteId(null);setRecetteForm(EMPTY_R)}}
+              style={{width:30,height:30,borderRadius:'50%',background:showRecette&&!editRecetteId?'#FEF2F2':VERT,color:'#fff',border:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,fontWeight:300,flexShrink:0,marginLeft:8}}>
+              {showRecette&&!editRecetteId?'×':'+'}
             </button>
           </div>
-          {showRecette && (
-            <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 14, padding: '14px', marginBottom: 12 }}>
-              <div style={{ marginBottom: 10 }}><label className={labelStyle}>Source *</label>
-                <select value={recetteForm.type} onChange={e => setRecetteForm(f => ({ ...f, type: e.target.value }))} className={inputStyle}>
-                  {TYPES_RECETTE.map(t => <option key={t.key} value={t.key}>{t.label}</option>)}
-                </select>
+          {showRecette && <FormulaireRecette/>}
+          <div style={{background:'#fff',borderRadius:12,border:'1px solid #E2E8F0',overflow:'hidden'}}>
+            {recettesFiltrees.length===0&&<p style={{fontSize:13,color:'#94A3B8',textAlign:'center',padding:'20px',margin:0}}>Aucune recette.</p>}
+            {recettesFiltrees.map((r,i)=><LigneRecette key={r.id} r={r} i={i} total={recettesFiltrees.length}/>)}
+          </div>
+          {hasMoreR&&filtreDateR==='tout'&&(
+            <button type="button" onClick={chargerPlusR} disabled={loadingMore}
+              style={{width:'100%',marginTop:10,background:'#fff',color:VERT,border:`1px solid ${VERT}`,borderRadius:10,padding:'10px',fontSize:13,fontWeight:600,cursor:'pointer',opacity:loadingMore?0.7:1}}>
+              {loadingMore?'Chargement...':'Charger plus'}
+            </button>
+          )}
+        </>
+      )}
+
+      {/* ── DONS EN NATURE ── */}
+      {onglet==='dons_nature' && (
+        <>
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:12}}>
+            <div>
+              <p style={{fontSize:11,fontWeight:700,color:'#94A3B8',letterSpacing:'0.1em',margin:0}}>DONS EN NATURE ({donsNature.length})</p>
+              <p style={{fontSize:10,color:'#94A3B8',margin:'2px 0 0'}}>Valeur totale reçue : {fmt(donsNature.filter(d=>d.statut==='reçu').reduce((s,d)=>s+(d.valeur_estimee||0),0))} FCFA</p>
+            </div>
+            <button type="button" onClick={()=>{setShowDonNature(!showDonNature);setEditDonNatureId(null);setDonNatureForm(EMPTY_DN)}}
+              style={{width:30,height:30,borderRadius:'50%',background:showDonNature&&!editDonNatureId?'#FEF2F2':VERT,color:'#fff',border:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,fontWeight:300}}>
+              {showDonNature&&!editDonNatureId?'×':'+'}
+            </button>
+          </div>
+          {showDonNature && (
+            <div style={{background:'#fff',border:'1px solid #E2E8F0',borderRadius:14,padding:'14px',marginBottom:12}}>
+              <p style={{fontSize:13,fontWeight:600,color:'#1E293B',margin:'0 0 10px'}}>{editDonNatureId?'Modifier le don':'Nouveau don en nature'}</p>
+              <div style={{marginBottom:8}}><label className={lS}>Désignation *</label>
+                <input type="text" value={donNatureForm.designation} onChange={e=>setDonNatureForm(f=>({...f,designation:e.target.value}))} placeholder="Ex: Riz, Huile, Poisson..." className={iS}/>
               </div>
-              <div style={{ marginBottom: 10 }}><label className={labelStyle}>Description</label>
-                <input type="text" value={recetteForm.description} onChange={e => setRecetteForm(f => ({ ...f, description: e.target.value }))} placeholder="Ex : Don de l'église XYZ" className={inputStyle} />
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 10 }}>
-                <div><label className={labelStyle}>Montant (FCFA)</label>
-                  <input type="number" value={recetteForm.montant} onChange={e => setRecetteForm(f => ({ ...f, montant: e.target.value }))} className={inputStyle} />
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:8}}>
+                <div><label className={lS}>Quantité *</label><input type="number" value={donNatureForm.quantite} onChange={e=>setDonNatureForm(f=>({...f,quantite:e.target.value}))} className={iS}/></div>
+                <div><label className={lS}>Unité</label>
+                  <select value={donNatureForm.unite} onChange={e=>setDonNatureForm(f=>({...f,unite:e.target.value}))} className={iS}>
+                    {UNITES.map(u=><option key={u}>{u}</option>)}
+                  </select>
                 </div>
-                <div><label className={labelStyle}>Date</label>
-                  <input type="date" value={recetteForm.date_reception} onChange={e => setRecetteForm(f => ({ ...f, date_reception: e.target.value }))} className={inputStyle} />
+              </div>
+              <div style={{marginBottom:8}}><label className={lS}>Valeur estimée (FCFA)</label>
+                <input type="number" value={donNatureForm.valeur_estimee} onChange={e=>setDonNatureForm(f=>({...f,valeur_estimee:e.target.value}))} placeholder="Ex: 15000" className={iS}/>
+              </div>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:8}}>
+                <div><label className={lS}>Donateur</label><input type="text" value={donNatureForm.donateur} onChange={e=>setDonNatureForm(f=>({...f,donateur:e.target.value}))} placeholder="Nom du donateur" className={iS}/></div>
+                <div><label className={lS}>Type donateur</label>
+                  <select value={donNatureForm.type_donateur} onChange={e=>setDonNatureForm(f=>({...f,type_donateur:e.target.value}))} className={iS}>
+                    <option value="exterieur">Extérieur (hors Navs)</option>
+                    <option value="interieur">Intérieur (Navigateurs)</option>
+                  </select>
                 </div>
               </div>
-              <div style={{ marginBottom: 12 }}><label className={labelStyle}>Donateur / Source</label>
-                <input type="text" value={recetteForm.donateur} onChange={e => setRecetteForm(f => ({ ...f, donateur: e.target.value }))} placeholder="Ex : M. KOUASSI" className={inputStyle} />
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:8}}>
+                <div><label className={lS}>Commission bénéficiaire</label>
+                  <select value={donNatureForm.commission_id} onChange={e=>setDonNatureForm(f=>({...f,commission_id:e.target.value}))} className={iS}>
+                    <option value="">-- Aucune --</option>
+                    {commissions.map(c=><option key={c.id} value={c.id}>{c.nom_commission}</option>)}
+                  </select>
+                </div>
+                <div><label className={lS}>Statut</label>
+                  <select value={donNatureForm.statut} onChange={e=>setDonNatureForm(f=>({...f,statut:e.target.value}))} className={iS}>
+                    {STATUTS_DON.map(s=><option key={s}>{s}</option>)}
+                  </select>
+                </div>
               </div>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <button type="button" onClick={() => setShowRecette(false)} style={{ flex: 1, background: '#F1F5F9', color: '#475569', border: 'none', borderRadius: 10, padding: '10px', fontSize: 13, cursor: 'pointer' }}>Annuler</button>
-                <button type="button" onClick={saveRecette} disabled={saving} style={{ flex: 1, background: VERT, color: '#fff', border: 'none', borderRadius: 10, padding: '10px', fontSize: 13, fontWeight: 600, cursor: 'pointer', opacity: saving ? 0.7 : 1 }}>{saving ? '...' : 'Ajouter'}</button>
+              <div style={{marginBottom:12}}><label className={lS}>Date</label>
+                <input type="date" value={donNatureForm.date_reception} onChange={e=>setDonNatureForm(f=>({...f,date_reception:e.target.value}))} className={iS}/>
+              </div>
+              <div style={{display:'flex',gap:8}}>
+                <button type="button" onClick={()=>{setShowDonNature(false);setEditDonNatureId(null);setDonNatureForm(EMPTY_DN)}} style={{...btnSecondary,flex:1}}>Annuler</button>
+                <button type="button" onClick={saveDonNature} disabled={saving} style={{...btnPrimary,flex:1,opacity:saving?0.7:1}}>{saving?'...':(editDonNatureId?'Modifier':'Enregistrer')}</button>
               </div>
             </div>
           )}
-          <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #E2E8F0', overflow: 'hidden' }}>
-            {recettesFiltrees.length === 0 && <p style={{ fontSize: 13, color: '#94A3B8', textAlign: 'center', padding: '20px', margin: 0 }}>Aucune recette.</p>}
-            {recettesFiltrees.map((r, i) => {
-              const t = getTypeRecette(r.type)
+
+          {/* Stats rapides */}
+          <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:6,marginBottom:12}}>
+            {[
+              {label:'Promis',count:donsNature.filter(d=>d.statut==='promis').length,color:'#92400E',bg:'#FFFBEB',border:'#FCD34D'},
+              {label:'Partiel',count:donsNature.filter(d=>d.statut==='partiellement reçu').length,color:'#1D4ED8',bg:'#EFF6FF',border:'#93C5FD'},
+              {label:'Reçus',count:donsNature.filter(d=>d.statut==='reçu').length,color:'#065F46',bg:'#ECFDF5',border:'#6EE7B7'},
+            ].map(s=>(
+              <div key={s.label} style={{background:s.bg,border:`1px solid ${s.border}`,borderRadius:10,padding:'8px',textAlign:'center'}}>
+                <p style={{fontSize:20,fontWeight:700,color:s.color,margin:'0 0 2px'}}>{s.count}</p>
+                <p style={{fontSize:9,color:s.color,margin:0,opacity:0.7}}>{s.label}</p>
+              </div>
+            ))}
+          </div>
+
+          <div style={{background:'#fff',borderRadius:12,border:'1px solid #E2E8F0',overflow:'hidden'}}>
+            {donsNature.length===0&&<p style={{fontSize:13,color:'#94A3B8',textAlign:'center',padding:'20px',margin:0}}>Aucun don en nature enregistré.</p>}
+            {donsNature.map((d,i)=>{
+              const statutConfig={
+                'promis':{bg:'#FFFBEB',color:'#92400E'},
+                'partiellement reçu':{bg:'#EFF6FF',color:'#1D4ED8'},
+                'reçu':{bg:'#ECFDF5',color:'#065F46'},
+              }[d.statut]||{bg:'#F8FAFC',color:'#475569'}
               return (
-                <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderBottom: i < recettesFiltrees.length - 1 ? '1px solid #F1F5F9' : 'none' }}>
-                  <div style={{ width: 34, height: 34, borderRadius: '50%', background: '#ECFDF5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="#065F46" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V7m0 1v8m0 0v1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontSize: 13, fontWeight: 500, color: '#1E293B', margin: '0 0 2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.description || t.label}</p>
-                    <p style={{ fontSize: 11, color: '#94A3B8', margin: 0 }}>{r.donateur && `${r.donateur} · `}{new Date(r.date_reception).toLocaleDateString('fr-FR')}</p>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-                    <p style={{ fontSize: 14, fontWeight: 700, color: '#065F46', margin: 0 }}>{fmt(r.montant || r.valeur_estimee || 0)}</p>
-                    <button type="button" onClick={() => supprimerRecette(r.id)} style={{ width: 26, height: 26, borderRadius: 8, background: '#FEF2F2', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="#DC2626" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                    </button>
+                <div key={d.id} style={{padding:'10px 14px',borderBottom:i<donsNature.length-1?'1px solid #F1F5F9':'none'}}>
+                  <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:5}}>
+                    <div style={{flex:1}}>
+                      <div style={{display:'flex',alignItems:'center',gap:6,flexWrap:'wrap',marginBottom:3}}>
+                        <p style={{fontSize:13,fontWeight:600,color:'#1E293B',margin:0}}>{d.designation}</p>
+                        <span style={{fontSize:9,fontWeight:700,background:statutConfig.bg,color:statutConfig.color,borderRadius:20,padding:'2px 8px'}}>{d.statut}</span>
+                        {d.type_donateur==='interieur'&&<span style={{fontSize:9,background:VERT_CLAIR,color:VERT,borderRadius:20,padding:'2px 7px',fontWeight:600}}>Navs</span>}
+                      </div>
+                      <p style={{fontSize:11,color:'#94A3B8',margin:0}}>
+                        {d.quantite} {d.unite}{d.donateur&&` · ${d.donateur}`}{d.valeur_estimee>0&&` · ~${fmt(d.valeur_estimee)} FCFA`}
+                      </p>
+                      {d.commission_id&&<p style={{fontSize:10,color:'#6D28D9',margin:'2px 0 0'}}>→ {commissions.find(c=>c.id===d.commission_id)?.nom_commission||'Commission'}</p>}
+                    </div>
+                    <div style={{display:'flex',gap:5,flexShrink:0}}>
+                      <button type="button" onClick={()=>openEditDonNature(d)} style={{width:24,height:24,borderRadius:7,background:VERT_CLAIR,border:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                        <svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke={VERT} strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                      </button>
+                      <button type="button" onClick={()=>supprimerDonNature(d.id)} style={{width:24,height:24,borderRadius:7,background:'#FEF2F2',border:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                        <svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="#DC2626" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                      </button>
+                    </div>
                   </div>
                 </div>
               )
             })}
           </div>
-          {hasMoreRecettes && filtreDateRecettes === 'tout' && (
-            <button type="button" onClick={chargerPlusRecettes} disabled={loadingMore}
-              style={{ width: '100%', marginTop: 10, background: '#fff', color: VERT, border: `1px solid ${VERT}`, borderRadius: 10, padding: '10px', fontSize: 13, fontWeight: 600, cursor: 'pointer', opacity: loadingMore ? 0.7 : 1 }}>
-              {loadingMore ? 'Chargement...' : 'Charger plus'}
-            </button>
-          )}
         </>
       )}
 
       {/* ── COMMISSIONS ── */}
-      {onglet === 'commissions' && (
+      {onglet==='commissions' && (
         <>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-            <p style={{ fontSize: 11, fontWeight: 700, color: '#94A3B8', letterSpacing: '0.1em', margin: 0 }}>PÔLES ({commissions.length})</p>
-            <button type="button" onClick={() => setShowCommission(!showCommission)}
-              style={{ width: 30, height: 30, borderRadius: '50%', background: showCommission ? '#FEF2F2' : VERT, color: '#fff', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 300 }}>
-              {showCommission ? '×' : '+'}
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:12}}>
+            <p style={{fontSize:11,fontWeight:700,color:'#94A3B8',letterSpacing:'0.1em',margin:0}}>PÔLES ({commissions.length})</p>
+            <button type="button" onClick={()=>setShowCommission(!showCommission)}
+              style={{width:30,height:30,borderRadius:'50%',background:showCommission?'#FEF2F2':VERT,color:'#fff',border:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,fontWeight:300}}>
+              {showCommission?'×':'+'}
             </button>
           </div>
-          {showCommission && (
-            <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 14, padding: '14px', marginBottom: 12 }}>
-              <div style={{ marginBottom: 10 }}><label className={labelStyle}>Nom *</label>
-                <input type="text" value={commissionForm.nom_commission} onChange={e => setCommissionForm(f => ({ ...f, nom_commission: e.target.value }))} placeholder="Ex : Restauration..." className={inputStyle} />
-              </div>
-              <div style={{ marginBottom: 12 }}><label className={labelStyle}>Budget prévisionnel (FCFA)</label>
-                <input type="number" value={commissionForm.budget_previsionnel} onChange={e => setCommissionForm(f => ({ ...f, budget_previsionnel: e.target.value }))} className={inputStyle} />
-              </div>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <button type="button" onClick={() => setShowCommission(false)} style={{ flex: 1, background: '#F1F5F9', color: '#475569', border: 'none', borderRadius: 10, padding: '10px', fontSize: 13, cursor: 'pointer' }}>Annuler</button>
-                <button type="button" onClick={saveCommission} disabled={saving} style={{ flex: 1, background: VERT, color: '#fff', border: 'none', borderRadius: 10, padding: '10px', fontSize: 13, fontWeight: 600, cursor: 'pointer', opacity: saving ? 0.7 : 1 }}>{saving ? '...' : 'Ajouter'}</button>
+          {showCommission&&(
+            <div style={{background:'#fff',border:'1px solid #E2E8F0',borderRadius:14,padding:'14px',marginBottom:12}}>
+              <div style={{marginBottom:8}}><label className={lS}>Nom *</label><input type="text" value={commissionForm.nom_commission} onChange={e=>setCommissionForm(f=>({...f,nom_commission:e.target.value}))} placeholder="Ex: Restauration..." className={iS}/></div>
+              <div style={{marginBottom:12}}><label className={lS}>Budget prévisionnel (FCFA)</label><input type="number" value={commissionForm.budget_previsionnel} onChange={e=>setCommissionForm(f=>({...f,budget_previsionnel:e.target.value}))} className={iS}/></div>
+              <div style={{display:'flex',gap:8}}>
+                <button type="button" onClick={()=>setShowCommission(false)} style={{...btnSecondary,flex:1}}>Annuler</button>
+                <button type="button" onClick={saveCommission} disabled={saving} style={{...btnPrimary,flex:1,opacity:saving?0.7:1}}>{saving?'...':'Ajouter'}</button>
               </div>
             </div>
           )}
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {commissions.map(c => {
-              const { dep, alloue, sol, pct, depasse, warning, couleurBarre } = commStats(c)
+          <div style={{display:'flex',flexDirection:'column',gap:8}}>
+            {commissions.map(c=>{
+              const {dep,alloue,sol,pct,depasse,warning,couleurBarre}=commStats(c)
               return (
-                <div key={c.id} style={{ background: '#fff', borderRadius: 12, border: `1px solid ${depasse ? '#FCA5A5' : warning ? '#FCD34D' : '#E2E8F0'}`, padding: '12px 14px', cursor: 'pointer' }}
-                  onClick={() => setFicheCommission(c)}>
-                  {/* Ligne 1 — nom + badge + supprimer */}
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <p style={{ fontSize: 13, fontWeight: 700, color: '#1E293B', margin: 0 }}>{c.nom_commission}</p>
-                      {depasse && <span style={{ fontSize: 9, fontWeight: 700, background: '#FEF2F2', color: '#DC2626', borderRadius: 20, padding: '2px 7px' }}>⚠ DÉPASSEMENT</span>}
-                      {warning && !depasse && <span style={{ fontSize: 9, fontWeight: 700, background: '#FFFBEB', color: '#D97706', borderRadius: 20, padding: '2px 7px' }}>⚠ 80%</span>}
+                <div key={c.id} style={{background:'#fff',borderRadius:12,border:`1px solid ${depasse?'#FCA5A5':warning?'#FCD34D':'#E2E8F0'}`,padding:'12px 14px',cursor:'pointer'}}
+                  onClick={()=>setFicheCommission(c)}>
+                  <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:8}}>
+                    <div style={{display:'flex',alignItems:'center',gap:6}}>
+                      <p style={{fontSize:13,fontWeight:700,color:'#1E293B',margin:0}}>{c.nom_commission}</p>
+                      {depasse&&<span style={{fontSize:9,fontWeight:700,background:'#FEF2F2',color:'#DC2626',borderRadius:20,padding:'2px 7px'}}>⚠ DÉPASSEMENT</span>}
+                      {warning&&!depasse&&<span style={{fontSize:9,fontWeight:700,background:'#FFFBEB',color:'#D97706',borderRadius:20,padding:'2px 7px'}}>⚠ 80%</span>}
                     </div>
-                    <button type="button" onClick={e => { e.stopPropagation(); supprimerCommission(c.id) }}
-                      style={{ width: 24, height: 24, borderRadius: 6, background: '#FEF2F2', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <button type="button" onClick={e=>{e.stopPropagation();supprimerCommission(c.id)}} style={{width:24,height:24,borderRadius:6,background:'#FEF2F2',border:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
                       <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="#DC2626" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                     </button>
                   </div>
-
-                  {/* 3 compteurs */}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 6, marginBottom: 10 }}>
-                    {[
-                      { label: 'Prévu', val: fmt(c.budget_previsionnel || 0), color: '#475569' },
-                      { label: 'Alloué', val: fmt(alloue), color: VERT },
-                      { label: 'Dépensé', val: fmt(dep), color: depasse ? '#DC2626' : '#1D4ED8' },
-                    ].map(s => (
-                      <div key={s.label} style={{ textAlign: 'center', background: '#F8FAFC', borderRadius: 8, padding: '6px 4px' }}>
-                        <p style={{ fontSize: 13, fontWeight: 700, color: s.color, margin: '0 0 1px' }}>{s.val}</p>
-                        <p style={{ fontSize: 9, color: '#94A3B8', margin: 0 }}>{s.label}</p>
+                  <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:6,marginBottom:10}}>
+                    {[{label:'Prévu',val:fmt(c.budget_previsionnel||0),color:'#475569'},{label:'Alloué',val:fmt(alloue),color:VERT},{label:'Dépensé',val:fmt(dep),color:depasse?'#DC2626':'#1D4ED8'}].map(s=>(
+                      <div key={s.label} style={{textAlign:'center',background:'#F8FAFC',borderRadius:8,padding:'6px 4px'}}>
+                        <p style={{fontSize:13,fontWeight:700,color:s.color,margin:'0 0 1px'}}>{s.val}</p>
+                        <p style={{fontSize:9,color:'#94A3B8',margin:0}}>{s.label}</p>
                       </div>
                     ))}
                   </div>
-
-                  {/* Barre progression */}
-                  <div style={{ marginBottom: 8 }}>
-                    <div style={{ background: '#F1F5F9', borderRadius: 4, height: 5 }}>
-                      <div style={{ background: couleurBarre, borderRadius: 4, height: 5, width: `${Math.min(pct, 100)}%`, transition: 'width .3s' }} />
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 3 }}>
-                      <span style={{ fontSize: 9, color: couleurBarre, fontWeight: 600 }}>{pct}% consommé</span>
-                      <span style={{ fontSize: 9, color: sol >= 0 ? '#065F46' : '#DC2626', fontWeight: 600 }}>
-                        Solde : {sol >= 0 ? '+' : ''}{fmt(sol)} FCFA
-                      </span>
-                    </div>
+                  <div style={{background:'#F1F5F9',borderRadius:4,height:5,marginBottom:5}}>
+                    <div style={{background:couleurBarre,borderRadius:4,height:5,width:`${Math.min(pct,100)}%`,transition:'width .3s'}}/>
                   </div>
-
-                  {/* Allocation */}
-                  {showAllouer === c.id ? (
-                    <div style={{ display: 'flex', gap: 6 }} onClick={e => e.stopPropagation()}>
-                      <input type="number" value={allouerMontant} onChange={e => setAllouerMontant(e.target.value)} placeholder="Montant à allouer"
-                        style={{ flex: 1, border: '1px solid #E2E8F0', borderRadius: 8, padding: '6px 10px', fontSize: 12, outline: 'none', color: '#1E293B' }} />
-                      <button type="button" onClick={() => saveAllouer(c.id)} style={{ background: VERT, color: '#fff', border: 'none', borderRadius: 8, padding: '6px 12px', fontSize: 12, cursor: 'pointer' }}>OK</button>
-                      <button type="button" onClick={() => setShowAllouer(null)} style={{ background: '#F1F5F9', color: '#64748B', border: 'none', borderRadius: 8, padding: '6px 10px', fontSize: 12, cursor: 'pointer' }}>✕</button>
+                  <div style={{display:'flex',justifyContent:'space-between',marginBottom:8}}>
+                    <span style={{fontSize:9,color:couleurBarre,fontWeight:600}}>{pct}% consommé</span>
+                    <span style={{fontSize:9,color:sol>=0?'#065F46':'#DC2626',fontWeight:600}}>Solde : {sol>=0?'+':''}{fmt(sol)} FCFA</span>
+                  </div>
+                  {showAllouer===c.id?(
+                    <div style={{display:'flex',gap:6}} onClick={e=>e.stopPropagation()}>
+                      <input type="number" value={allouerMontant} onChange={e=>setAllouerMontant(e.target.value)} placeholder="Montant à allouer"
+                        style={{flex:1,border:'1px solid #E2E8F0',borderRadius:8,padding:'6px 10px',fontSize:12,outline:'none',color:'#1E293B'}}/>
+                      <button type="button" onClick={()=>saveAllouer(c.id)} style={{background:VERT,color:'#fff',border:'none',borderRadius:8,padding:'6px 12px',fontSize:12,cursor:'pointer'}}>OK</button>
+                      <button type="button" onClick={()=>setShowAllouer(null)} style={{background:'#F1F5F9',color:'#64748B',border:'none',borderRadius:8,padding:'6px 10px',fontSize:12,cursor:'pointer'}}>✕</button>
                     </div>
-                  ) : (
-                    <button type="button" onClick={e => { e.stopPropagation(); setShowAllouer(c.id); setAllouerMontant(alloue || '') }}
-                      style={{ background: 'transparent', color: VERT, border: `1px solid ${VERT}`, borderRadius: 8, padding: '5px 12px', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
+                  ):(
+                    <button type="button" onClick={e=>{e.stopPropagation();setShowAllouer(c.id);setAllouerMontant(alloue||'')}}
+                      style={{background:'transparent',color:VERT,border:`1px solid ${VERT}`,borderRadius:8,padding:'5px 12px',fontSize:11,fontWeight:600,cursor:'pointer'}}>
                       Modifier l'allocation
                     </button>
                   )}
-
-                  {/* Hint clic */}
-                  <p style={{ fontSize: 10, color: '#CBD5E1', margin: '8px 0 0', textAlign: 'center' }}>Appuyer pour voir les dépenses →</p>
+                  <p style={{fontSize:10,color:'#CBD5E1',margin:'8px 0 0',textAlign:'center'}}>Appuyer pour voir les dépenses →</p>
                 </div>
               )
             })}
-            {commissions.length === 0 && <p style={{ fontSize: 13, color: '#94A3B8', textAlign: 'center', padding: '20px', margin: 0 }}>Aucune commission créée.</p>}
-          </div>
+            {commissions.length===0&&<p style={{fontSize:13,color:'#94A3B8',textAlign:'center',padding:'20px',margin:0}}>Aucune commission.</p>}
         </>
       )}
 
       {/* ── DÉPENSES ── */}
-      {onglet === 'depenses' && (
+      {onglet==='depenses' && (
         <>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-            <div style={{ display: 'flex', gap: 6, overflowX: 'auto', scrollbarWidth: 'none' }}>
-              {[{ k: 'tout', l: 'Tout' }, { k: 'mois', l: 'Ce mois' }, { k: 'semaine', l: 'Cette semaine' }].map(f => (
-                <button key={f.k} type="button" onClick={() => setFiltreDateDepenses(f.k)} style={dateChip(filtreDateDepenses === f.k)}>{f.l}</button>
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:10}}>
+            <div style={{display:'flex',gap:6,overflowX:'auto',scrollbarWidth:'none'}}>
+              {[{k:'tout',l:'Tout'},{k:'mois',l:'Ce mois'},{k:'semaine',l:'Cette semaine'}].map(f=>(
+                <button key={f.k} type="button" onClick={()=>setFiltreDateD(f.k)} style={dateChipS(filtreDateD===f.k)}>{f.l}</button>
               ))}
             </div>
-            <button type="button" onClick={() => setShowDepense(!showDepense)}
-              style={{ width: 30, height: 30, borderRadius: '50%', background: showDepense ? '#FEF2F2' : VERT, color: '#fff', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 300, flexShrink: 0, marginLeft: 8 }}>
-              {showDepense ? '×' : '+'}
-            </button>
-          </div>
-          {showDepense && (
-            <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 14, padding: '14px', marginBottom: 12 }}>
-              <div style={{ marginBottom: 10 }}><label className={labelStyle}>Commission *</label>
-                <select value={depenseForm.commission_id} onChange={e => setDepenseForm(f => ({ ...f, commission_id: e.target.value }))} className={inputStyle}>
-                  <option value="">Sélectionner</option>
-                  {commissions.map(c => <option key={c.id} value={c.id}>{c.nom_commission}</option>)}
-                </select>
-              </div>
-              <div style={{ marginBottom: 10 }}><label className={labelStyle}>Description *</label>
-                <input type="text" value={depenseForm.description} onChange={e => setDepenseForm(f => ({ ...f, description: e.target.value }))} placeholder="Ex : Achat vivres" className={inputStyle} />
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 10 }}>
-                <div><label className={labelStyle}>Montant (FCFA) *</label>
-                  <input type="number" value={depenseForm.montant} onChange={e => setDepenseForm(f => ({ ...f, montant: e.target.value }))} className={inputStyle} />
-                </div>
-                <div><label className={labelStyle}>Date</label>
-                  <input type="date" value={depenseForm.date_depense} onChange={e => setDepenseForm(f => ({ ...f, date_depense: e.target.value }))} className={inputStyle} />
-                </div>
-              </div>
-              <div style={{ marginBottom: 12 }}><label className={labelStyle}>Justificatif</label>
-                <input type="text" value={depenseForm.justificatif} onChange={e => setDepenseForm(f => ({ ...f, justificatif: e.target.value }))} placeholder="Ex : Reçu n°001" className={inputStyle} />
-              </div>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <button type="button" onClick={() => setShowDepense(false)} style={{ flex: 1, background: '#F1F5F9', color: '#475569', border: 'none', borderRadius: 10, padding: '10px', fontSize: 13, cursor: 'pointer' }}>Annuler</button>
-                <button type="button" onClick={saveDepense} disabled={saving} style={{ flex: 1, background: VERT, color: '#fff', border: 'none', borderRadius: 10, padding: '10px', fontSize: 13, fontWeight: 600, cursor: 'pointer', opacity: saving ? 0.7 : 1 }}>{saving ? '...' : 'Ajouter'}</button>
-              </div>
+            <div style={{display:'flex',gap:6,flexShrink:0,marginLeft:8}}>
+              <button type="button" onClick={()=>setVueDepenses(v=>v==='liste'?'groupee':'liste')}
+                style={{fontSize:10,fontWeight:600,color:VERT,background:VERT_CLAIR,border:`1px solid ${VERT}`,borderRadius:20,padding:'4px 10px',cursor:'pointer'}}>
+                {vueDepenses==='liste'?'Par commission':'Chronologique'}
+              </button>
+              <button type="button" onClick={()=>{setShowDepense(!showDepense);setEditDepenseId(null);setDepenseForm(EMPTY_D)}}
+                style={{width:30,height:30,borderRadius:'50%',background:showDepense&&!editDepenseId?'#FEF2F2':VERT,color:'#fff',border:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,fontWeight:300}}>
+                {showDepense&&!editDepenseId?'×':'+'}
+              </button>
             </div>
-          )}
-          <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #E2E8F0', overflow: 'hidden' }}>
-            {depensesFiltrees.length === 0 && <p style={{ fontSize: 13, color: '#94A3B8', textAlign: 'center', padding: '20px', margin: 0 }}>Aucune dépense.</p>}
-            {depensesFiltrees.map((d, i) => (
-              <div key={d.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderBottom: i < depensesFiltrees.length - 1 ? '1px solid #F1F5F9' : 'none' }}>
-                <div style={{ width: 34, height: 34, borderRadius: '50%', background: '#FEF2F2', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="#DC2626" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontSize: 13, fontWeight: 500, color: '#1E293B', margin: '0 0 2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.description}</p>
-                  <p style={{ fontSize: 11, color: '#94A3B8', margin: 0 }}>{d.nom_commission} · {new Date(d.date_depense).toLocaleDateString('fr-FR')}</p>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-                  <p style={{ fontSize: 14, fontWeight: 700, color: '#DC2626', margin: 0 }}>{fmt(d.montant)}</p>
-                  <button type="button" onClick={() => supprimerDepense(d.id)} style={{ width: 26, height: 26, borderRadius: 8, background: '#FEF2F2', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="#DC2626" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                  </button>
-                </div>
-              </div>
-            ))}
           </div>
-          {hasMoreDepenses && filtreDateDepenses === 'tout' && (
-            <button type="button" onClick={chargerPlusDepenses} disabled={loadingMore}
-              style={{ width: '100%', marginTop: 10, background: '#fff', color: VERT, border: `1px solid ${VERT}`, borderRadius: 10, padding: '10px', fontSize: 13, fontWeight: 600, cursor: 'pointer', opacity: loadingMore ? 0.7 : 1 }}>
-              {loadingMore ? 'Chargement...' : 'Charger plus'}
-            </button>
+          {showDepense&&<FormulaireDepense/>}
+
+          {vueDepenses==='liste' && (
+            <>
+              <div style={{background:'#fff',borderRadius:12,border:'1px solid #E2E8F0',overflow:'hidden'}}>
+                {depensesFiltrees.length===0&&<p style={{fontSize:13,color:'#94A3B8',textAlign:'center',padding:'20px',margin:0}}>Aucune dépense.</p>}
+                {depensesFiltrees.map((d,i)=><LigneDepense key={d.id} d={d} i={i} total={depensesFiltrees.length}/>)}
+              </div>
+              {hasMoreD&&filtreDateD==='tout'&&(
+                <button type="button" onClick={chargerPlusD} disabled={loadingMore}
+                  style={{width:'100%',marginTop:10,background:'#fff',color:VERT,border:`1px solid ${VERT}`,borderRadius:10,padding:'10px',fontSize:13,fontWeight:600,cursor:'pointer',opacity:loadingMore?0.7:1}}>
+                  {loadingMore?'Chargement...':'Charger plus'}
+                </button>
+              )}
+            </>
+          )}
+
+          {vueDepenses==='groupee' && (
+            <div style={{display:'flex',flexDirection:'column',gap:10}}>
+              {commissions.map(c=>{
+                const deps=filtrerParDate(depenses.filter(d=>d.commission_id===c.id),'date_depense',filtreDateD)
+                const {dep,alloue,sol,depasse,couleurBarre,pct}=commStats(c)
+                return (
+                  <div key={c.id} style={{background:'#fff',borderRadius:12,border:`1px solid ${depasse?'#FCA5A5':'#E2E8F0'}`,overflow:'hidden'}}>
+                    <div style={{padding:'10px 14px',background:depasse?'#FEF2F2':'#F8FAFC',borderBottom:'1px solid #F1F5F9'}}>
+                      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:4}}>
+                        <div style={{display:'flex',alignItems:'center',gap:6}}>
+                          <p style={{fontSize:13,fontWeight:700,color:'#1E293B',margin:0}}>{c.nom_commission}</p>
+                          {depasse&&<span style={{fontSize:9,fontWeight:700,background:'#FEF2F2',color:'#DC2626',borderRadius:20,padding:'2px 7px'}}>⚠ DÉPASSEMENT</span>}
+                        </div>
+                        <span style={{fontSize:12,fontWeight:700,color:sol>=0?'#065F46':'#DC2626'}}>{sol>=0?'+':''}{fmt(sol)} FCFA</span>
+                      </div>
+                      <div style={{display:'flex',gap:12,marginBottom:5}}>
+                        <span style={{fontSize:10,color:'#94A3B8'}}>Alloué : <strong style={{color:VERT}}>{fmt(alloue)}</strong></span>
+                        <span style={{fontSize:10,color:'#94A3B8'}}>Dépensé : <strong style={{color:depasse?'#DC2626':'#1D4ED8'}}>{fmt(dep)}</strong></span>
+                        <span style={{fontSize:10,color:'#94A3B8'}}>{pct}%</span>
+                      </div>
+                      <div style={{background:'#E2E8F0',borderRadius:4,height:3}}>
+                        <div style={{background:couleurBarre,borderRadius:4,height:3,width:`${Math.min(pct,100)}%`}}/>
+                      </div>
+                    </div>
+                    {deps.length===0?<p style={{fontSize:12,color:'#94A3B8',textAlign:'center',padding:'12px',margin:0}}>Aucune dépense.</p>
+                      :deps.map((d,i)=><LigneDepense key={d.id} d={d} i={i} total={deps.length} showComm={false}/>)}
+                  </div>
+                )
+              })}
+            </div>
           )}
         </>
       )}
 
       {/* ── HISTORIQUE ── */}
-      {onglet === 'historique' && (
+      {onglet==='historique' && (
         <>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-            <p style={{ fontSize: 11, fontWeight: 700, color: '#94A3B8', letterSpacing: '0.1em', margin: 0 }}>RELEVÉ ({historique.length})</p>
-            <div style={{ display: 'flex', gap: 6 }}>
-              <span style={{ fontSize: 11, fontWeight: 600, color: '#065F46', background: '#ECFDF5', borderRadius: 20, padding: '2px 10px' }}>+{fmt(totalRecettes)}</span>
-              <span style={{ fontSize: 11, fontWeight: 600, color: '#DC2626', background: '#FEF2F2', borderRadius: 20, padding: '2px 10px' }}>-{fmt(totalDepenses)}</span>
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:12}}>
+            <p style={{fontSize:11,fontWeight:700,color:'#94A3B8',letterSpacing:'0.1em',margin:0}}>RELEVÉ ({historique.length})</p>
+            <div style={{display:'flex',gap:6}}>
+              <span style={{fontSize:11,fontWeight:600,color:'#065F46',background:'#ECFDF5',borderRadius:20,padding:'2px 10px'}}>+{fmt(totalRecettes)}</span>
+              <span style={{fontSize:11,fontWeight:600,color:'#DC2626',background:'#FEF2F2',borderRadius:20,padding:'2px 10px'}}>-{fmt(totalDepenses)}</span>
             </div>
           </div>
-          <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #E2E8F0', overflow: 'hidden' }}>
-            {historique.length === 0 && <p style={{ fontSize: 13, color: '#94A3B8', textAlign: 'center', padding: '20px', margin: 0 }}>Aucune transaction.</p>}
-            {historique.map((tx, i) => {
-              const isR = tx._type === 'recette'
+          <div style={{background:'#fff',borderRadius:12,border:'1px solid #E2E8F0',overflow:'hidden'}}>
+            {historique.length===0&&<p style={{fontSize:13,color:'#94A3B8',textAlign:'center',padding:'20px',margin:0}}>Aucune transaction.</p>}
+            {historique.map((tx,i)=>{
+              const isR=tx._type==='recette'
               return (
-                <div key={`${tx._type}-${tx.id}`} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderBottom: i < historique.length - 1 ? '1px solid #F1F5F9' : 'none' }}>
-                  <div style={{ width: 30, height: 30, borderRadius: '50%', background: isR ? '#ECFDF5' : '#FEF2F2', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <span style={{ fontSize: 16, fontWeight: 800, color: isR ? '#065F46' : '#DC2626', lineHeight: 1 }}>{isR ? '+' : '−'}</span>
+                <div key={`${tx._type}-${tx.id}`} style={{display:'flex',alignItems:'center',gap:10,padding:'10px 14px',borderBottom:i<historique.length-1?'1px solid #F1F5F9':'none'}}>
+                  <div style={{width:30,height:30,borderRadius:'50%',background:isR?'#ECFDF5':'#FEF2F2',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                    <span style={{fontSize:16,fontWeight:800,color:isR?'#065F46':'#DC2626',lineHeight:1}}>{isR?'+':'−'}</span>
                   </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontSize: 13, fontWeight: 600, color: '#1E293B', margin: '0 0 1px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tx._label}</p>
-                    <p style={{ fontSize: 10, color: '#94A3B8', margin: 0 }}>{tx._sub && `${tx._sub} · `}{new Date(tx._date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                  <div style={{flex:1,minWidth:0}}>
+                    <p style={{fontSize:13,fontWeight:600,color:'#1E293B',margin:'0 0 1px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{tx._label}</p>
+                    <p style={{fontSize:10,color:'#94A3B8',margin:0}}>{tx._sub&&`${tx._sub} · `}{new Date(tx._date).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'})}</p>
                   </div>
-                  <p style={{ fontSize: 14, fontWeight: 700, color: isR ? '#065F46' : '#DC2626', margin: 0, flexShrink: 0 }}>
-                    {isR ? '+' : '-'}{fmt(tx._montant)}
-                  </p>
+                  <p style={{fontSize:14,fontWeight:700,color:isR?'#065F46':'#DC2626',margin:0,flexShrink:0}}>{isR?'+':'-'}{fmt(tx._montant)}</p>
                 </div>
               )
             })}
@@ -800,70 +1069,55 @@ export default function TresoreriePage() {
         </>
       )}
 
-      {/* ── BOTTOM SHEET — DÉPENSES PAR COMMISSION ── */}
+      {/* ── BOTTOM SHEET COMMISSION ── */}
       {ficheCommission && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 50, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
-          onClick={() => setFicheCommission(null)}>
-          <div style={{ background: '#F8FAFC', borderRadius: '20px 20px 0 0', width: '100%', maxWidth: 480, maxHeight: '80vh', overflowY: 'auto', paddingBottom: 28 }}
-            onClick={e => e.stopPropagation()}>
-            <div style={{ width: 36, height: 3, background: '#E2E8F0', borderRadius: 2, margin: '14px auto 0' }} />
-
-            {(() => {
-              const { dep, alloue, sol, pct, depasse, warning, couleurBarre } = commStats(ficheCommission)
-              const deps = depenses.filter(d => d.commission_id === ficheCommission.id)
+        <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.45)',zIndex:50,display:'flex',alignItems:'flex-end',justifyContent:'center'}}
+          onClick={()=>setFicheCommission(null)}>
+          <div style={{background:'#F8FAFC',borderRadius:'20px 20px 0 0',width:'100%',maxWidth:480,maxHeight:'80vh',overflowY:'auto',paddingBottom:28}}
+            onClick={e=>e.stopPropagation()}>
+            <div style={{width:36,height:3,background:'#E2E8F0',borderRadius:2,margin:'14px auto 0'}}/>
+            {(()=>{
+              const {dep,alloue,sol,pct,depasse,warning,couleurBarre}=commStats(ficheCommission)
+              const deps=depenses.filter(d=>d.commission_id===ficheCommission.id)
               return (
                 <>
-                  {/* En-tête */}
-                  <div style={{ padding: '14px 16px 0' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                      <p style={{ fontSize: 17, fontWeight: 700, color: '#1E293B', margin: 0 }}>{ficheCommission.nom_commission}</p>
-                      {depasse && <span style={{ fontSize: 9, fontWeight: 700, background: '#FEF2F2', color: '#DC2626', borderRadius: 20, padding: '2px 8px' }}>⚠ DÉPASSEMENT</span>}
-                      {warning && !depasse && <span style={{ fontSize: 9, fontWeight: 700, background: '#FFFBEB', color: '#D97706', borderRadius: 20, padding: '2px 8px' }}>⚠ 80%</span>}
+                  <div style={{padding:'14px 16px 0'}}>
+                    <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:10}}>
+                      <p style={{fontSize:17,fontWeight:700,color:'#1E293B',margin:0}}>{ficheCommission.nom_commission}</p>
+                      {depasse&&<span style={{fontSize:9,fontWeight:700,background:'#FEF2F2',color:'#DC2626',borderRadius:20,padding:'2px 8px'}}>⚠ DÉPASSEMENT</span>}
+                      {warning&&!depasse&&<span style={{fontSize:9,fontWeight:700,background:'#FFFBEB',color:'#D97706',borderRadius:20,padding:'2px 8px'}}>⚠ 80%</span>}
                     </div>
-
-                    {/* 3 KPI */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 6, marginBottom: 10 }}>
-                      {[
-                        { label: 'Alloué', val: fmt(alloue), color: VERT },
-                        { label: 'Dépensé', val: fmt(dep), color: depasse ? '#DC2626' : '#1D4ED8' },
-                        { label: 'Solde', val: `${sol >= 0 ? '+' : ''}${fmt(sol)}`, color: sol >= 0 ? '#065F46' : '#DC2626' },
-                      ].map(s => (
-                        <div key={s.label} style={{ background: '#fff', borderRadius: 10, border: '1px solid #E2E8F0', padding: '8px', textAlign: 'center' }}>
-                          <p style={{ fontSize: 14, fontWeight: 700, color: s.color, margin: '0 0 2px' }}>{s.val}</p>
-                          <p style={{ fontSize: 9, color: '#94A3B8', margin: 0 }}>{s.label}</p>
+                    <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:6,marginBottom:10}}>
+                      {[{label:'Alloué',val:fmt(alloue),color:VERT},{label:'Dépensé',val:fmt(dep),color:depasse?'#DC2626':'#1D4ED8'},{label:'Solde',val:`${sol>=0?'+':''}${fmt(sol)}`,color:sol>=0?'#065F46':'#DC2626'}].map(s=>(
+                        <div key={s.label} style={{background:'#fff',borderRadius:10,border:'1px solid #E2E8F0',padding:'8px',textAlign:'center'}}>
+                          <p style={{fontSize:14,fontWeight:700,color:s.color,margin:'0 0 2px'}}>{s.val}</p>
+                          <p style={{fontSize:9,color:'#94A3B8',margin:0}}>{s.label}</p>
                         </div>
                       ))}
                     </div>
-
-                    {/* Barre */}
-                    <div style={{ background: '#F1F5F9', borderRadius: 4, height: 5, marginBottom: 4 }}>
-                      <div style={{ background: couleurBarre, borderRadius: 4, height: 5, width: `${Math.min(pct, 100)}%` }} />
+                    <div style={{background:'#F1F5F9',borderRadius:4,height:5,marginBottom:4}}>
+                      <div style={{background:couleurBarre,borderRadius:4,height:5,width:`${Math.min(pct,100)}%`}}/>
                     </div>
-                    <p style={{ fontSize: 10, color: couleurBarre, fontWeight: 600, margin: '0 0 14px', textAlign: 'right' }}>{pct}% du budget consommé</p>
+                    <p style={{fontSize:10,color:couleurBarre,fontWeight:600,margin:'0 0 14px',textAlign:'right'}}>{pct}% consommé</p>
                   </div>
-
-                  {/* Liste dépenses */}
-                  <p style={{ fontSize: 10, fontWeight: 700, color: '#94A3B8', letterSpacing: '0.1em', margin: '0 0 8px', padding: '0 16px', textTransform: 'uppercase' }}>
+                  <p style={{fontSize:10,fontWeight:700,color:'#94A3B8',letterSpacing:'0.1em',margin:'0 0 8px',padding:'0 16px',textTransform:'uppercase'}}>
                     Dépenses ({deps.length})
                   </p>
-                  <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #E2E8F0', overflow: 'hidden', margin: '0 16px' }}>
-                    {deps.length === 0 && <p style={{ fontSize: 13, color: '#94A3B8', textAlign: 'center', padding: '16px', margin: 0 }}>Aucune dépense enregistrée.</p>}
-                    {deps.map((d, i) => (
-                      <div key={d.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderBottom: i < deps.length - 1 ? '1px solid #F1F5F9' : 'none' }}>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <p style={{ fontSize: 13, fontWeight: 500, color: '#1E293B', margin: '0 0 2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.description}</p>
-                          <p style={{ fontSize: 10, color: '#94A3B8', margin: 0 }}>
-                            {new Date(d.date_depense).toLocaleDateString('fr-FR')}{d.justificatif && ` · ${d.justificatif}`}
-                          </p>
+                  <div style={{background:'#fff',borderRadius:12,border:'1px solid #E2E8F0',overflow:'hidden',margin:'0 16px'}}>
+                    {deps.length===0&&<p style={{fontSize:13,color:'#94A3B8',textAlign:'center',padding:'16px',margin:0}}>Aucune dépense.</p>}
+                    {deps.map((d,i)=>(
+                      <div key={d.id} style={{display:'flex',alignItems:'center',gap:10,padding:'9px 14px',borderBottom:i<deps.length-1?'1px solid #F1F5F9':'none'}}>
+                        <div style={{flex:1,minWidth:0}}>
+                          <p style={{fontSize:13,fontWeight:500,color:'#1E293B',margin:'0 0 1px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{d.description}</p>
+                          <p style={{fontSize:10,color:'#94A3B8',margin:0}}>{new Date(d.date_depense).toLocaleDateString('fr-FR')}{d.justificatif&&` · ${d.justificatif}`}</p>
                         </div>
-                        <p style={{ fontSize: 14, fontWeight: 700, color: '#DC2626', margin: 0, flexShrink: 0 }}>{fmt(d.montant)} FCFA</p>
+                        <p style={{fontSize:14,fontWeight:700,color:'#DC2626',margin:0,flexShrink:0}}>{fmt(d.montant)} FCFA</p>
                       </div>
                     ))}
                   </div>
-
-                  <div style={{ padding: '14px 16px 0' }}>
-                    <button type="button" onClick={() => setFicheCommission(null)}
-                      style={{ width: '100%', background: '#F1F5F9', color: '#475569', border: 'none', borderRadius: 10, padding: '11px', fontSize: 13, cursor: 'pointer' }}>
+                  <div style={{padding:'14px 16px 0'}}>
+                    <button type="button" onClick={()=>setFicheCommission(null)}
+                      style={{width:'100%',background:'#F1F5F9',color:'#475569',border:'none',borderRadius:10,padding:'11px',fontSize:13,cursor:'pointer'}}>
                       Fermer
                     </button>
                   </div>
