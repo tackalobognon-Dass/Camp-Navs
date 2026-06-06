@@ -23,7 +23,7 @@ export default function AdminLayout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   return (
-    <div style={{ height: '100dvh', display: 'flex', overflow: 'hidden', background: '#F8FAFC' }}>
+    <div style={{ height: '100dvh', display: 'flex', overflow: 'clip', background: '#F8FAFC' }}>
 
       {/* Overlay sidebar mobile */}
       {sidebarOpen && (
@@ -66,7 +66,7 @@ export default function AdminLayout({ children }) {
       </aside>
 
       {/* Zone principale */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100dvh', overflow: 'hidden', minWidth: 0 }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100dvh', minWidth: 0 }}>
 
         {/* Header mobile (burger) */}
         <header style={{ background: '#fff', borderBottom: '1px solid #F1F5F9', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
