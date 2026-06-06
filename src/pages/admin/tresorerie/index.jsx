@@ -331,7 +331,7 @@ export default function TresoreriePage() {
       <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', background: '#F8FAFC', overflow: 'hidden' }}>
 
       {/* ── HEADER FIXE ── */}
-      <div style={{ flexShrink: 0, background: '#F8FAFC', padding: '14px 14px 8px', borderBottom: '1px solid #F1F5F9' }}>
+      <div style={{ flexShrink: 0, background: '#F8FAFC', padding: '14px 14px 8px', borderBottom: '1px solid #E2E8F0', zIndex: 2, position: 'relative', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
           <div>
             <h1 style={{ fontSize: 20, fontWeight: 700, color: '#1E293B', margin: 0 }}>Trésorerie</h1>
