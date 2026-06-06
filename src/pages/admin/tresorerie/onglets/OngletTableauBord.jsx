@@ -5,7 +5,8 @@ export default function OngletTableauBord({
   recettes, commissions, depenses, donsNature,
   budgetGlobal, budgetGlobalId, totalRecettes, totalDepenses,
   soldeGlobal, totalAlloue, soldeNonAlloue, pctCollecte,
-  depassements, caisseJour, onSaveBudget, saving,
+  depassements, caisseJour, onSaveBudget, saving, onNavigate,
+  subventionEnAttente,
 }) {
   const [editBudget, setEditBudget] = useState(false)
   const [budgetForm, setBudgetForm] = useState(budgetGlobal)
@@ -28,20 +29,16 @@ export default function OngletTableauBord({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
 
-      {/* Alertes dépassements */}
+      {/* Alerte dépassements — compacte */}
       {depassements.length > 0 && (
-        <div style={{ background: '#FEF2F2', border: '1px solid #FCA5A5', borderRadius: 12, padding: '10px 14px' }}>
-          <p style={{ fontSize: 11, fontWeight: 700, color: '#DC2626', margin: '0 0 6px' }}>
+        <div style={{ background: '#FEF2F2', border: '1px solid #FCA5A5', borderRadius: 10, padding: '8px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span style={{ fontSize: 12, fontWeight: 600, color: '#DC2626' }}>
             ⚠ {depassements.length} commission(s) en dépassement
-          </p>
-          {depassements.map(c => {
-            const dep = depenses.filter(d => d.commission_id === c.id).reduce((s, d) => s + d.montant, 0)
-            return (
-              <p key={c.id} style={{ fontSize: 11, color: '#DC2626', margin: '2px 0' }}>
-                {c.nom_commission} : dépensé {fmt(dep)} / alloué {fmt(c.montant_alloue || 0)} FCFA (+{fmt(dep - (c.montant_alloue || 0))} FCFA)
-              </p>
-            )
-          })}
+          </span>
+          <button type="button" onClick={() => onNavigate('commissions')}
+            style={{ fontSize: 11, fontWeight: 700, color: '#DC2626', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>
+            Voir →
+          </button>
         </div>
       )}
 
@@ -76,10 +73,15 @@ export default function OngletTableauBord({
             <div style={{ background: '#F1F5F9', borderRadius: 4, height: 4, marginBottom: 4 }}>
               <div style={{ background: VERT, borderRadius: 4, height: 4, width: `${Math.min(pctCollecte, 100)}%`, transition: 'width .4s' }} />
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
               <span style={{ fontSize: 10, color: '#64748B' }}>{pctCollecte}% collecté</span>
               <span style={{ fontSize: 10, color: '#94A3B8' }}>Reste : {fmt(Math.max(budgetGlobal - totalRecettes, 0))} FCFA</span>
             </div>
+            {subventionEnAttente > 0 && (
+              <p style={{ fontSize: 10, color: '#D97706', margin: 0, fontWeight: 500 }}>
+                ⏳ Subvention demandée : {fmt(subventionEnAttente)} FCFA (en attente)
+              </p>
+            )}
           </>
         )}
       </div>

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { fmt, VERT, VERT_CLAIR, commStats } from '../utils'
 
-function FicheCommission({ commission, depenses, onClose }) {
+function FicheCommission({ commission, depenses, donsNature, onClose }) {
   const { dep, alloue, sol, pct, depasse, warning, couleurBarre } = commStats(commission, depenses)
   const deps = depenses.filter(d => d.commission_id === commission.id)
 
@@ -17,18 +17,41 @@ function FicheCommission({ commission, depenses, onClose }) {
             {depasse && <span style={{ fontSize: 9, fontWeight: 700, background: '#FEF2F2', color: '#DC2626', borderRadius: 20, padding: '2px 8px' }}>⚠ DÉPASSEMENT</span>}
             {warning && !depasse && <span style={{ fontSize: 9, fontWeight: 700, background: '#FFFBEB', color: '#D97706', borderRadius: 20, padding: '2px 8px' }}>⚠ 80%</span>}
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 6, marginBottom: 10 }}>
-            {[
-              { label: 'Alloué', val: fmt(alloue), color: VERT },
-              { label: 'Dépensé', val: fmt(dep), color: depasse ? '#DC2626' : '#1D4ED8' },
-              { label: 'Solde', val: `${sol >= 0 ? '+' : ''}${fmt(sol)}`, color: sol >= 0 ? '#065F46' : '#DC2626' },
-            ].map(s => (
-              <div key={s.label} style={{ background: '#fff', borderRadius: 10, border: '1px solid #E2E8F0', padding: 8, textAlign: 'center' }}>
-                <p style={{ fontSize: 14, fontWeight: 700, color: s.color, margin: '0 0 2px' }}>{s.val}</p>
-                <p style={{ fontSize: 9, color: '#94A3B8', margin: 0 }}>{s.label}</p>
-              </div>
-            ))}
-          </div>
+          {(() => {
+            const donsCommission = donsNature.filter(d => d.commission_id === commission.id && d.statut === 'reçu')
+            const valeurDons = donsCommission.reduce((s, d) => s + (d.valeur_estimee || 0), 0)
+            return (
+              <>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 6, marginBottom: valeurDons > 0 ? 8 : 10 }}>
+                  {[
+                    { label: 'Alloué', val: fmt(alloue), color: VERT },
+                    { label: 'Dépensé', val: fmt(dep), color: depasse ? '#DC2626' : '#1D4ED8' },
+                    { label: 'Solde cash', val: `${sol >= 0 ? '+' : ''}${fmt(sol)}`, color: sol >= 0 ? '#065F46' : '#DC2626' },
+                  ].map(s => (
+                    <div key={s.label} style={{ background: '#fff', borderRadius: 10, border: '1px solid #E2E8F0', padding: 8, textAlign: 'center' }}>
+                      <p style={{ fontSize: 14, fontWeight: 700, color: s.color, margin: '0 0 2px' }}>{s.val}</p>
+                      <p style={{ fontSize: 9, color: '#94A3B8', margin: 0 }}>{s.label}</p>
+                    </div>
+                  ))}
+                </div>
+                {valeurDons > 0 && (
+                  <div style={{ background: '#F5F3FF', border: '1px solid #DDD6FE', borderRadius: 10, padding: '8px 12px', marginBottom: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <p style={{ fontSize: 10, fontWeight: 600, color: '#6D28D9', margin: '0 0 2px' }}>Dons en nature reçus</p>
+                      <p style={{ fontSize: 9, color: '#8B5CF6', margin: 0 }}>{donsCommission.length} don(s) · valeur estimée</p>
+                    </div>
+                    <p style={{ fontSize: 14, fontWeight: 700, color: '#6D28D9', margin: 0 }}>~{fmt(valeurDons)} FCFA</p>
+                  </div>
+                )}
+                {valeurDons > 0 && (
+                  <div style={{ background: '#ECFDF5', border: '1px solid #6EE7B7', borderRadius: 10, padding: '8px 12px', marginBottom: 10, display: 'flex', justifyContent: 'space-between' }}>
+                    <p style={{ fontSize: 10, fontWeight: 600, color: '#065F46', margin: 0 }}>Couverture totale (cash + nature)</p>
+                    <p style={{ fontSize: 13, fontWeight: 700, color: '#065F46', margin: 0 }}>{fmt(alloue + valeurDons)} FCFA</p>
+                  </div>
+                )}
+              </>
+            )
+          })()}
           <div style={{ background: '#F1F5F9', borderRadius: 4, height: 5, marginBottom: 4 }}>
             <div style={{ background: couleurBarre, borderRadius: 4, height: 5, width: `${Math.min(pct, 100)}%` }} />
           </div>
@@ -67,7 +90,7 @@ function FicheCommission({ commission, depenses, onClose }) {
 }
 
 export default function OngletCommissions({
-  commissions, depenses, showForm, onToggleForm,
+  commissions, depenses, donsNature, showForm, onToggleForm,
   onDelete, onSaveAllouer, onSupprimerCommission, saving,
   FormCommission, formProps,
 }) {
@@ -148,7 +171,15 @@ export default function OngletCommissions({
                 </button>
               )}
 
-              <p style={{ fontSize: 10, color: '#CBD5E1', margin: '8px 0 0', textAlign: 'center' }}>
+              {(() => {
+                const vDons = donsNature.filter(d => d.commission_id === c.id && d.statut === 'reçu').reduce((s, d) => s + (d.valeur_estimee || 0), 0)
+                return vDons > 0 ? (
+                  <p style={{ fontSize: 10, color: '#6D28D9', margin: '6px 0 0', fontWeight: 500 }}>
+                    + Dons en nature : ~{fmt(vDons)} FCFA · Couverture : {fmt(alloue + vDons)} FCFA
+                  </p>
+                ) : null
+              })()}
+              <p style={{ fontSize: 10, color: '#CBD5E1', margin: '6px 0 0', textAlign: 'center' }}>
                 Appuyer pour voir les dépenses →
               </p>
             </div>
@@ -163,6 +194,7 @@ export default function OngletCommissions({
         <FicheCommission
           commission={ficheOuverte}
           depenses={depenses}
+          donsNature={donsNature}
           onClose={() => setFicheOuverte(null)}
         />
       )}

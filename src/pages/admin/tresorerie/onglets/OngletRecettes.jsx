@@ -2,10 +2,11 @@ import { fmt, VERT, VERT_CLAIR, getTypeRecette, filtrerParDate } from '../utils'
 
 function LigneRecette({ r, onEdit, onDelete, isLast }) {
   const t = getTypeRecette(r.type)
+  const enAttente = r.type === 'subvention' && r.statut_recette === 'demandée'
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 14px', borderBottom: isLast ? 'none' : '1px solid #F1F5F9' }}>
-      <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#ECFDF5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-        <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="#065F46" strokeWidth="1.5">
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 14px', borderBottom: isLast ? 'none' : '1px solid #F1F5F9', background: enAttente ? '#FFFBEB' : '#fff' }}>
+      <div style={{ width: 32, height: 32, borderRadius: '50%', background: enAttente ? '#FEF9C3' : '#ECFDF5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke={enAttente ? '#D97706' : '#065F46'} strokeWidth="1.5">
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V7m0 1v8m0 0v1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
         </svg>
       </div>
@@ -18,8 +19,13 @@ function LigneRecette({ r, onEdit, onDelete, isLast }) {
             {r.donateur && `${r.donateur} · `}
             {new Date(r.date_reception).toLocaleDateString('fr-FR')}
           </span>
-          {r.statut_recette && (
-            <span style={{ fontSize: 9, fontWeight: 600, background: '#FFFBEB', color: '#92400E', borderRadius: 20, padding: '1px 6px' }}>
+          {enAttente && (
+            <span style={{ fontSize: 9, fontWeight: 700, background: '#FEF9C3', color: '#D97706', borderRadius: 20, padding: '1px 6px' }}>
+              ⏳ En attente
+            </span>
+          )}
+          {r.statut_recette && !enAttente && (
+            <span style={{ fontSize: 9, fontWeight: 600, background: '#ECFDF5', color: '#065F46', borderRadius: 20, padding: '1px 6px' }}>
               {r.statut_recette}
             </span>
           )}
@@ -29,7 +35,7 @@ function LigneRecette({ r, onEdit, onDelete, isLast }) {
         </div>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
-        <p style={{ fontSize: 13, fontWeight: 700, color: r.type === 'subvention' && r.statut_recette === 'demandée' ? '#D97706' : '#065F46', margin: 0 }}>
+        <p style={{ fontSize: 13, fontWeight: 700, color: enAttente ? '#D97706' : '#065F46', margin: 0, opacity: enAttente ? 0.6 : 1 }}>
           {fmt(r.montant || 0)}
         </p>
         <button type="button" onClick={() => onEdit(r)}

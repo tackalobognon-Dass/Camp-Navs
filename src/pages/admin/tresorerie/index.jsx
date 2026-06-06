@@ -134,6 +134,13 @@ export default function TresoreriePage() {
     [commissions, depenses]
   )
 
+  const subventionEnAttente = useMemo(
+    () => recettes
+      .filter(r => r.type === 'subvention' && r.statut_recette === 'demandée')
+      .reduce((s, r) => s + (r.montant || 0), 0),
+    [recettes]
+  )
+
   // ── Pagination ──
   async function chargerPlusR() {
     setLoadingMore(true)
@@ -370,6 +377,8 @@ export default function TresoreriePage() {
               totalAlloue={totalAlloue} soldeNonAlloue={soldeNonAlloue} pctCollecte={pctCollecte}
               depassements={depassements} caisseJour={caisseJour}
               onSaveBudget={saveBudgetGlobal} saving={saving}
+              onNavigate={setOnglet}
+              subventionEnAttente={subventionEnAttente}
             />
           )}
 
@@ -401,7 +410,7 @@ export default function TresoreriePage() {
 
           {onglet === 'commissions' && (
             <OngletCommissions
-              commissions={commissions} depenses={depenses}
+              commissions={commissions} depenses={depenses} donsNature={donsNature}
               showForm={showCommission}
               onToggleForm={() => { setShowCommission(s => !s); setCommissionForm(EMPTY_C) }}
               onSaveAllouer={saveAllouer}
