@@ -65,7 +65,7 @@ export default function OngletRecettes({
 
   return (
     <>
-      <div style={{ position: 'sticky', top: 0, background: '#F8FAFC', zIndex: 5, paddingBottom: 10, paddingTop: 2 }}>
+      <div style={{ position: 'sticky', top: 0, background: '#F8FAFC', zIndex: 2, paddingBottom: 10 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', gap: 6, overflowX: 'auto', scrollbarWidth: 'none' }}>
             {[{ k: 'tout', l: 'Tout' }, { k: 'mois', l: 'Ce mois' }, { k: 'semaine', l: 'Cette semaine' }].map(f => (
