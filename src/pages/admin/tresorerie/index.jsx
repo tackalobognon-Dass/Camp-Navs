@@ -369,7 +369,7 @@ export default function TresoreriePage() {
       </div>{/* fin header fixe */}
 
       {/* Zone scrollable */}
-      <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: '12px 14px 14px' }}>
+      <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: '0 14px 14px' }}>
 
       {loading && <p style={{ fontSize: 13, color: '#94A3B8', textAlign: 'center', padding: '30px 0' }}>Chargement...</p>}
 

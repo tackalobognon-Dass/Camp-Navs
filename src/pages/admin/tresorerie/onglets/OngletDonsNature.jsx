@@ -14,7 +14,7 @@ export default function OngletDonsNature({
 
   return (
     <>
-      <div style={{ position: 'sticky', top: 0, background: '#F8FAFC', zIndex: 2, paddingBottom: 12 }}>
+      <div style={{ position: 'sticky', top: 0, background: '#F8FAFC', zIndex: 2, paddingTop: 12, paddingBottom: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
             <p style={{ fontSize: 11, fontWeight: 700, color: '#94A3B8', letterSpacing: '0.1em', margin: 0 }}>
