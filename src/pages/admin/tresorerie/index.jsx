@@ -71,18 +71,21 @@ export default function TresoreriePage() {
       { data: r, count: rc },
       { data: c },
       { data: d, count: dc },
-      { data: dn },
       { data: bg },
     ] = await Promise.all([
       supabase.from('recettes').select('*', { count: 'exact' }).order('date_reception', { ascending: false }).range(0, LIMIT - 1),
       supabase.from('budget_commissions').select('*').order('nom_commission').limit(LIMIT),
       supabase.from('depenses').select('*', { count: 'exact' }).order('date_depense', { ascending: false }).range(0, LIMIT - 1),
-      supabase.from('dons_nature').select('*').order('date_reception', { ascending: false }),
       supabase.from('budget_global').select('*').limit(1),
     ])
     setRecettes(r || [])
     setCommissions(c || [])
     setDepenses(d || [])
+
+    // Requête séparée pour dons_nature avec gestion d'erreur explicite
+    const { data: dn, error: dnErr } = await supabase
+      .from('dons_nature').select('*').order('created_at', { ascending: false })
+    if (dnErr) console.error('dons_nature fetch error:', dnErr)
     setDonsNature(dn || [])
     setHasMoreR((rc || 0) > LIMIT)
     setHasMoreD((dc || 0) > LIMIT)
@@ -237,21 +240,22 @@ export default function TresoreriePage() {
       date_reception: donNatureForm.date_reception,
     }
     if (donNatureForm._editId) {
-      const { data: upd } = await supabase.from('dons_nature').update(payload).eq('id', donNatureForm._editId).select().single()
-      if (upd) setDonsNature(prev => prev.map(d => d.id === donNatureForm._editId ? upd : d))
+      await supabase.from('dons_nature').update(payload).eq('id', donNatureForm._editId)
       showToast('Don modifié ✓')
     } else {
-      const { data: newD } = await supabase.from('dons_nature').insert([payload]).select().single()
-      if (newD) setDonsNature(prev => [newD, ...prev])
+      await supabase.from('dons_nature').insert([payload])
       showToast('Don enregistré ✓')
     }
+    const { data: dn } = await supabase.from('dons_nature').select('*').order('created_at', { ascending: false })
+    setDonsNature(dn || [])
     setSaving(false); setShowDonNature(false); setDonNatureForm(EMPTY_DN)
   }
 
   async function supprimerDonNature(id) {
     if (!window.confirm('Supprimer ce don ?')) return
     await supabase.from('dons_nature').delete().eq('id', id)
-    setDonsNature(prev => prev.filter(d => d.id !== id))
+    const { data: dn } = await supabase.from('dons_nature').select('*').order('created_at', { ascending: false })
+    setDonsNature(dn || [])
     showToast('Don supprimé')
   }
 
