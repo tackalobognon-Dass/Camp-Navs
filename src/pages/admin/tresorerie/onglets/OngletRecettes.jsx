@@ -65,16 +65,18 @@ export default function OngletRecettes({
 
   return (
     <>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-        <div style={{ display: 'flex', gap: 6, overflowX: 'auto', scrollbarWidth: 'none' }}>
-          {[{ k: 'tout', l: 'Tout' }, { k: 'mois', l: 'Ce mois' }, { k: 'semaine', l: 'Cette semaine' }].map(f => (
-            <button key={f.k} type="button" onClick={() => onChangeFiltre(f.k)} style={dateChipS(filtreDateR === f.k)}>{f.l}</button>
-          ))}
+      <div style={{ position: 'sticky', top: 0, background: '#F8FAFC', zIndex: 5, paddingBottom: 10, paddingTop: 2 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', gap: 6, overflowX: 'auto', scrollbarWidth: 'none' }}>
+            {[{ k: 'tout', l: 'Tout' }, { k: 'mois', l: 'Ce mois' }, { k: 'semaine', l: 'Cette semaine' }].map(f => (
+              <button key={f.k} type="button" onClick={() => onChangeFiltre(f.k)} style={dateChipS(filtreDateR === f.k)}>{f.l}</button>
+            ))}
+          </div>
+          <button type="button" onClick={onToggleForm}
+            style={{ width: 30, height: 30, borderRadius: '50%', background: showForm ? '#FEF2F2' : VERT, color: '#fff', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 300, flexShrink: 0, marginLeft: 8 }}>
+            {showForm ? '×' : '+'}
+          </button>
         </div>
-        <button type="button" onClick={onToggleForm}
-          style={{ width: 30, height: 30, borderRadius: '50%', background: showForm ? '#FEF2F2' : VERT, color: '#fff', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 300, flexShrink: 0, marginLeft: 8 }}>
-          {showForm ? '×' : '+'}
-        </button>
       </div>
 
       {showForm && <FormRecette {...formProps} />}

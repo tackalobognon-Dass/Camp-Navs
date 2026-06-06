@@ -3,13 +3,15 @@ import { fmt, VERT } from '../utils'
 export default function OngletHistorique({ historique, totalRecettes, totalDepenses }) {
   return (
     <>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-        <p style={{ fontSize: 11, fontWeight: 700, color: '#94A3B8', letterSpacing: '0.1em', margin: 0 }}>
-          RELEVÉ ({historique.length})
-        </p>
-        <div style={{ display: 'flex', gap: 6 }}>
-          <span style={{ fontSize: 11, fontWeight: 600, color: '#065F46', background: '#ECFDF5', borderRadius: 20, padding: '2px 10px' }}>+{fmt(totalRecettes)}</span>
-          <span style={{ fontSize: 11, fontWeight: 600, color: '#DC2626', background: '#FEF2F2', borderRadius: 20, padding: '2px 10px' }}>-{fmt(totalDepenses)}</span>
+      <div style={{ position: 'sticky', top: 0, background: '#F8FAFC', zIndex: 5, paddingBottom: 12, paddingTop: 2 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <p style={{ fontSize: 11, fontWeight: 700, color: '#94A3B8', letterSpacing: '0.1em', margin: 0 }}>
+            RELEVÉ ({historique.length})
+          </p>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <span style={{ fontSize: 11, fontWeight: 600, color: '#065F46', background: '#ECFDF5', borderRadius: 20, padding: '2px 10px' }}>+{fmt(totalRecettes)}</span>
+            <span style={{ fontSize: 11, fontWeight: 600, color: '#DC2626', background: '#FEF2F2', borderRadius: 20, padding: '2px 10px' }}>-{fmt(totalDepenses)}</span>
+          </div>
         </div>
       </div>
 

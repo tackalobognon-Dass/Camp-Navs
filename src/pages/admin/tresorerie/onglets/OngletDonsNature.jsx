@@ -14,19 +14,21 @@ export default function OngletDonsNature({
 
   return (
     <>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-        <div>
-          <p style={{ fontSize: 11, fontWeight: 700, color: '#94A3B8', letterSpacing: '0.1em', margin: 0 }}>
-            DONS EN NATURE ({donsNature.length})
-          </p>
-          <p style={{ fontSize: 10, color: '#94A3B8', margin: '2px 0 0' }}>
-            Valeur reçue : {fmt(totalRecu)} FCFA
-          </p>
+      <div style={{ position: 'sticky', top: 0, background: '#F8FAFC', zIndex: 5, paddingBottom: 12, paddingTop: 2 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <p style={{ fontSize: 11, fontWeight: 700, color: '#94A3B8', letterSpacing: '0.1em', margin: 0 }}>
+              DONS EN NATURE ({donsNature.length})
+            </p>
+            <p style={{ fontSize: 10, color: '#94A3B8', margin: '2px 0 0' }}>
+              Valeur reçue : {fmt(totalRecu)} FCFA
+            </p>
+          </div>
+          <button type="button" onClick={onToggleForm}
+            style={{ width: 30, height: 30, borderRadius: '50%', background: showForm ? '#FEF2F2' : VERT, color: '#fff', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 300 }}>
+            {showForm ? '×' : '+'}
+          </button>
         </div>
-        <button type="button" onClick={onToggleForm}
-          style={{ width: 30, height: 30, borderRadius: '50%', background: showForm ? '#FEF2F2' : VERT, color: '#fff', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 300 }}>
-          {showForm ? '×' : '+'}
-        </button>
       </div>
 
       {showForm && <FormDonNature {...formProps} commissions={commissions} />}
