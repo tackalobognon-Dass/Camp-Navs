@@ -327,8 +327,11 @@ export default function TresoreriePage() {
         </div>
       )}
 
+      {/* Conteneur absolu plein écran dans main */}
+      <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', background: '#F8FAFC', overflow: 'hidden' }}>
+
       {/* ── HEADER FIXE ── */}
-      <div style={{ position: 'sticky', top: 0, background: '#F8FAFC', zIndex: 10, paddingBottom: 8 }}>
+      <div style={{ flexShrink: 0, background: '#F8FAFC', padding: '14px 14px 8px', borderBottom: '1px solid #F1F5F9' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
           <div>
             <h1 style={{ fontSize: 20, fontWeight: 700, color: '#1E293B', margin: 0 }}>Trésorerie</h1>
@@ -363,7 +366,10 @@ export default function TresoreriePage() {
             </button>
           ))}
         </div>
-      </div>
+      </div>{/* fin header fixe */}
+
+      {/* Zone scrollable */}
+      <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: '12px 14px 14px' }}>
 
       {loading && <p style={{ fontSize: 13, color: '#94A3B8', textAlign: 'center', padding: '30px 0' }}>Chargement...</p>}
 
@@ -445,6 +451,9 @@ export default function TresoreriePage() {
           )}
         </>
       )}
+
+      </div>{/* fin zone scrollable */}
+      </div>{/* fin conteneur absolu */}
     </AdminLayout>
   )
 }

@@ -78,7 +78,7 @@ export default function AdminLayout({ children }) {
         </header>
 
         {/* Contenu — scroll interne uniquement ici */}
-        <main style={{ flex: 1, padding: '14px 14px', overflowY: 'auto', overflowX: 'hidden' }}>
+        <main style={{ flex: 1, padding: '14px 14px', overflowY: 'auto', overflowX: 'hidden', position: 'relative' }}>
           {children}
         </main>
       </div>
