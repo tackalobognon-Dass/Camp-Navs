@@ -283,7 +283,7 @@ export default function ChantsAdminPage() {
               const ouverte = carteOuverte === c.id
               return (
                 <div key={c.id}
-                  style={{ background: '#fff', borderRadius: 12, border: `1px solid ${ouverte ? '#CBD5E1' : '#E2E8F0'}`, overflow: 'hidden', transition: 'border-color .2s' }}>
+                  style={{ background: '#fff', borderRadius: 12, border: `1px solid ${ouverte ? '#CBD5E1' : '#E2E8F0'}`, transition: 'border-color .2s' }}>
 
                   {/* Ligne principale — cliquable */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', cursor: 'pointer' }}
