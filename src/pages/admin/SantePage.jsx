@@ -15,7 +15,7 @@ const STATUT_CONFIG = {
 }
 const EMPTY_FICHE = { nom_campeur: '', symptomes: '', traitement: '', statut: 'En traitement', hopital: '', accompagnateur: '', notes: '', personnel_id: '', nom_personnel: '' }
 const EMPTY_PERSONNEL = { nom: '', role: 'Infirmier', telephone: '' }
-const iS = { width: '100%', border: '1px solid #E2E8F0', borderRadius: 8, padding: '8px 12px', fontSize: 13, outline: 'none', background: '#fff', color: '#1E293B' }
+const iS = { width: '100%', border: '1px solid #E2E8F0', borderRadius: 10, padding: '8px 12px', fontSize: 13, outline: 'none', background: '#fff', color: '#1E293B' }
 const lS = { display: 'block', fontSize: 11, color: '#64748B', marginBottom: 4, fontWeight: 500 }
 
 function MedicamentSelect({ medicaments, medsSelectionnes, onAjouter, onRetirer, onUpdateQte }) {
@@ -34,7 +34,7 @@ function MedicamentSelect({ medicaments, medsSelectionnes, onAjouter, onRetirer,
         <input type="text" value={recherche} onChange={e => { setRecherche(e.target.value); setOuvert(true) }} onFocus={() => setOuvert(true)}
           placeholder="Rechercher un médicament..." style={iS} />
         {ouvert && filtres.length > 0 && (
-          <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: '#fff', border: '1px solid #E2E8F0', borderRadius: 8, zIndex: 20, maxHeight: 140, overflowY: 'auto', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}>
+          <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: '#fff', border: '1px solid #E2E8F0', borderRadius: 10, zIndex: 20, maxHeight: 140, overflowY: 'auto', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}>
             {filtres.map(m => {
               const restant = (m.quantite_initiale || 0) - (m.quantite_utilisee || 0)
               return (
@@ -450,11 +450,11 @@ export default function SantePage() {
                           </div>
                           <div style={{ display: 'flex', gap: 5 }}>
                             <button type="button" onClick={() => { setMedForm({ nom: m.nom, quantite_initiale: m.quantite_initiale || 0, unite: m.unite || 'comprimé(s)' }); setEditMedId(m.id); setShowMed(true) }}
-                              style={{ width: 28, height: 28, borderRadius: 8, background: VERT_CLAIR, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              style={{ width: 28, height: 28, borderRadius: 10, background: VERT_CLAIR, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                               <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke={VERT} strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                             </button>
                             <button type="button" onClick={() => supprimerMed(m.id)}
-                              style={{ width: 28, height: 28, borderRadius: 8, background: '#FEF2F2', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              style={{ width: 28, height: 28, borderRadius: 10, background: '#FEF2F2', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                               <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="#DC2626" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                             </button>
                           </div>
@@ -519,11 +519,11 @@ export default function SantePage() {
                     </div>
                     <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
                       <button type="button" onClick={() => { setPersonnelForm({ nom: p.nom, role: p.role, telephone: p.telephone || '' }); setEditPersonnelId(p.id); setShowPersonnel(true) }}
-                        style={{ width: 28, height: 28, borderRadius: 8, background: VERT_CLAIR, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        style={{ width: 28, height: 28, borderRadius: 10, background: VERT_CLAIR, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke={VERT} strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                       </button>
                       <button type="button" onClick={() => supprimerPersonnel(p.id)}
-                        style={{ width: 28, height: 28, borderRadius: 8, background: '#FEF2F2', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        style={{ width: 28, height: 28, borderRadius: 10, background: '#FEF2F2', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="#DC2626" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                       </button>
                     </div>
