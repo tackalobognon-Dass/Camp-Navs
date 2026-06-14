@@ -279,7 +279,7 @@ export default function SantePage() {
           </div>
 
           {/* Onglets */}
-          <div style={{ display: 'flex', gap: 0, padding: '0 14px', borderTop: '1px solid #F1F5F9' }}>
+          <div style={{ display: 'flex', gap: 6, padding: '8px 14px 10px', overflowX: 'auto', scrollbarWidth: 'none' }}>
             {[
               { key: 'malades',     label: `Malades (${totalMalades})` },
               { key: 'medicaments', label: `Médicaments (${medicaments.length})` },
@@ -287,7 +287,7 @@ export default function SantePage() {
               { key: 'rapport',     label: 'Rapport' },
             ].map(o => (
               <button key={o.key} type="button" onClick={() => setOnglet(o.key)}
-                style={{ padding: '9px 10px', fontSize: 11, fontWeight: onglet === o.key ? 700 : 400, color: onglet === o.key ? VERT : '#64748B', background: 'none', border: 'none', borderBottom: onglet === o.key ? `2px solid ${VERT}` : '2px solid transparent', cursor: 'pointer', marginBottom: -1, whiteSpace: 'nowrap' }}>
+                style={{ flexShrink: 0, padding: '6px 14px', borderRadius: 20, fontSize: 12, fontWeight: onglet === o.key ? 700 : 500, color: onglet === o.key ? '#fff' : '#64748B', background: onglet === o.key ? VERT : '#fff', border: `1px solid ${onglet === o.key ? VERT : '#E2E8F0'}`, cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all .2s' }}>
                 {o.label}
               </button>
             ))}
