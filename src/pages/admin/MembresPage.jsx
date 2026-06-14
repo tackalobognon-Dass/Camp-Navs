@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { supabase } from '../../lib/supabase'
 import AdminLayout from '../../components/admin/AdminLayout'
+import jsPDF from 'jspdf'
 
 const VERT = '#1B3B2B'
 const VERT_CLAIR = '#E8F5E8'
@@ -122,6 +123,66 @@ export default function MembresPage() {
     return { initiales: nom.slice(0, 2).toUpperCase(), ...c }
   }
 
+  function downloadFiche(membre) {
+    const doc = new jsPDF()
+    const VERT_RGB = [27, 59, 43]
+    const pw = doc.internal.pageSize.getWidth()
+
+    // En-tête vert
+    doc.setFillColor(...VERT_RGB)
+    doc.rect(0, 0, pw, 40, 'F')
+    doc.setTextColor(255, 255, 255)
+    doc.setFontSize(16); doc.setFont('helvetica', 'bold')
+    doc.text(membre.nom_complet, 14, 18)
+    doc.setFontSize(10); doc.setFont('helvetica', 'normal')
+    doc.text(membre.role, 14, 27)
+    if (membre.commission) doc.text(`Commission : ${membre.commission}`, 14, 34)
+
+    // Contacts
+    let y = 50
+    if (membre.telephone || membre.email) {
+      doc.setTextColor(27, 59, 43); doc.setFontSize(9); doc.setFont('helvetica', 'bold')
+      doc.text('COORDONNÉES', 14, y); y += 5
+      doc.setFont('helvetica', 'normal'); doc.setTextColor(71, 85, 105)
+      if (membre.telephone) { doc.text(`Téléphone : ${membre.telephone}`, 14, y); y += 6 }
+      if (membre.email)     { doc.text(`Email : ${membre.email}`, 14, y); y += 6 }
+      y += 4
+    }
+
+    // Missions
+    const missions = parseMissions(membre.missions)
+    if (missions.length > 0) {
+      doc.setTextColor(27, 59, 43); doc.setFontSize(9); doc.setFont('helvetica', 'bold')
+      doc.text('MISSIONS & RESPONSABILITÉS', 14, y); y += 6
+
+      missions.forEach((ligne, i) => {
+        const { titre, desc } = parseLigne(ligne)
+        if (y > 260) { doc.addPage(); y = 20 }
+
+        // Numéro + titre
+        doc.setFillColor(232, 245, 232)
+        doc.roundedRect(14, y - 4, pw - 28, desc ? 18 : 10, 3, 3, 'F')
+        doc.setTextColor(27, 59, 43); doc.setFontSize(10); doc.setFont('helvetica', 'bold')
+        doc.text(`${i + 1}. ${titre}`, 18, y + 2)
+        if (desc) {
+          doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(71, 85, 105)
+          const lines = doc.splitTextToSize(desc, pw - 36)
+          doc.text(lines, 18, y + 9)
+          y += 10 + lines.length * 4
+        } else {
+          y += 12
+        }
+        y += 4
+      })
+    }
+
+    // Pied de page
+    doc.setTextColor(148, 163, 184); doc.setFontSize(8)
+    doc.text(`Camp-Navs 2026 · Fiche de mission · ${new Date().toLocaleDateString('fr-FR')}`, pw / 2, 285, { align: 'center' })
+
+    doc.save(`Fiche_${membre.nom_complet.replace(/\s+/g, '_')}_CampNavs2026.pdf`)
+  }
+
   return (
     <AdminLayout>
       <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', background: '#F8FAFC', overflow: 'hidden' }}>
@@ -181,50 +242,69 @@ Suivi des inscriptions : Valider les dossiers.'}
 
           {loading && <p style={{ fontSize: 13, color: '#94A3B8', textAlign: 'center', padding: '20px 0' }}>Chargement...</p>}
 
-          {/* Liste */}
-          <div ref={menuRef} style={{ background: '#fff', borderRadius: 12, border: '1px solid #E2E8F0', overflow: 'hidden' }}>
+          {/* Cartes flottantes */}
+          <div ref={menuRef} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {filtres.length === 0 && !loading && (
-              <div style={{ padding: 28, textAlign: 'center' }}>
+              <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #E2E8F0', padding: 28, textAlign: 'center' }}>
                 <p style={{ fontSize: 13, color: '#94A3B8', margin: '0 0 10px' }}>Aucun membre enregistré.</p>
                 <button type="button" onClick={openNew} style={{ fontSize: 13, color: VERT, fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer' }}>+ Ajouter le premier membre</button>
               </div>
             )}
             {filtres.map((m, index) => {
               const av = getAvatar(m.nom_complet, index)
+              const nbMissions = parseMissions(m.missions).length
               return (
-                <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderBottom: index < filtres.length - 1 ? '1px solid #F1F5F9' : 'none', cursor: 'pointer' }}
+                <div key={m.id}
+                  style={{ background: '#fff', borderRadius: 14, border: '1px solid #E2E8F0', padding: '12px 14px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)', cursor: 'pointer' }}
                   onClick={() => setFicheOuverte(m)}>
-                  <div style={{ width: 38, height: 38, borderRadius: '50%', background: av.bg, color: av.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, flexShrink: 0 }}>
-                    {av.initiales}
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontSize: 13, fontWeight: 600, color: '#1E293B', margin: '0 0 2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.nom_complet}</p>
-                    <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                      <span style={{ fontSize: 10, fontWeight: 600, color: VERT, background: VERT_CLAIR, borderRadius: 20, padding: '1px 8px' }}>{m.role}</span>
-                      {m.commission && <span style={{ fontSize: 10, color: '#94A3B8' }}>{m.commission}</span>}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div style={{ width: 44, height: 44, borderRadius: '50%', background: av.bg, color: av.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, fontWeight: 700, flexShrink: 0 }}>
+                      {av.initiales}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontSize: 14, fontWeight: 700, color: '#1E293B', margin: '0 0 4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.nom_complet}</p>
+                      <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: 10, fontWeight: 600, color: VERT, background: VERT_CLAIR, borderRadius: 20, padding: '2px 10px' }}>{m.role}</span>
+                        {m.commission && <span style={{ fontSize: 10, color: '#94A3B8' }}>{m.commission}</span>}
+                      </div>
+                    </div>
+                    <div style={{ position: 'relative', flexShrink: 0 }} onClick={e => e.stopPropagation()}>
+                      <button type="button" onClick={() => setMenuOuvert(menuOuvert === m.id ? null : m.id)}
+                        style={{ width: 28, height: 28, borderRadius: 8, background: '#F8FAFC', border: '1px solid #E2E8F0', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, color: '#94A3B8' }}>
+                        ···
+                      </button>
+                      {menuOuvert === m.id && (
+                        <div style={{ position: 'absolute', right: 0, top: 32, background: '#fff', borderRadius: 10, border: '1px solid #E2E8F0', boxShadow: '0 4px 20px rgba(0,0,0,0.12)', zIndex: 100, minWidth: 155, overflow: 'hidden' }}>
+                          {[
+                            { label: 'Modifier',       action: () => openEdit(m),               color: '#1E293B' },
+                            { label: '↑ Monter',        action: () => monterOrdre(index),    color: '#1E293B' },
+                            { label: '↓ Descendre',     action: () => descendreOrdre(index), color: '#1E293B' },
+                            { label: 'Télécharger PDF',action: () => { downloadFiche(m); setMenuOuvert(null) }, color: VERT },
+                            { label: 'Supprimer',      action: () => supprimerMembre(m.id),      color: '#DC2626' },
+                          ].map((item, i, arr) => (
+                            <div key={item.label}>
+                              <button type="button" onClick={item.action} style={{ width: '100%', padding: '9px 14px', fontSize: 13, color: item.color, background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
+                                {item.label}
+                              </button>
+                              {i < arr.length - 1 && <div style={{ height: 1, background: '#F1F5F9' }} />}
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
-                  <div style={{ position: 'relative', flexShrink: 0 }} onClick={e => e.stopPropagation()}>
-                    <button type="button" onClick={() => setMenuOuvert(menuOuvert === m.id ? null : m.id)}
-                      style={{ width: 26, height: 26, borderRadius: 7, background: '#F8FAFC', border: '1px solid #E2E8F0', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, color: '#94A3B8' }}>
-                      ···
-                    </button>
-                    {menuOuvert === m.id && (
-                      <div style={{ position: 'absolute', right: 0, top: 30, background: '#fff', borderRadius: 10, border: '1px solid #E2E8F0', boxShadow: '0 4px 20px rgba(0,0,0,0.12)', zIndex: 100, minWidth: 150, overflow: 'hidden' }}>
-                        {[
-                          { label: 'Modifier',  action: () => openEdit(m),              color: '#1E293B' },
-                          { label: '↑ Monter',    action: () => monterOrdre(index),   color: '#1E293B' },
-                          { label: '↓ Descendre', action: () => descendreOrdre(index),color: '#1E293B' },
-                          { label: 'Supprimer', action: () => supprimerMembre(m.id),     color: '#DC2626' },
-                        ].map((item, i, arr) => (
-                          <div key={item.label}>
-                            <button type="button" onClick={item.action} style={{ width: '100%', padding: '9px 14px', fontSize: 13, color: item.color, background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
-                              {item.label}
-                            </button>
-                            {i < arr.length - 1 && <div style={{ height: 1, background: '#F1F5F9' }} />}
-                          </div>
-                        ))}
+                  {/* Infos complémentaires */}
+                  <div style={{ display: 'flex', gap: 12, marginTop: 10, paddingTop: 10, borderTop: '1px solid #F8FAFC' }}>
+                    {m.telephone && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="#94A3B8" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                        <span style={{ fontSize: 11, color: '#64748B' }}>{m.telephone}</span>
                       </div>
+                    )}
+                    {nbMissions > 0 && (
+                      <span style={{ fontSize: 10, color: VERT, background: VERT_CLAIR, borderRadius: 20, padding: '2px 8px', marginLeft: 'auto' }}>
+                        {nbMissions} mission(s)
+                      </span>
                     )}
                   </div>
                 </div>
@@ -302,13 +382,18 @@ Suivi des inscriptions : Valider les dossiers.'}
             </div>
 
             {/* Boutons */}
-            <div style={{ display: 'flex', gap: 10, margin: '14px 14px 0' }}>
+            <div style={{ display: 'flex', gap: 8, margin: '14px 14px 0', flexWrap: 'wrap' }}>
+              <button type="button" onClick={() => downloadFiche(ficheOuverte)}
+                style={{ display: 'flex', alignItems: 'center', gap: 5, background: VERT, color: '#fff', border: 'none', borderRadius: 10, padding: '10px 14px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+                <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                Télécharger PDF
+              </button>
               <button type="button" onClick={() => { setFicheOuverte(null); openEdit(ficheOuverte) }}
-                style={{ flex: 1, background: VERT_CLAIR, color: VERT, border: 'none', borderRadius: 10, padding: 11, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
-                Modifier les missions
+                style={{ flex: 1, background: VERT_CLAIR, color: VERT, border: 'none', borderRadius: 10, padding: 10, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+                Modifier
               </button>
               <button type="button" onClick={() => setFicheOuverte(null)}
-                style={{ background: '#F1F5F9', color: '#475569', border: 'none', borderRadius: 10, padding: '11px 16px', fontSize: 13, cursor: 'pointer' }}>
+                style={{ background: '#F1F5F9', color: '#475569', border: 'none', borderRadius: 10, padding: '10px 14px', fontSize: 12, cursor: 'pointer' }}>
                 Fermer
               </button>
             </div>
