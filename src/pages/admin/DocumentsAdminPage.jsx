@@ -388,7 +388,7 @@ export default function DocumentsAdminPage() {
                 <p style={{ fontSize: 10, fontWeight: 700, color: '#94A3B8', letterSpacing: '0.1em', textTransform: 'uppercase', margin: '4px 0 8px' }}>
                   Sans dossier ({docsSansDossier.length})
                 </p>
-                <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #E2E8F0', overflow: 'hidden' }}>
+                <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #E2E8F0' }}>
                   {docsSansDossier.map((doc, i) => (
                     <DocLigne key={doc.id} doc={doc} isLast={i === docsSansDossier.length - 1}
                       menuOuvert={menuOuvert} setMenuOuvert={setMenuOuvert}
