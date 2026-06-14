@@ -224,9 +224,7 @@ export default function MembresPage() {
                 <label style={lS}>Missions & Responsabilités</label>
                 <p style={{ fontSize: 10, color: '#94A3B8', margin: '0 0 6px' }}>Une mission par ligne. Format : "Titre : description"</p>
                 <textarea value={form.missions} onChange={e => setF('missions', e.target.value)}
-                  placeholder={'Ex :
-Gestion financière : Superviser le budget.
-Suivi des inscriptions : Valider les dossiers.'}
+                  placeholder="Ex : Gestion financiere : Superviser le budget. / Suivi des inscriptions : Valider les dossiers."
                   rows={5} style={{ ...iS, resize: 'vertical', lineHeight: 1.5 }} />
               </div>
               <div style={{ display: 'flex', gap: 8 }}>
