@@ -8,6 +8,7 @@ import {
 } from './utils'
 import { exportPDFTresorerie } from './exportPDF'
 import { exportExcelTresorerie } from './exportExcel'
+import * as XLSX from 'xlsx'
 import FormRecette    from './FormRecette'
 import FormDepense    from './FormDepense'
 import FormDonNature  from './FormDonNature'
@@ -343,7 +344,7 @@ export default function TresoreriePage() {
               <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
               PDF
             </button>
-            <button type="button" onClick={() => exportExcelTresorerie(recettes, commissions, depenses)}
+            <button type="button" onClick={() => exportExcelTresorerie(recettes, commissions, depenses, donsNature, budgetGlobal)}
               style={{ background: VERT_CLAIR, color: VERT, border: `1px solid ${VERT}`, borderRadius: 8, padding: '6px 12px', fontSize: 12, fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
               <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
               Excel
