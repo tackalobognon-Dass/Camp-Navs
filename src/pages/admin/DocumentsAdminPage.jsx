@@ -31,26 +31,26 @@ function ExtIcon({ ext }) {
   )
 }
 
-const EMPTY_DOC = { nom: '', description: '', dossier_id: '' }
+const EMPTY_DOC = { nom: '', description: '', dossier_id: '', est_public: true }
 const EMPTY_DOSSIER = { nom: '' }
 const iS = { width: '100%', border: '1px solid #E2E8F0', borderRadius: 8, padding: '9px 12px', fontSize: 13, outline: 'none', background: '#fff', color: '#1E293B' }
 const lS = { fontSize: 11, color: '#64748B', display: 'block', marginBottom: 4, fontWeight: 500 }
 
 export default function DocumentsAdminPage() {
-  const [dossiers, setDossiers]     = useState([])
-  const [documents, setDocuments]   = useState([])
-  const [loading, setLoading]       = useState(true)
+  const [dossiers,   setDossiers]   = useState([])
+  const [documents,  setDocuments]  = useState([])
+  const [loading,    setLoading]    = useState(true)
   const [dossierOuvert, setDossierOuvert] = useState(null)
-  const [showFormDoc, setShowFormDoc]     = useState(false)
+  const [showFormDoc,     setShowFormDoc]     = useState(false)
   const [showFormDossier, setShowFormDossier] = useState(false)
-  const [formDoc, setFormDoc]   = useState(EMPTY_DOC)
+  const [formDoc,     setFormDoc]     = useState(EMPTY_DOC)
   const [formDossier, setFormDossier] = useState(EMPTY_DOSSIER)
-  const [editDocId, setEditDocId]   = useState(null)
+  const [editDocId,     setEditDocId]     = useState(null)
   const [editDossierId, setEditDossierId] = useState(null)
-  const [fichier, setFichier]       = useState(null)
-  const [saving, setSaving]         = useState(false)
-  const [progress, setProgress]     = useState(0)
-  const [erreur, setErreur]         = useState('')
+  const [fichier,   setFichier]   = useState(null)
+  const [saving,    setSaving]    = useState(false)
+  const [progress,  setProgress]  = useState(0)
+  const [erreur,    setErreur]    = useState('')
   const [menuOuvert, setMenuOuvert] = useState(null)
   const menuRef = useRef(null)
 
@@ -66,7 +66,7 @@ export default function DocumentsAdminPage() {
   async function fetchAll() {
     const [{ data: d }, { data: docs }] = await Promise.all([
       supabase.from('dossiers_documents').select('*').order('ordre'),
-      supabase.from('documents').select('*').order('created_at', { ascending: false }),
+      supabase.from('documents').select('*').order('ordre', { ascending: true }),
     ])
     setDossiers(d || [])
     setDocuments(docs || [])
@@ -91,8 +91,7 @@ export default function DocumentsAdminPage() {
     const docs = documents.filter(d => d.dossier_id === id)
     for (const doc of docs) {
       if (doc.lien_fichier) {
-        const nom = doc.lien_fichier.split('/').pop()
-        await supabase.storage.from('documents-camp').remove([nom])
+        await supabase.storage.from('documents-camp').remove([doc.lien_fichier.split('/').pop()])
       }
     }
     await supabase.from('documents').delete().eq('dossier_id', id)
@@ -101,17 +100,15 @@ export default function DocumentsAdminPage() {
   }
 
   function openEditDossier(dossier) {
-    setFormDossier({ nom: dossier.nom })
-    setEditDossierId(dossier.id)
-    setShowFormDossier(true)
-    setMenuOuvert(null)
+    setFormDossier({ nom: dossier.nom }); setEditDossierId(dossier.id)
+    setShowFormDossier(true); setMenuOuvert(null)
   }
 
   // ── Documents ──
   function openNewDoc(dossierId = '') {
     setFormDoc({ ...EMPTY_DOC, dossier_id: dossierId })
     setEditDocId(null); setFichier(null); setErreur(''); setProgress(0)
-    setShowFormDoc(true)
+    setShowFormDoc(true); setShowFormDossier(false)
   }
 
   async function saveDoc() {
@@ -130,12 +127,15 @@ export default function DocumentsAdminPage() {
     }
     setProgress(90)
     const tailleMo = fichier ? (fichier.size / 1024 / 1024).toFixed(1) : null
+    const docsInDossier = documents.filter(d => d.dossier_id === (formDoc.dossier_id || null))
     const payload = {
       nom: formDoc.nom,
       description: formDoc.description,
       dossier_id: formDoc.dossier_id || null,
+      est_public: formDoc.est_public,
       lien_fichier,
       taille: tailleMo && parseFloat(tailleMo) > 0 ? `${tailleMo} MB` : '',
+      ordre: editDocId ? documents.find(d => d.id === editDocId)?.ordre : docsInDossier.length,
     }
     if (editDocId) {
       await supabase.from('documents').update(payload).eq('id', editDocId)
@@ -150,17 +150,34 @@ export default function DocumentsAdminPage() {
   async function supprimerDocument(doc) {
     if (!window.confirm('Supprimer ce document ?')) return
     if (doc.lien_fichier) {
-      const nomFichier = doc.lien_fichier.split('/').pop()
-      await supabase.storage.from('documents-camp').remove([nomFichier])
+      await supabase.storage.from('documents-camp').remove([doc.lien_fichier.split('/').pop()])
     }
     await supabase.from('documents').delete().eq('id', doc.id)
     setMenuOuvert(null); fetchAll()
   }
 
   function openEditDoc(doc) {
-    setFormDoc({ nom: doc.nom, description: doc.description || '', dossier_id: doc.dossier_id || '' })
+    setFormDoc({ nom: doc.nom, description: doc.description || '', dossier_id: doc.dossier_id || '', est_public: doc.est_public !== false })
     setEditDocId(doc.id); setFichier(null); setErreur(''); setProgress(0)
     setShowFormDoc(true); setMenuOuvert(null)
+  }
+
+  async function togglePublic(doc) {
+    await supabase.from('documents').update({ est_public: !doc.est_public }).eq('id', doc.id)
+    setDocuments(prev => prev.map(d => d.id === doc.id ? { ...d, est_public: !d.est_public } : d))
+    setMenuOuvert(null)
+  }
+
+  async function deplacerDoc(doc, direction, docsListe) {
+    const idx = docsListe.findIndex(d => d.id === doc.id)
+    const swapIdx = direction === 'up' ? idx - 1 : idx + 1
+    if (swapIdx < 0 || swapIdx >= docsListe.length) return
+    const swap = docsListe[swapIdx]
+    await Promise.all([
+      supabase.from('documents').update({ ordre: swap.ordre }).eq('id', doc.id),
+      supabase.from('documents').update({ ordre: doc.ordre }).eq('id', swap.id),
+    ])
+    fetchAll()
   }
 
   const docsSansDossier = documents.filter(d => !d.dossier_id)
@@ -192,7 +209,7 @@ export default function DocumentsAdminPage() {
         {/* ── ZONE SCROLLABLE ── */}
         <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: '12px 14px 14px' }} ref={menuRef}>
 
-          {/* Formulaire nouveau dossier */}
+          {/* Formulaire dossier */}
           {showFormDossier && (
             <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 14, padding: 14, marginBottom: 12 }}>
               <p style={{ fontSize: 13, fontWeight: 600, color: '#1E293B', margin: '0 0 10px' }}>
@@ -200,10 +217,8 @@ export default function DocumentsAdminPage() {
               </p>
               <div style={{ marginBottom: 12 }}>
                 <label style={lS}>Nom du dossier *</label>
-                <input type="text" value={formDossier.nom}
-                  onChange={e => setFormDossier({ nom: e.target.value })}
-                  placeholder="Ex : Inscriptions, Finances, Programme..."
-                  style={iS} />
+                <input type="text" value={formDossier.nom} onChange={e => setFormDossier({ nom: e.target.value })}
+                  placeholder="Ex : Inscriptions, Finances, Programme..." style={iS} />
               </div>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button type="button" onClick={() => { setShowFormDossier(false); setEditDossierId(null); setFormDossier(EMPTY_DOSSIER) }}
@@ -218,21 +233,21 @@ export default function DocumentsAdminPage() {
             </div>
           )}
 
-          {/* Formulaire nouveau document */}
+          {/* Formulaire document */}
           {showFormDoc && (
             <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 14, padding: 14, marginBottom: 12 }}>
               <p style={{ fontSize: 13, fontWeight: 600, color: '#1E293B', margin: '0 0 10px' }}>
                 {editDocId ? 'Modifier le document' : 'Nouveau document'}
               </p>
               <div style={{ marginBottom: 10 }}>
-                <label style={lS}>Nom du document *</label>
+                <label style={lS}>Nom *</label>
                 <input type="text" value={formDoc.nom} onChange={e => setFormDoc(f => ({ ...f, nom: e.target.value }))}
                   placeholder="Ex : Liste des campeurs 2026" style={iS} />
               </div>
               <div style={{ marginBottom: 10 }}>
                 <label style={lS}>Description</label>
                 <input type="text" value={formDoc.description} onChange={e => setFormDoc(f => ({ ...f, description: e.target.value }))}
-                  placeholder="Ex : Document officiel mis à jour le 15 juin" style={iS} />
+                  placeholder="Ex : Document mis à jour le 15 juin" style={iS} />
               </div>
               <div style={{ marginBottom: 10 }}>
                 <label style={lS}>Ranger dans un dossier</label>
@@ -241,6 +256,24 @@ export default function DocumentsAdminPage() {
                   {dossiers.map(d => <option key={d.id} value={d.id}>{d.nom}</option>)}
                 </select>
               </div>
+
+              {/* Public / Interne */}
+              <div style={{ marginBottom: 12, background: '#F8FAFC', borderRadius: 10, padding: '10px 12px' }}>
+                <p style={{ fontSize: 11, fontWeight: 600, color: '#64748B', margin: '0 0 8px' }}>Visibilité</p>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  {[
+                    { val: true,  label: 'Public',   desc: 'Visible sur le portail',  color: '#065F46', bg: '#ECFDF5', border: '#6EE7B7' },
+                    { val: false, label: 'Interne',  desc: 'Admin uniquement',         color: '#1D4ED8', bg: '#EFF6FF', border: '#93C5FD' },
+                  ].map(opt => (
+                    <div key={String(opt.val)} onClick={() => setFormDoc(f => ({ ...f, est_public: opt.val }))}
+                      style={{ flex: 1, padding: '8px 10px', borderRadius: 10, border: `2px solid ${formDoc.est_public === opt.val ? opt.border : '#E2E8F0'}`, background: formDoc.est_public === opt.val ? opt.bg : '#fff', cursor: 'pointer', transition: 'all .15s' }}>
+                      <p style={{ fontSize: 12, fontWeight: 700, color: formDoc.est_public === opt.val ? opt.color : '#94A3B8', margin: '0 0 2px' }}>{opt.label}</p>
+                      <p style={{ fontSize: 10, color: '#94A3B8', margin: 0 }}>{opt.desc}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               <div style={{ marginBottom: 12 }}>
                 <label style={lS}>Fichier {!editDocId && '*'}</label>
                 <div style={{ border: '1px dashed #CBD5E1', borderRadius: 10, padding: '12px', textAlign: 'center' }}>
@@ -250,7 +283,7 @@ export default function DocumentsAdminPage() {
                         <div style={{ width: 28, height: 28, background: VERT_CLAIR, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                           <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke={VERT} strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
                         </div>
-                        <p style={{ fontSize: 12, color: '#1E293B', margin: 0 }}>{fichier.name.slice(0, 30)}</p>
+                        <p style={{ fontSize: 12, color: '#1E293B', margin: 0 }}>{fichier.name.slice(0, 28)}</p>
                       </div>
                       <button type="button" onClick={() => setFichier(null)} style={{ fontSize: 11, color: '#DC2626', background: 'none', border: 'none', cursor: 'pointer' }}>Retirer</button>
                     </div>
@@ -265,6 +298,7 @@ export default function DocumentsAdminPage() {
                 </div>
                 {editDocId && <p style={{ fontSize: 10, color: VERT, margin: '4px 0 0' }}>Fichier existant conservé si pas de nouveau fichier</p>}
               </div>
+
               {saving && (
                 <div style={{ marginBottom: 10 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#94A3B8', marginBottom: 4 }}>
@@ -283,7 +317,7 @@ export default function DocumentsAdminPage() {
                 </button>
                 <button type="button" onClick={saveDoc} disabled={saving || !formDoc.nom || (!fichier && !editDocId)}
                   style={{ flex: 1, background: VERT, color: '#fff', border: 'none', borderRadius: 10, padding: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer', opacity: saving || !formDoc.nom || (!fichier && !editDocId) ? 0.7 : 1 }}>
-                  {saving ? 'Upload...' : editDocId ? 'Modifier' : 'Publier'}
+                  {saving ? 'Upload...' : editDocId ? 'Modifier' : 'Enregistrer'}
                 </button>
               </div>
             </div>
@@ -308,14 +342,11 @@ export default function DocumentsAdminPage() {
               const ouvert = dossierOuvert === dossier.id
               return (
                 <div key={dossier.id} style={{ background: '#fff', borderRadius: 12, border: `1px solid ${ouvert ? '#CBD5E1' : '#E2E8F0'}` }}>
-                  {/* En-tête dossier */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', cursor: 'pointer' }}
                     onClick={() => setDossierOuvert(prev => prev === dossier.id ? null : dossier.id)}>
                     <div style={{ width: 36, height: 36, borderRadius: 10, background: ouvert ? VERT : VERT_CLAIR, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'background .2s' }}>
                       <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke={ouvert ? '#fff' : VERT} strokeWidth="1.5">
-                        <path strokeLinecap="round" strokeLinejoin="round" d={ouvert
-                          ? "M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
-                          : "M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"} />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
                       </svg>
                     </div>
                     <div style={{ flex: 1 }}>
@@ -327,14 +358,13 @@ export default function DocumentsAdminPage() {
                         style={{ transition: 'transform .25s', transform: ouvert ? 'rotate(180deg)' : 'rotate(0deg)' }}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7"/>
                       </svg>
-                      {/* Menu dossier */}
                       <div style={{ position: 'relative' }}>
                         <button type="button" onClick={e => { e.stopPropagation(); setMenuOuvert(menuOuvert === `d-${dossier.id}` ? null : `d-${dossier.id}`) }}
                           style={{ width: 28, height: 28, borderRadius: 8, background: '#F8FAFC', border: '1px solid #E2E8F0', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, color: '#94A3B8' }}>
                           ···
                         </button>
                         {menuOuvert === `d-${dossier.id}` && (
-                          <div style={{ position: 'absolute', right: 0, top: 32, background: '#fff', borderRadius: 10, border: '1px solid #E2E8F0', boxShadow: '0 4px 16px rgba(0,0,0,0.08)', zIndex: 20, minWidth: 155, overflow: 'hidden' }}>
+                          <div style={{ position: 'absolute', right: 0, top: 32, background: '#fff', borderRadius: 10, border: '1px solid #E2E8F0', boxShadow: '0 4px 16px rgba(0,0,0,0.08)', zIndex: 20, minWidth: 160, overflow: 'hidden' }}>
                             <button type="button" onClick={e => { e.stopPropagation(); openEditDossier(dossier) }}
                               style={{ width: '100%', padding: '9px 14px', fontSize: 13, color: '#1E293B', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 8 }}>
                               <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
@@ -358,7 +388,6 @@ export default function DocumentsAdminPage() {
                     </div>
                   </div>
 
-                  {/* Documents du dossier */}
                   {ouvert && (
                     <div style={{ borderTop: '1px solid #F1F5F9' }}>
                       {docsInDossier.length === 0 ? (
@@ -372,8 +401,12 @@ export default function DocumentsAdminPage() {
                       ) : (
                         docsInDossier.map((doc, i) => (
                           <DocLigne key={doc.id} doc={doc} isLast={i === docsInDossier.length - 1}
+                            isFirst={i === 0}
                             menuOuvert={menuOuvert} setMenuOuvert={setMenuOuvert}
-                            onEdit={openEditDoc} onDelete={supprimerDocument} />
+                            onEdit={openEditDoc} onDelete={supprimerDocument}
+                            onTogglePublic={togglePublic}
+                            onUp={() => deplacerDoc(doc, 'up', docsInDossier)}
+                            onDown={() => deplacerDoc(doc, 'down', docsInDossier)} />
                         ))
                       )}
                     </div>
@@ -382,7 +415,7 @@ export default function DocumentsAdminPage() {
               )
             })}
 
-            {/* Documents sans dossier */}
+            {/* Sans dossier */}
             {docsSansDossier.length > 0 && (
               <div>
                 <p style={{ fontSize: 10, fontWeight: 700, color: '#94A3B8', letterSpacing: '0.1em', textTransform: 'uppercase', margin: '4px 0 8px' }}>
@@ -391,39 +424,67 @@ export default function DocumentsAdminPage() {
                 <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #E2E8F0' }}>
                   {docsSansDossier.map((doc, i) => (
                     <DocLigne key={doc.id} doc={doc} isLast={i === docsSansDossier.length - 1}
+                      isFirst={i === 0}
                       menuOuvert={menuOuvert} setMenuOuvert={setMenuOuvert}
-                      onEdit={openEditDoc} onDelete={supprimerDocument} />
+                      onEdit={openEditDoc} onDelete={supprimerDocument}
+                      onTogglePublic={togglePublic}
+                      onUp={() => deplacerDoc(doc, 'up', docsSansDossier)}
+                      onDown={() => deplacerDoc(doc, 'down', docsSansDossier)} />
                   ))}
                 </div>
               </div>
             )}
           </div>
 
-        </div>{/* fin zone scrollable */}
-      </div>{/* fin conteneur absolu */}
+        </div>
+      </div>
     </AdminLayout>
   )
 }
 
-function DocLigne({ doc, isLast, menuOuvert, setMenuOuvert, onEdit, onDelete }) {
+function DocLigne({ doc, isFirst, isLast, menuOuvert, setMenuOuvert, onEdit, onDelete, onTogglePublic, onUp, onDown }) {
   const ext = getExt(doc.lien_fichier)
   const date = new Date(doc.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
   const taille = doc.taille && doc.taille !== '0.0 MB' ? doc.taille : ''
+  const estPublic = doc.est_public !== false
+
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', borderBottom: isLast ? 'none' : '1px solid #F1F5F9' }}>
+
+      {/* Flèches ordre */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flexShrink: 0 }}>
+        <button type="button" onClick={onUp} disabled={isFirst}
+          style={{ width: 20, height: 18, borderRadius: 4, background: isFirst ? '#F8FAFC' : '#F1F5F9', border: 'none', cursor: isFirst ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: isFirst ? 0.3 : 1 }}>
+          <svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="#475569" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7"/></svg>
+        </button>
+        <button type="button" onClick={onDown} disabled={isLast}
+          style={{ width: 20, height: 18, borderRadius: 4, background: isLast ? '#F8FAFC' : '#F1F5F9', border: 'none', cursor: isLast ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: isLast ? 0.3 : 1 }}>
+          <svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="#475569" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7"/></svg>
+        </button>
+      </div>
+
       <ExtIcon ext={ext} />
+
       <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ fontSize: 13, fontWeight: 500, color: '#1E293B', margin: '0 0 2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{doc.nom}</p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
+          <p style={{ fontSize: 13, fontWeight: 500, color: '#1E293B', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{doc.nom}</p>
+          <span style={{ fontSize: 9, fontWeight: 700, borderRadius: 20, padding: '1px 6px', flexShrink: 0,
+            background: estPublic ? '#ECFDF5' : '#EFF6FF',
+            color: estPublic ? '#065F46' : '#1D4ED8' }}>
+            {estPublic ? 'Public' : 'Interne'}
+          </span>
+        </div>
         <p style={{ fontSize: 10, color: '#94A3B8', margin: 0 }}>{[date, taille].filter(Boolean).join(' · ')}</p>
         {doc.description && <p style={{ fontSize: 10, color: '#64748B', margin: '1px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{doc.description}</p>}
       </div>
+
       <div style={{ position: 'relative', flexShrink: 0 }}>
         <button type="button" onClick={() => setMenuOuvert(menuOuvert === doc.id ? null : doc.id)}
           style={{ width: 28, height: 28, borderRadius: 8, background: '#F8FAFC', border: '1px solid #E2E8F0', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, color: '#94A3B8' }}>
           ···
         </button>
         {menuOuvert === doc.id && (
-          <div style={{ position: 'absolute', right: 0, top: 32, background: '#fff', borderRadius: 10, border: '1px solid #E2E8F0', boxShadow: '0 4px 16px rgba(0,0,0,0.08)', zIndex: 20, minWidth: 155, overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', right: 0, top: 32, background: '#fff', borderRadius: 10, border: '1px solid #E2E8F0', boxShadow: '0 4px 16px rgba(0,0,0,0.08)', zIndex: 20, minWidth: 165, overflow: 'hidden' }}>
             {doc.lien_fichier && (
               <>
                 <a href={doc.lien_fichier} target="_blank" rel="noreferrer" onClick={() => setMenuOuvert(null)}
@@ -434,6 +495,12 @@ function DocLigne({ doc, isLast, menuOuvert, setMenuOuvert, onEdit, onDelete }) 
                 <div style={{ height: 1, background: '#F1F5F9' }} />
               </>
             )}
+            <button type="button" onClick={() => onTogglePublic(doc)}
+              style={{ width: '100%', padding: '9px 14px', fontSize: 13, color: estPublic ? '#1D4ED8' : '#065F46', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d={estPublic ? "M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" : "M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"}/></svg>
+              {estPublic ? 'Rendre interne' : 'Rendre public'}
+            </button>
+            <div style={{ height: 1, background: '#F1F5F9' }} />
             <button type="button" onClick={() => onEdit(doc)}
               style={{ width: '100%', padding: '9px 14px', fontSize: 13, color: '#1E293B', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 8 }}>
               <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
