@@ -11,128 +11,109 @@ const TYPE_CONFIG = {
   'xlsx': { badge: 'EXCEL', bg: '#F0FDF4', color: '#166534', borderColor: '#86EFAC' },
   'ppt':  { badge: 'PPT',   bg: '#FFFBEB', color: '#92400E', borderColor: '#FCD34D' },
   'pptx': { badge: 'PPT',   bg: '#FFFBEB', color: '#92400E', borderColor: '#FCD34D' },
-  'mp3':  { badge: 'AUDIO', bg: '#F5F3FF', color: '#5B21B6', borderColor: '#C4B5FD' },
-  'mp4':  { badge: 'VIDEO', bg: '#F5F3FF', color: '#5B21B6', borderColor: '#C4B5FD' },
 }
-
-const CATEGORIES = ['Tous', 'Études', 'Planning', 'Chants', 'Formulaires', 'Autres']
 
 function getExt(url) {
   if (!url) return 'pdf'
-  return url.split('.').pop().toLowerCase()
+  return url.split('.').pop().split('?')[0].toLowerCase()
 }
 
 function getTypeConfig(url) {
   const ext = getExt(url)
-  return TYPE_CONFIG[ext] || TYPE_CONFIG['pdf']
+  return TYPE_CONFIG[ext] || { badge: 'DOC', bg: '#F1F5F9', color: '#475569', borderColor: '#CBD5E1' }
 }
 
 function formatDate(str) {
   return new Date(str).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
-// Icône fichier selon le type
-function FileIcon({ url, size = 20 }) {
-  const ext = getExt(url)
+function FileIcon({ url, size = 18 }) {
   const tc = getTypeConfig(url)
-
-  const icons = {
-    pdf: (
-      <svg width={size} height={size} fill="none" viewBox="0 0 24 24" stroke={tc.color} strokeWidth="1.5">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-      </svg>
-    ),
-    doc: (
-      <svg width={size} height={size} fill="none" viewBox="0 0 24 24" stroke={tc.color} strokeWidth="1.5">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-      </svg>
-    ),
-    xls: (
-      <svg width={size} height={size} fill="none" viewBox="0 0 24 24" stroke={tc.color} strokeWidth="1.5">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M3 14h18M10 3v18M6 3h12a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V5a2 2 0 012-2z" />
-      </svg>
-    ),
-    default: (
-      <svg width={size} height={size} fill="none" viewBox="0 0 24 24" stroke={tc.color} strokeWidth="1.5">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-      </svg>
-    ),
-  }
-
-  if (ext === 'doc' || ext === 'docx') return icons.doc
-  if (ext === 'xls' || ext === 'xlsx') return icons.xls
-  if (ext === 'pdf') return icons.pdf
-  return icons.default
+  return (
+    <svg width={size} height={size} fill="none" viewBox="0 0 24 24" stroke={tc.color} strokeWidth="1.5">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+    </svg>
+  )
 }
 
-// Bouton téléchargement icône circulaire
-function DownloadIconBtn({ url, label, large = false }) {
+function DownloadBtn({ url, label, large = false }) {
   const [loading, setLoading] = useState(false)
-
   function handleDownload() {
     if (!url) return
     setLoading(true)
     const a = document.createElement('a')
-    a.href = url
-    a.download = label || 'document'
-    a.target = '_blank'
-    a.click()
+    a.href = url; a.download = label || 'document'; a.target = '_blank'; a.click()
     setTimeout(() => setLoading(false), 800)
   }
-
   if (large) {
     return (
       <button onClick={handleDownload} disabled={loading}
-        style={{ background: '#fff', color: '#054035', border: 'none', borderRadius: 10, padding: '8px 16px', fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, opacity: loading ? 0.7 : 1 }}>
-        {loading ? '...' : (
-          <>
-            <svg style={{ width: 14, height: 14 }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-            </svg>
-            Télécharger
-          </>
-        )}
+        style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#fff', color: '#054035', border: 'none', borderRadius: 10, padding: '8px 16px', fontSize: 12, fontWeight: 600, cursor: 'pointer', opacity: loading ? 0.7 : 1 }}>
+        <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+        {loading ? '...' : 'Télécharger'}
       </button>
     )
   }
-
   return (
     <button onClick={handleDownload} disabled={loading}
       style={{ width: 32, height: 32, borderRadius: '50%', background: '#F3F4F6', border: '0.5px solid #E5E7EB', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, opacity: loading ? 0.7 : 1 }}>
-      {loading ? (
-        <div style={{ width: 10, height: 10, borderRadius: '50%', border: '1.5px solid #9CA3AF', borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite' }} />
-      ) : (
-        <svg style={{ width: 14, height: 14, color: '#6B7280' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-        </svg>
-      )}
+      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#6B7280" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
     </button>
+  )
+}
+
+function DocLigne({ doc }) {
+  const tc = getTypeConfig(doc.lien_fichier)
+  return (
+    <div style={{ background: '#fff', borderRadius: 12, border: '0.5px solid #F3F4F6', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', padding: '10px 12px', display: 'flex', alignItems: 'center', gap: 10 }}>
+      <div style={{ width: 38, height: 38, borderRadius: 10, background: tc.bg, border: `0.5px solid ${tc.borderColor}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <FileIcon url={doc.lien_fichier} />
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{ fontSize: 13, fontWeight: 500, color: '#111827', margin: '0 0 3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{doc.nom}</p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ fontSize: 9, fontWeight: 600, padding: '1px 7px', borderRadius: 20, background: tc.bg, color: tc.color, border: `0.5px solid ${tc.borderColor}` }}>{tc.badge}</span>
+          <span style={{ fontSize: 10, color: '#9CA3AF' }}>{doc.taille ? `${doc.taille} · ` : ''}{formatDate(doc.created_at)}</span>
+        </div>
+        {doc.description && <p style={{ fontSize: 10, color: '#6B7280', margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{doc.description}</p>}
+      </div>
+      <DownloadBtn url={doc.lien_fichier} label={doc.nom} />
+    </div>
   )
 }
 
 export default function DocumentsPage() {
   const navigate = useNavigate()
+  const [dossiers,  setDossiers]  = useState([])
   const [documents, setDocuments] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [categorie, setCategorie] = useState('Tous')
+  const [loading,   setLoading]   = useState(true)
+  const [dossierOuvert, setDossierOuvert] = useState(null)
 
   useEffect(() => {
-    async function fetchDocuments() {
-      const { data } = await supabase
-        .from('documents')
-        .select('*')
-        .order('created_at', { ascending: false })
-      setDocuments(data || [])
+    async function fetchData() {
+      const [{ data: d }, { data: docs }] = await Promise.all([
+        supabase.from('dossiers_documents').select('*').order('ordre'),
+        supabase.from('documents').select('*').eq('est_public', true).order('ordre', { ascending: true }),
+      ])
+      setDossiers(d || [])
+      setDocuments(docs || [])
+      // Ouvrir le premier dossier par défaut
+      if (d && d.length > 0) setDossierOuvert(d[0].id)
       setLoading(false)
     }
-    fetchDocuments()
+    fetchData()
   }, [])
 
+  // Premier document public (mis en avant)
   const featured = documents[0]
-  const listeDocuments = documents.slice(1).filter(doc => {
-    if (categorie === 'Tous') return true
-    return doc.categorie === categorie
-  })
+  const autresDocuments = documents.slice(1)
+
+  // Dossiers qui ont au moins un doc public
+  const dossiersAvecDocs = dossiers.filter(d =>
+    documents.some(doc => doc.dossier_id === d.id)
+  )
+
+  const docsSansDossier = autresDocuments.filter(d => !d.dossier_id)
 
   return (
     <div style={{ minHeight: '100vh', background: '#F9FAFB', maxWidth: 480, margin: '0 auto' }}>
@@ -155,7 +136,9 @@ export default function DocumentsPage() {
 
         {!loading && documents.length === 0 && (
           <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #F3F4F6', padding: 28, textAlign: 'center', marginTop: 8 }}>
-            <svg style={{ width: 36, height: 36, color: '#D1D5DB', margin: '0 auto 10px' }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M5 19a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1M5 19h14a2 2 0 002-2v-5a2 2 0 00-2-2H9a2 2 0 00-2 2v5a2 2 0 01-2 2z" /></svg>
+            <svg width="36" height="36" fill="none" viewBox="0 0 24 24" stroke="#D1D5DB" style={{ display: 'block', margin: '0 auto 10px' }}>
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M5 19a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1M5 19h14a2 2 0 002-2v-5a2 2 0 00-2-2H9a2 2 0 00-2 2v5a2 2 0 01-2 2z"/>
+            </svg>
             <p style={{ fontSize: 13, color: '#6B7280', margin: '0 0 4px' }}>Aucun document disponible.</p>
             <p style={{ fontSize: 11, color: '#9CA3AF', margin: 0 }}>Les documents seront publiés prochainement.</p>
           </div>
@@ -163,97 +146,80 @@ export default function DocumentsPage() {
 
         {/* Document mis en avant */}
         {featured && (
-          <div onClick={() => {
-            if (!featured.lien_fichier) return
-            const a = document.createElement('a')
-            a.href = featured.lien_fichier
-            a.download = featured.nom
-            a.target = '_blank'
-            a.click()
-          }}
+          <div onClick={() => { if (!featured.lien_fichier) return; const a = document.createElement('a'); a.href = featured.lien_fichier; a.download = featured.nom; a.target = '_blank'; a.click() }}
             style={{ background: 'linear-gradient(140deg,#054035,#0D7A5A)', borderRadius: 20, padding: '18px 16px', marginBottom: 16, position: 'relative', overflow: 'hidden', cursor: 'pointer' }}>
             <div style={{ position: 'absolute', width: 100, height: 100, borderRadius: '50%', background: 'rgba(255,255,255,0.06)', top: -30, right: -20 }} />
             <div style={{ position: 'absolute', width: 60, height: 60, borderRadius: '50%', background: 'rgba(255,255,255,0.04)', bottom: -10, left: 100 }} />
-
-            <span style={{ fontSize: 9, fontWeight: 600, background: 'rgba(255,255,255,0.2)', color: '#fff', borderRadius: 20, padding: '2px 10px', display: 'inline-block', marginBottom: 10, letterSpacing: '0.05em' }}>NOUVEAU</span>
-
+            <span style={{ fontSize: 9, fontWeight: 600, background: 'rgba(255,255,255,0.2)', color: '#fff', borderRadius: 20, padding: '2px 10px', display: 'inline-block', marginBottom: 10, letterSpacing: '0.05em' }}>
+              EN AVANT
+            </span>
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 14 }}>
               <div style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="#fff" strokeWidth="1.5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
+                <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="#fff" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
               </div>
               <div>
                 <p style={{ fontSize: 14, fontWeight: 600, color: '#fff', margin: '0 0 4px', lineHeight: 1.3 }}>{featured.nom}</p>
                 {featured.description && <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.65)', margin: '0 0 4px', lineHeight: 1.4 }}>{featured.description}</p>}
-                <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.45)', margin: 0 }}>
-                  {featured.taille ? `${featured.taille} · ` : ''}{formatDate(featured.created_at)}
-                </p>
+                <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.45)', margin: 0 }}>{featured.taille ? `${featured.taille} · ` : ''}{formatDate(featured.created_at)}</p>
               </div>
             </div>
-
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#fff', color: '#054035', borderRadius: 10, padding: '8px 16px', fontSize: 12, fontWeight: 600 }}>
-              <svg style={{ width: 13, height: 13 }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-              </svg>
-              Télécharger
-            </div>
+            <DownloadBtn url={featured.lien_fichier} label={featured.nom} large />
           </div>
         )}
 
-        {/* Filtres catégories */}
-        {documents.length > 1 && (
-          <div style={{ display: 'flex', gap: 6, overflowX: 'auto', marginBottom: 14, scrollbarWidth: 'none', paddingBottom: 2 }}>
-            {CATEGORIES.map(cat => (
-              <button key={cat} onClick={() => setCategorie(cat)}
-                style={{ flexShrink: 0, padding: '5px 12px', borderRadius: 20, fontSize: 12, fontWeight: 500, cursor: 'pointer', border: `0.5px solid ${categorie === cat ? '#054035' : '#E5E7EB'}`, background: categorie === cat ? '#054035' : '#fff', color: categorie === cat ? '#fff' : '#6B7280', whiteSpace: 'nowrap' }}>
-                {cat}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* Liste unifiée */}
-        {listeDocuments.length > 0 && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {listeDocuments.map(doc => {
-              const tc = getTypeConfig(doc.lien_fichier)
+        {/* Dossiers avec documents */}
+        {dossiersAvecDocs.length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 10 }}>
+            {dossiersAvecDocs.map(dossier => {
+              const docsInDossier = autresDocuments.filter(d => d.dossier_id === dossier.id)
+              if (docsInDossier.length === 0) return null
+              const ouvert = dossierOuvert === dossier.id
               return (
-                <div key={doc.id} style={{ background: '#fff', borderRadius: 12, border: '0.5px solid #F3F4F6', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 12 }}>
-                  {/* Icône fichier */}
-                  <div style={{ width: 40, height: 40, borderRadius: 10, background: tc.bg, border: `0.5px solid ${tc.borderColor}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <FileIcon url={doc.lien_fichier} size={18} />
-                  </div>
-
-                  {/* Infos */}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontSize: 13, fontWeight: 500, color: '#111827', margin: '0 0 3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{doc.nom}</p>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <span style={{ fontSize: 9, fontWeight: 600, padding: '1px 7px', borderRadius: 20, background: tc.bg, color: tc.color, border: `0.5px solid ${tc.borderColor}` }}>
-                        {tc.badge}
-                      </span>
-                      <span style={{ fontSize: 10, color: '#9CA3AF' }}>
-                        {doc.taille ? `${doc.taille} · ` : ''}{formatDate(doc.created_at)}
-                      </span>
+                <div key={dossier.id} style={{ background: '#fff', borderRadius: 14, border: `1px solid ${ouvert ? '#CBD5E1' : '#F3F4F6'}`, overflow: 'hidden' }}>
+                  {/* En-tête dossier */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 14px', cursor: 'pointer' }}
+                    onClick={() => setDossierOuvert(prev => prev === dossier.id ? null : dossier.id)}>
+                    <div style={{ width: 34, height: 34, borderRadius: 9, background: ouvert ? '#054035' : '#F0FDF4', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'background .2s' }}>
+                      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke={ouvert ? '#fff' : '#166534'} strokeWidth="1.5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+                      </svg>
                     </div>
+                    <div style={{ flex: 1 }}>
+                      <p style={{ fontSize: 13, fontWeight: 600, color: '#111827', margin: 0 }}>{dossier.nom}</p>
+                      <p style={{ fontSize: 11, color: '#9CA3AF', margin: '1px 0 0' }}>{docsInDossier.length} document(s)</p>
+                    </div>
+                    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#9CA3AF" strokeWidth="2"
+                      style={{ transition: 'transform .25s', transform: ouvert ? 'rotate(180deg)' : 'rotate(0deg)', flexShrink: 0 }}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7"/>
+                    </svg>
                   </div>
-
-                  {/* Bouton téléchargement icône */}
-                  <DownloadIconBtn url={doc.lien_fichier} label={doc.nom} />
+                  {/* Documents du dossier */}
+                  {ouvert && (
+                    <div style={{ borderTop: '1px solid #F3F4F6', padding: '10px 10px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {docsInDossier.map(doc => <DocLigne key={doc.id} doc={doc} />)}
+                    </div>
+                  )}
                 </div>
               )
             })}
           </div>
         )}
 
-        {!loading && listeDocuments.length === 0 && documents.length > 1 && (
-          <div style={{ background: '#fff', borderRadius: 12, border: '0.5px solid #F3F4F6', padding: '20px', textAlign: 'center' }}>
-            <p style={{ fontSize: 13, color: '#9CA3AF', margin: 0 }}>Aucun document dans cette catégorie.</p>
+        {/* Documents sans dossier */}
+        {docsSansDossier.length > 0 && (
+          <div>
+            {dossiersAvecDocs.length > 0 && (
+              <p style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', letterSpacing: '0.1em', textTransform: 'uppercase', margin: '4px 0 8px' }}>
+                Autres documents
+              </p>
+            )}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {docsSansDossier.map(doc => <DocLigne key={doc.id} doc={doc} />)}
+            </div>
           </div>
         )}
-      </div>
 
-      {/* Bottom nav */}
+      </div>
       <BottomNav />
     </div>
   )
