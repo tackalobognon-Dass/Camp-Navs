@@ -50,7 +50,7 @@ export default function BottomNav() {
 
   function goTo(path) {
     setPlusOpen(false)
-    navigate(path, { replace: true })
+    navigate(path)
   }
 
   return (
