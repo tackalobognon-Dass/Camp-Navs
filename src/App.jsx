@@ -2,8 +2,8 @@ import { useState } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import PrivateRoute from './routes/PrivateRoute'
 import InstallBanner from './components/InstallBanner'
+import OfflineBanner from './components/OfflineBanner'
 import SplashScreen from './components/SplashScreen'
-
 import HomePage from './pages/public/HomePage'
 import InscriptionPage from './pages/public/InscriptionPage'
 import ChantsPage from './pages/public/ChantsPage'
@@ -14,7 +14,6 @@ import NotificationsPage from './pages/public/NotificationsPage'
 import ContactPage from './pages/public/ContactPage'
 import SuiviPage from './pages/public/SuiviPage'
 import LieuPage from './pages/public/LieuPage'
-
 import LoginPage from './pages/admin/LoginPage'
 import DashboardPage from './pages/admin/DashboardPage'
 import MembresPage from './pages/admin/MembresPage'
@@ -36,6 +35,7 @@ function App() {
     <>
       {!splashDone && <SplashScreen onFinish={() => setSplashDone(true)} />}
       <InstallBanner />
+      <OfflineBanner />
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/inscription" element={<InscriptionPage />} />
@@ -47,7 +47,6 @@ function App() {
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/suivi" element={<SuiviPage />} />
         <Route path="/lieu" element={<LieuPage />} />
-
         <Route path="/admin/login" element={<LoginPage />} />
         <Route path="/admin" element={<PrivateRoute><DashboardPage /></PrivateRoute>} />
         <Route path="/admin/membres" element={<PrivateRoute><MembresPage /></PrivateRoute>} />
@@ -66,5 +65,4 @@ function App() {
     </>
   )
 }
-
 export default App
