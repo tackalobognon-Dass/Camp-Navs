@@ -225,12 +225,57 @@ export default function ChantsAdminPage() {
                     Paroles synchronisées (LRC) <span style={{ fontSize: 9, fontWeight: 700, color: '#C9A84C', background: '#FFFBEB', borderRadius: 20, padding: '1px 7px', marginLeft: 4 }}>✨ Optionnel</span>
                   </label>
                 </div>
-                <div style={{ background: '#FFFBEB', border: '1px solid #FCD34D', borderRadius: 10, padding: '8px 12px', marginBottom: 8 }}>
-                  <p style={{ fontSize: 10, color: '#92400E', margin: 0, lineHeight: 1.6 }}>
-                    Format : <strong>[mm:ss.xx] texte de la ligne</strong><br />
-                    Section : <strong>[mm:ss.xx] ## Refrain</strong> ou <strong>## Couplet 1</strong><br />
-                    Exemple : <code>[00:05.00] Seigneur tu es grand</code>
+                {/* Note explicative LRC */}
+                <div style={{ background: '#FFFBEB', border: '1px solid #FCD34D', borderRadius: 12, padding: '12px 14px', marginBottom: 10 }}>
+                  <p style={{ fontSize: 11, fontWeight: 700, color: '#92400E', margin: '0 0 8px', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span>✨</span> Comment fonctionne la synchronisation ?
                   </p>
+                  <p style={{ fontSize: 11, color: '#92400E', margin: '0 0 10px', lineHeight: 1.6 }}>
+                    Le format <strong>LRC</strong> associe chaque ligne de paroles à un <strong>horodatage</strong> (moment précis dans l'audio).
+                    Pendant la lecture, les paroles défilent automatiquement et la ligne courante est mise en surbrillance — comme un karaoké.
+                  </p>
+
+                  {/* Format de base */}
+                  <p style={{ fontSize: 10, fontWeight: 700, color: '#92400E', margin: '0 0 4px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Format de chaque ligne</p>
+                  <div style={{ background: 'rgba(0,0,0,0.06)', borderRadius: 8, padding: '8px 10px', marginBottom: 10, fontFamily: 'monospace', fontSize: 11, color: '#7C2D12', lineHeight: 1.8 }}>
+                    [mm:ss.xx] texte de la ligne<br />
+                    [01:23.45] → minute 1, seconde 23, centième 45
+                  </div>
+
+                  {/* Sections */}
+                  <p style={{ fontSize: 10, fontWeight: 700, color: '#92400E', margin: '0 0 4px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Marqueurs de section</p>
+                  <div style={{ background: 'rgba(0,0,0,0.06)', borderRadius: 8, padding: '8px 10px', marginBottom: 10, fontFamily: 'monospace', fontSize: 11, color: '#7C2D12', lineHeight: 1.8 }}>
+                    [00:00.00] ## Couplet 1<br />
+                    [00:30.00] ## Refrain<br />
+                    [01:15.00] ## Couplet 2<br />
+                    [01:45.00] ## Pont
+                  </div>
+
+                  {/* Exemple complet */}
+                  <p style={{ fontSize: 10, fontWeight: 700, color: '#92400E', margin: '0 0 4px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Exemple complet</p>
+                  <div style={{ background: 'rgba(0,0,0,0.06)', borderRadius: 8, padding: '8px 10px', marginBottom: 10, fontFamily: 'monospace', fontSize: 11, color: '#7C2D12', lineHeight: 1.9 }}>
+                    [00:00.00] ## Couplet 1<br />
+                    [00:05.00] Seigneur tu es grand<br />
+                    [00:08.50] Ta gloire remplit la terre<br />
+                    [00:12.00] Nous venons devant toi<br />
+                    [00:16.00] ## Refrain<br />
+                    [00:17.00] Tu règnes sur tout<br />
+                    [00:20.50] Pour toujours tu es roi
+                  </div>
+
+                  {/* Comment trouver les timestamps */}
+                  <p style={{ fontSize: 10, fontWeight: 700, color: '#92400E', margin: '0 0 4px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Comment trouver les timestamps ?</p>
+                  <div style={{ fontSize: 10, color: '#92400E', lineHeight: 1.7 }}>
+                    <p style={{ margin: '0 0 3px' }}>
+                      <strong>1.</strong> Écouter l'audio et noter manuellement à quelle seconde chaque ligne commence.
+                    </p>
+                    <p style={{ margin: '0 0 3px' }}>
+                      <strong>2.</strong> Utiliser un éditeur LRC en ligne : <strong>lrcmaker.com</strong> ou <strong>megalobiz.com/lrc/maker</strong>
+                    </p>
+                    <p style={{ margin: 0 }}>
+                      <strong>3.</strong> Format : <code>mm</code> = minutes, <code>ss</code> = secondes, <code>xx</code> = centièmes de seconde (00 si inconnu).
+                    </p>
+                  </div>
                 </div>
                 <textarea value={form.paroles_lrc} onChange={e => setF('paroles_lrc', e.target.value)}
                   placeholder={"[00:00.00] ## Couplet 1\n[00:05.00] Seigneur tu es grand\n[00:08.50] Ta gloire remplit la terre\n[00:12.00] ## Refrain\n[00:13.00] Tu règnes sur tout"}
