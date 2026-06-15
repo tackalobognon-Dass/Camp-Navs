@@ -172,7 +172,7 @@ export default function ParametresPage() {
                   {inscriptionsOuvertes ? '🟢 Inscriptions ouvertes' : '🔴 Inscriptions fermées'}
                 </p>
                 <p style={{ fontSize: 11, color: '#64748B', margin: 0 }}>
-                  {inscriptionsOuvertes ? 'Les campeurs peuvent s'inscrire sur le portail.' : 'Le formulaire d'inscription est désactivé.'}
+                  {inscriptionsOuvertes ? 'Les campeurs peuvent s’inscrire sur le portail.' : 'Le formulaire d’inscription est désactivé.'}
                 </p>
               </div>
               <button type="button" onClick={toggleInscriptions} disabled={togglingInscriptions || !configId}
