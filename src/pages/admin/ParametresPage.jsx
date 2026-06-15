@@ -23,10 +23,27 @@ export default function ParametresPage() {
   const [saving, setSaving] = useState(false)
   const [erreur, setErreur] = useState('')
   const [succes, setSucces] = useState('')
+  const [inscriptionsOuvertes, setInscriptionsOuvertes] = useState(true)
+  const [configId, setConfigId] = useState(null)
+  const [togglingInscriptions, setTogglingInscriptions] = useState(false)
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => setUser(user))
+    supabase.from('config_camp').select('*').limit(1).then(({ data }) => {
+      if (data && data.length > 0) {
+        setInscriptionsOuvertes(data[0].inscriptions_ouvertes)
+        setConfigId(data[0].id)
+      }
+    })
   }, [])
+
+  async function toggleInscriptions() {
+    setTogglingInscriptions(true)
+    const newVal = !inscriptionsOuvertes
+    await supabase.from('config_camp').update({ inscriptions_ouvertes: newVal, updated_at: new Date().toISOString() }).eq('id', configId)
+    setInscriptionsOuvertes(newVal)
+    setTogglingInscriptions(false)
+  }
 
   async function handleChangerMdp() {
     setErreur(''); setSucces('')
@@ -144,6 +161,25 @@ export default function ParametresPage() {
             <InfoLigne label="Lieu"          valeur="La Sablière, Bingerville" />
             <InfoLigne label="Organisation"  valeur="Mission Évangélique des Navigateurs CI" />
             <InfoLigne label="Version"       valeur="1.0.0" last />
+          </div>
+
+          {/* Inscriptions ouvertes/fermées */}
+          <div style={{ background: '#fff', borderRadius: 14, border: `1px solid ${inscriptionsOuvertes ? '#86EFAC' : '#FCA5A5'}`, padding: '14px', marginBottom: 12 }}>
+            <p style={{ fontSize: 9, fontWeight: 700, color: '#94A3B8', letterSpacing: '0.1em', textTransform: 'uppercase', margin: '0 0 10px' }}>Inscriptions</p>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div>
+                <p style={{ fontSize: 14, fontWeight: 700, color: inscriptionsOuvertes ? '#065F46' : '#DC2626', margin: '0 0 3px' }}>
+                  {inscriptionsOuvertes ? '🟢 Inscriptions ouvertes' : '🔴 Inscriptions fermées'}
+                </p>
+                <p style={{ fontSize: 11, color: '#64748B', margin: 0 }}>
+                  {inscriptionsOuvertes ? 'Les campeurs peuvent s'inscrire sur le portail.' : 'Le formulaire d'inscription est désactivé.'}
+                </p>
+              </div>
+              <button type="button" onClick={toggleInscriptions} disabled={togglingInscriptions || !configId}
+                style={{ flexShrink: 0, marginLeft: 12, background: inscriptionsOuvertes ? '#FEF2F2' : '#ECFDF5', color: inscriptionsOuvertes ? '#DC2626' : '#065F46', border: `1px solid ${inscriptionsOuvertes ? '#FCA5A5' : '#6EE7B7'}`, borderRadius: 10, padding: '8px 14px', fontSize: 12, fontWeight: 700, cursor: togglingInscriptions || !configId ? 'not-allowed' : 'pointer', opacity: togglingInscriptions ? 0.7 : 1, whiteSpace: 'nowrap' }}>
+                {togglingInscriptions ? '...' : inscriptionsOuvertes ? 'Fermer' : 'Ouvrir'}
+              </button>
+            </div>
           </div>
 
           {/* Déconnexion */}
