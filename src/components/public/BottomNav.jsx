@@ -48,25 +48,25 @@ export default function BottomNav() {
   const location = useLocation()
   const [plusOpen, setPlusOpen] = useState(false)
 
+  function goTo(path) {
+    setPlusOpen(false)
+    navigate(path, { replace: true })
+  }
+
   return (
     <>
       {/* Overlay menu Plus */}
       {plusOpen && (
         <>
-          <div
-            style={{ position: 'fixed', inset: 0, zIndex: 40 }}
-            onClick={() => setPlusOpen(false)}
-          />
+          <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={() => setPlusOpen(false)} />
           <div
             style={{ position: 'fixed', bottom: 56, left: 0, right: 0, maxWidth: 480, margin: '0 auto', background: '#fff', borderRadius: '20px 20px 0 0', borderTop: '0.5px solid #e5e5e0', padding: '12px 16px 16px', boxShadow: '0 -4px 24px rgba(0,0,0,0.08)', zIndex: 50 }}
-            onClick={e => e.stopPropagation()}
-          >
+            onClick={e => e.stopPropagation()}>
             <div style={{ width: 32, height: 3, background: '#e0e0e0', borderRadius: 2, margin: '0 auto 12px' }} />
             <div style={{ fontSize: 9, fontWeight: 500, color: '#888', letterSpacing: '0.06em', marginBottom: 12 }}>PLUS DE SECTIONS</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 8 }}>
               {PLUS_ITEMS.map(item => (
-                <div key={item.label}
-                  onClick={() => { navigate(item.path); setPlusOpen(false) }}
+                <div key={item.label} onClick={() => goTo(item.path)}
                   style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
                   <div style={{ width: 48, height: 48, borderRadius: 16, background: item.bg, color: item.color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     {item.icon}
@@ -84,16 +84,16 @@ export default function BottomNav() {
         {NAV_ITEMS.map(item => {
           const active = location.pathname === item.path
           return (
-            <button key={item.label}
-              onClick={() => { setPlusOpen(false); navigate(item.path) }}
+            <button key={item.label} type="button"
+              onClick={() => goTo(item.path)}
               style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '8px 0 10px', color: active ? '#054035' : '#888780', background: 'none', border: 'none', cursor: 'pointer' }}>
               {item.icon}
               <span style={{ fontSize: 10, marginTop: 2, fontWeight: active ? 500 : 400 }}>{item.label}</span>
             </button>
           )
         })}
-        <button
-          onClick={(e) => { e.stopPropagation(); setPlusOpen(!plusOpen) }}
+        <button type="button"
+          onClick={e => { e.stopPropagation(); setPlusOpen(!plusOpen) }}
           style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '8px 0 10px', color: plusOpen ? '#054035' : '#888780', background: 'none', border: 'none', cursor: 'pointer' }}>
           <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
             <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z" />
