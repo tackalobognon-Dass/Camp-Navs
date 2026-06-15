@@ -1,17 +1,14 @@
 import { useEffect, useState, useRef } from 'react'
 import { supabase } from '../../lib/supabase'
 import AdminLayout from '../../components/admin/AdminLayout'
-
 const VERT = '#1B3B2B'
 const VERT_CLAIR = '#E8F5E8'
-const EMPTY_FORM = { titre: '', artiste: '', ordre: '', paroles: '' }
-
+const EMPTY_FORM = { titre: '', artiste: '', ordre: '', paroles: '', paroles_lrc: '' }
 const NoteIcon = () => (
   <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
     <path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
   </svg>
 )
-
 export default function ChantsAdminPage() {
   const [chants, setChants] = useState([])
   const [loading, setLoading] = useState(true)
@@ -27,7 +24,6 @@ export default function ChantsAdminPage() {
   const [carteOuverte, setCarteOuverte] = useState(null)
   const [recherche, setRecherche] = useState('')
   const menuRef = useRef(null)
-
   useEffect(() => { fetchChants() }, [])
   useEffect(() => {
     function handleClick(e) {
@@ -36,26 +32,25 @@ export default function ChantsAdminPage() {
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
   }, [])
-
   async function fetchChants() {
     const { data } = await supabase.from('chants').select('*').order('ordre', { ascending: true })
     setChants(data || [])
     setLoading(false)
   }
-
   function setF(key, val) { setForm(f => ({ ...f, [key]: val })) }
-
   function openNew() {
     setForm(EMPTY_FORM); setEditId(null); setFichierAudio(null)
     setErreur(''); setUploadProgress(0); setUploadEtape(''); setShowForm(true)
   }
-
   function openEdit(chant) {
-    setForm({ titre: chant.titre, artiste: chant.artiste || '', ordre: chant.ordre || '', paroles: chant.paroles || '' })
+    setForm({
+      titre: chant.titre, artiste: chant.artiste || '', ordre: chant.ordre || '',
+      paroles: chant.paroles || '',
+      paroles_lrc: chant.paroles_lrc || '',
+    })
     setEditId(chant.id); setFichierAudio(null); setErreur('')
     setUploadProgress(0); setUploadEtape(''); setShowForm(true); setMenuOuvert(null)
   }
-
   async function handleSave() {
     if (!form.titre) return
     setSaving(true); setErreur(''); setUploadProgress(0)
@@ -100,7 +95,13 @@ export default function ChantsAdminPage() {
       }
     }
     setUploadProgress(93); setUploadEtape('Sauvegarde...')
-    const payload = { titre: form.titre, artiste: form.artiste, ordre: form.ordre ? parseInt(form.ordre) : chants.length + 1, paroles: form.paroles, lien_audio }
+    const payload = {
+      titre: form.titre, artiste: form.artiste,
+      ordre: form.ordre ? parseInt(form.ordre) : chants.length + 1,
+      paroles: form.paroles,
+      paroles_lrc: form.paroles_lrc || null,
+      lien_audio,
+    }
     if (editId) await supabase.from('chants').update(payload).eq('id', editId)
     else await supabase.from('chants').insert([payload])
     setUploadProgress(100); setUploadEtape('Terminé !')
@@ -109,7 +110,6 @@ export default function ChantsAdminPage() {
     setFichierAudio(null); setUploadProgress(0); setUploadEtape('')
     fetchChants()
   }
-
   async function supprimerChant(chant) {
     if (!window.confirm('Supprimer ce chant ?')) return
     if (chant.lien_audio) {
@@ -119,19 +119,15 @@ export default function ChantsAdminPage() {
     await supabase.from('chants').delete().eq('id', chant.id)
     setMenuOuvert(null); fetchChants()
   }
-
   const chantsFiltres = chants.filter(c =>
     c.titre.toLowerCase().includes(recherche.toLowerCase()) ||
     (c.artiste || '').toLowerCase().includes(recherche.toLowerCase())
   )
-
   const iS = { width: '100%', border: '1px solid #E2E8F0', borderRadius: 10, padding: '9px 12px', fontSize: 13, outline: 'none', background: '#fff', color: '#1E293B' }
-
   return (
     <AdminLayout>
       <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', background: '#F8FAFC', overflow: 'hidden' }}>
-
-        {/* ── HEADER FIXE ── */}
+        {/* HEADER */}
         <div style={{ flexShrink: 0, padding: '14px 14px 10px', borderBottom: '1px solid #E2E8F0', background: '#F8FAFC', zIndex: 2, position: 'relative', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
             <div>
@@ -143,8 +139,6 @@ export default function ChantsAdminPage() {
               {showForm ? '×' : '+'}
             </button>
           </div>
-
-          {/* Barre de recherche */}
           <div style={{ position: 'relative' }}>
             <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#94A3B8" strokeWidth="1.5"
               style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)' }}>
@@ -155,10 +149,8 @@ export default function ChantsAdminPage() {
               style={{ ...iS, paddingLeft: 32, fontSize: 12 }} />
           </div>
         </div>
-
-        {/* ── ZONE SCROLLABLE ── */}
+        {/* ZONE SCROLLABLE */}
         <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: '0 14px 14px' }}>
-
           {/* Formulaire */}
           {showForm && (
             <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 14, padding: 14, marginTop: 12, marginBottom: 12 }}>
@@ -182,7 +174,6 @@ export default function ChantsAdminPage() {
                     placeholder="Ex : 1" style={iS} />
                 </div>
               </div>
-
               {/* Audio */}
               <div style={{ marginBottom: 10 }}>
                 <label style={{ fontSize: 11, color: '#64748B', display: 'block', marginBottom: 4 }}>
@@ -218,18 +209,40 @@ export default function ChantsAdminPage() {
                   <p style={{ fontSize: 10, color: VERT, margin: '4px 0 0' }}>Audio existant conservé si pas de nouveau fichier</p>
                 )}
               </div>
-
-              {/* Paroles */}
-              <div style={{ marginBottom: 14 }}>
+              {/* Paroles classiques */}
+              <div style={{ marginBottom: 10 }}>
                 <label style={{ fontSize: 11, color: '#64748B', display: 'block', marginBottom: 4 }}>
                   Paroles <span style={{ color: '#94A3B8' }}>· Commencez le refrain par "R:" ou "Refrain :"</span>
                 </label>
                 <textarea value={form.paroles} onChange={e => setF('paroles', e.target.value)}
-                  placeholder="Saisissez les paroles du chant ici..." rows={6}
+                  placeholder="Saisissez les paroles du chant ici..." rows={5}
                   style={{ ...iS, resize: 'none', lineHeight: 1.6 }} />
               </div>
-
-              {/* Progression upload */}
+              {/* Paroles LRC synchronisées */}
+              <div style={{ marginBottom: 14 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                  <label style={{ fontSize: 11, color: '#64748B', fontWeight: 500 }}>
+                    Paroles synchronisées (LRC) <span style={{ fontSize: 9, fontWeight: 700, color: '#C9A84C', background: '#FFFBEB', borderRadius: 20, padding: '1px 7px', marginLeft: 4 }}>✨ Optionnel</span>
+                  </label>
+                </div>
+                <div style={{ background: '#FFFBEB', border: '1px solid #FCD34D', borderRadius: 10, padding: '8px 12px', marginBottom: 8 }}>
+                  <p style={{ fontSize: 10, color: '#92400E', margin: 0, lineHeight: 1.6 }}>
+                    Format : <strong>[mm:ss.xx] texte de la ligne</strong><br />
+                    Section : <strong>[mm:ss.xx] ## Refrain</strong> ou <strong>## Couplet 1</strong><br />
+                    Exemple : <code>[00:05.00] Seigneur tu es grand</code>
+                  </p>
+                </div>
+                <textarea value={form.paroles_lrc} onChange={e => setF('paroles_lrc', e.target.value)}
+                  placeholder={"[00:00.00] ## Couplet 1\n[00:05.00] Seigneur tu es grand\n[00:08.50] Ta gloire remplit la terre\n[00:12.00] ## Refrain\n[00:13.00] Tu règnes sur tout"}
+                  rows={7}
+                  style={{ ...iS, resize: 'vertical', lineHeight: 1.7, fontFamily: 'monospace', fontSize: 12 }} />
+                {form.paroles_lrc && (
+                  <p style={{ fontSize: 10, color: VERT, margin: '4px 0 0', fontWeight: 500 }}>
+                    ✓ {form.paroles_lrc.split('\n').filter(l => l.trim()).length} ligne(s) LRC saisie(s)
+                  </p>
+                )}
+              </div>
+              {/* Progression */}
               {saving && (
                 <div style={{ marginBottom: 12 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
@@ -241,13 +254,11 @@ export default function ChantsAdminPage() {
                   </div>
                 </div>
               )}
-
               {erreur && (
                 <div style={{ marginBottom: 10, background: '#FEF2F2', border: '1px solid #FCA5A5', borderRadius: 10, padding: '8px 12px' }}>
                   <p style={{ fontSize: 11, color: '#DC2626', margin: 0 }}>{erreur}</p>
                 </div>
               )}
-
               <div style={{ display: 'flex', gap: 8 }}>
                 <button type="button" onClick={() => { setShowForm(false); setEditId(null) }}
                   style={{ flex: 1, background: '#F1F5F9', color: '#475569', border: 'none', borderRadius: 10, padding: 10, fontSize: 13, cursor: 'pointer' }}>
@@ -260,7 +271,6 @@ export default function ChantsAdminPage() {
               </div>
             </div>
           )}
-
           {loading && <p style={{ fontSize: 13, color: '#94A3B8', textAlign: 'center', padding: '20px 0' }}>Chargement...</p>}
           {!loading && chants.length === 0 && (
             <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #E2E8F0', padding: 28, textAlign: 'center', marginTop: 12 }}>
@@ -270,13 +280,11 @@ export default function ChantsAdminPage() {
               </button>
             </div>
           )}
-
           {!loading && chants.length > 0 && chantsFiltres.length === 0 && (
             <p style={{ fontSize: 13, color: '#94A3B8', textAlign: 'center', padding: '20px 0', marginTop: 12 }}>
               Aucun résultat pour "{recherche}"
             </p>
           )}
-
           {/* Liste */}
           <div ref={menuRef} style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 }}>
             {chantsFiltres.map((c) => {
@@ -284,8 +292,6 @@ export default function ChantsAdminPage() {
               return (
                 <div key={c.id}
                   style={{ background: '#fff', borderRadius: 12, border: `1px solid ${ouverte ? '#CBD5E1' : '#E2E8F0'}`, transition: 'border-color .2s' }}>
-
-                  {/* Ligne principale — cliquable */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', cursor: 'pointer' }}
                     onClick={() => setCarteOuverte(prev => prev === c.id ? null : c.id)}>
                     <div style={{ width: 38, height: 38, borderRadius: 10, background: VERT_CLAIR, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: VERT }}>
@@ -297,15 +303,14 @@ export default function ChantsAdminPage() {
                         {c.artiste && <span style={{ fontSize: 11, color: '#94A3B8' }}>{c.artiste}</span>}
                         {c.lien_audio && <span style={{ fontSize: 9, fontWeight: 600, color: '#1D4ED8', background: '#EFF6FF', borderRadius: 20, padding: '1px 7px' }}>Audio</span>}
                         {c.paroles && <span style={{ fontSize: 9, fontWeight: 600, color: '#6D28D9', background: '#F5F3FF', borderRadius: 20, padding: '1px 7px' }}>Paroles</span>}
+                        {c.paroles_lrc && <span style={{ fontSize: 9, fontWeight: 600, color: '#C9A84C', background: '#FFFBEB', border: '1px solid #FCD34D', borderRadius: 20, padding: '1px 7px' }}>✨ Sync</span>}
                       </div>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-                      {/* Chevron */}
                       <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#94A3B8" strokeWidth="2"
                         style={{ transition: 'transform .25s', transform: ouverte ? 'rotate(180deg)' : 'rotate(0deg)' }}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7"/>
                       </svg>
-                      {/* Menu */}
                       <div style={{ position: 'relative' }}>
                         <button type="button" onClick={e => { e.stopPropagation(); setMenuOuvert(menuOuvert === c.id ? null : c.id) }}
                           style={{ width: 30, height: 30, borderRadius: 8, background: '#F8FAFC', border: '1px solid #E2E8F0', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: '#94A3B8', letterSpacing: 1 }}>
@@ -329,45 +334,45 @@ export default function ChantsAdminPage() {
                       </div>
                     </div>
                   </div>
-
-                  {/* Contenu déployé */}
                   {ouverte && (
                     <div style={{ padding: '0 12px 14px', borderTop: '1px solid #F1F5F9' }}>
-
-                      {/* Lecteur audio */}
                       {c.lien_audio && (
-                        <div style={{ marginTop: 12, marginBottom: c.paroles ? 12 : 0 }}>
+                        <div style={{ marginTop: 12, marginBottom: (c.paroles || c.paroles_lrc) ? 12 : 0 }}>
                           <p style={{ fontSize: 10, fontWeight: 600, color: '#94A3B8', letterSpacing: '0.08em', textTransform: 'uppercase', margin: '0 0 6px' }}>Lecture audio</p>
-                          <audio controls src={c.lien_audio}
-                            style={{ width: '100%', height: 36, borderRadius: 8 }}>
+                          <audio controls src={c.lien_audio} style={{ width: '100%', height: 36, borderRadius: 8 }}>
                             Votre navigateur ne supporte pas l'audio.
                           </audio>
                         </div>
                       )}
-
-                      {/* Paroles */}
+                      {c.paroles_lrc && (
+                        <div style={{ marginTop: 12, marginBottom: c.paroles ? 12 : 0 }}>
+                          <p style={{ fontSize: 10, fontWeight: 600, color: '#C9A84C', letterSpacing: '0.08em', textTransform: 'uppercase', margin: '0 0 6px', display: 'flex', alignItems: 'center', gap: 5 }}>
+                            ✨ Paroles synchronisées (LRC)
+                          </p>
+                          <div style={{ background: '#FFFBEB', borderRadius: 10, padding: '10px 12px', maxHeight: 120, overflowY: 'auto' }}>
+                            <pre style={{ fontSize: 11, color: '#92400E', margin: 0, lineHeight: 1.7, fontFamily: 'monospace', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+                              {c.paroles_lrc.slice(0, 300)}{c.paroles_lrc.length > 300 ? '...' : ''}
+                            </pre>
+                          </div>
+                        </div>
+                      )}
                       {c.paroles && (
                         <div style={{ marginTop: 12 }}>
                           <p style={{ fontSize: 10, fontWeight: 600, color: '#94A3B8', letterSpacing: '0.08em', textTransform: 'uppercase', margin: '0 0 8px' }}>Paroles</p>
                           <div style={{ background: '#F8FAFC', borderRadius: 10, padding: '10px 12px' }}>
-                            {c.paroles.split('\n').map((ligne, i) => {
+                            {c.paroles.split('\n').slice(0, 10).map((ligne, i) => {
                               const isRefrain = ligne.startsWith('R:') || ligne.toLowerCase().startsWith('refrain')
                               return (
-                                <p key={i} style={{
-                                  fontSize: 12, margin: '0 0 3px', lineHeight: 1.6,
-                                  color: isRefrain ? VERT : '#475569',
-                                  fontWeight: isRefrain ? 600 : 400,
-                                  fontStyle: isRefrain ? 'italic' : 'normal',
-                                }}>
-                                  {ligne || ' '}
+                                <p key={i} style={{ fontSize: 12, margin: '0 0 3px', lineHeight: 1.6, color: isRefrain ? VERT : '#475569', fontWeight: isRefrain ? 600 : 400, fontStyle: isRefrain ? 'italic' : 'normal' }}>
+                                  {ligne || ' '}
                                 </p>
                               )
                             })}
+                            {c.paroles.split('\n').length > 10 && <p style={{ fontSize: 10, color: '#94A3B8', margin: '4px 0 0' }}>... et {c.paroles.split('\n').length - 10} ligne(s) de plus</p>}
                           </div>
                         </div>
                       )}
-
-                      {!c.lien_audio && !c.paroles && (
+                      {!c.lien_audio && !c.paroles && !c.paroles_lrc && (
                         <p style={{ fontSize: 12, color: '#CBD5E1', textAlign: 'center', margin: '12px 0 0' }}>Aucun contenu ajouté.</p>
                       )}
                     </div>
@@ -376,9 +381,8 @@ export default function ChantsAdminPage() {
               )
             })}
           </div>
-
-        </div>{/* fin zone scrollable */}
-      </div>{/* fin conteneur absolu */}
+        </div>
+      </div>
     </AdminLayout>
   )
 }
