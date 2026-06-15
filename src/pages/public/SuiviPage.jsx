@@ -75,7 +75,7 @@ export default function SuiviPage() {
     const msg = reste > 0
       ? `Bonjour Mme OBODJI, je suis ${inscription.nom_complet}, inscrit(e) au Camp-Navs 2026.\n\nIl me reste ${reste.toLocaleString()} FCFA à payer sur un total de ${du.toLocaleString()} FCFA.\n\nPouvez-vous me confirmer les modalités de paiement ? Merci.`
       : `Bonjour Mme OBODJI, je suis ${inscription.nom_complet}, inscrit(e) au Camp-Navs 2026. Mon paiement de ${du.toLocaleString()} FCFA est complet. Merci !`
-    window.open(`https://wa.me/225${TEL_TRESORIERE.replace(/^0/, '')}?text=${encodeURIComponent(msg)}`, '_blank')
+    window.open(`https://wa.me/225${TEL_TRESORIERE}?text=${encodeURIComponent(msg)}`, '_blank')
   }
 
   // Calculs paiement
