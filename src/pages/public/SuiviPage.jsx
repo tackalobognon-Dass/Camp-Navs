@@ -38,37 +38,56 @@ export default function SuiviPage() {
   const [rechercheFaite, setRechercheFaite] = useState(false)
   const [copie, setCopie] = useState(false)
 
+  // Normalise un numéro : garde uniquement les chiffres, retire
+  // l'indicatif pays (225) et le 0 initial. Ainsi "07 09...",
+  // "+225 709...", "0709..." et "709..." deviennent identiques.
+  function normaliserTelephone(str) {
+    if (!str) return ''
+    let chiffres = String(str).replace(/\D/g, '')
+    chiffres = chiffres.replace(/^225/, '')
+    chiffres = chiffres.replace(/^0/, '')
+    return chiffres
+  }
+
   async function handleRecherche() {
-    const saisie = telephone.trim().replace(/\s/g, '')
+    const saisie = telephone.trim()
     if (!saisie) { setErreur('Entrez votre numéro de téléphone.'); return }
     setLoading(true); setErreur(''); setInscription(null); setVersements([]); setRechercheFaite(false)
 
-    // Génère toutes les variantes plausibles du numéro saisi
-    const sansIndicatif = saisie.replace(/^\+?225/, '').replace(/^0/, '')
-    const variantes = Array.from(new Set([
-      saisie,
-      '0' + sansIndicatif,
-      sansIndicatif,
-      '225' + sansIndicatif,
-      '+225' + sansIndicatif,
-    ]))
+    const cible = normaliserTelephone(saisie)
+    if (!cible) {
+      setErreur('Numéro invalide.')
+      setLoading(false); setRechercheFaite(true)
+      return
+    }
 
-    const { data, error } = await supabase
+    // On récupère id + téléphone de toutes les inscriptions (léger)
+    // et on compare après normalisation, ce qui tolère tous les
+    // formats possibles (espaces, indicatif, 0 initial ou pas).
+    const { data: liste, error } = await supabase
       .from('inscriptions')
-      .select('*')
-      .in('telephone', variantes)
-      .maybeSingle()
+      .select('id, telephone')
 
     if (error) {
       console.error('Erreur recherche inscription :', error)
+      setErreur('Erreur de connexion. Réessayez.')
+      setLoading(false); setRechercheFaite(true)
+      return
     }
 
-    if (data) {
-      setInscription(data)
+    const correspondance = (liste || []).find(ins => normaliserTelephone(ins.telephone) === cible)
+
+    if (correspondance) {
+      const { data: complet } = await supabase
+        .from('inscriptions')
+        .select('*')
+        .eq('id', correspondance.id)
+        .single()
+      setInscription(complet)
       const { data: v } = await supabase
         .from('versements')
         .select('*')
-        .eq('inscription_id', data.id)
+        .eq('inscription_id', correspondance.id)
         .order('date_versement', { ascending: true })
       setVersements(v || [])
     } else {
