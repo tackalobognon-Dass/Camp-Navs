@@ -39,14 +39,30 @@ export default function SuiviPage() {
   const [copie, setCopie] = useState(false)
 
   async function handleRecherche() {
-    const num = telephone.trim().replace(/\s/g, '')
-    if (!num) { setErreur('Entrez votre numéro de téléphone.'); return }
+    const saisie = telephone.trim().replace(/\s/g, '')
+    if (!saisie) { setErreur('Entrez votre numéro de téléphone.'); return }
     setLoading(true); setErreur(''); setInscription(null); setVersements([]); setRechercheFaite(false)
-    const { data } = await supabase
+
+    // Génère toutes les variantes plausibles du numéro saisi
+    const sansIndicatif = saisie.replace(/^\+?225/, '').replace(/^0/, '')
+    const variantes = Array.from(new Set([
+      saisie,
+      '0' + sansIndicatif,
+      sansIndicatif,
+      '225' + sansIndicatif,
+      '+225' + sansIndicatif,
+    ]))
+
+    const { data, error } = await supabase
       .from('inscriptions')
       .select('*')
-      .or(`telephone.eq.${num},telephone.eq.0${num.replace(/^225/, '')},telephone.eq.+225${num}`)
+      .in('telephone', variantes)
       .maybeSingle()
+
+    if (error) {
+      console.error('Erreur recherche inscription :', error)
+    }
+
     if (data) {
       setInscription(data)
       const { data: v } = await supabase
